@@ -956,9 +956,9 @@ s32 func_8008FCC8(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* p
         }
 
         if (limbIndex == PLAYER_LIMB_HEAD) {
-            rot->x += this->headRot.x;
+            rot->x += this->headRot.z;
             rot->y -= this->headRot.y;
-            rot->z += this->headRot.z;
+            rot->z += this->headRot.x;
         } else if (limbIndex == PLAYER_LIMB_UPPER) {
             if (this->upperBodyYawOffset != 0) {
                 Matrix_RotateZ(0x44C * (M_PI / 0x8000), MTXMODE_APPLY);
