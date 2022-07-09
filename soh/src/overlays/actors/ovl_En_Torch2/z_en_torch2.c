@@ -587,7 +587,7 @@ void EnTorch2_Update(Actor* thisx, GlobalContext* globalCtx2) {
 
     if ((this->actor.colChkInfo.health == 0) && sDeathFlag) {
         this->csMode = 0x18;
-        this->unk_448 = &player->actor;
+        this->csTargetActor = &player->actor;
         this->unk_46A = 1;
         sDeathFlag = false;
     }
@@ -598,11 +598,11 @@ void EnTorch2_Update(Actor* thisx, GlobalContext* globalCtx2) {
         if (!Actor_ApplyDamage(&this->actor)) {
             func_800F5B58();
             this->actor.flags &= ~(ACTOR_FLAG_0 | ACTOR_FLAG_2);
-            this->unk_8A1 = 2;
-            this->unk_8A4 = 6.0f;
-            this->unk_8A8 = 6.0f;
-            this->unk_8A0 = this->actor.colChkInfo.damage;
-            this->unk_8A2 = this->actor.yawTowardsPlayer + 0x8000;
+            this->damageEffect = 2;
+            this->knockbackVelXZ = 6.0f;
+            this->knockbackVelY = 6.0f;
+            this->damageAmount = this->actor.colChkInfo.damage;
+            this->damageYaw = this->actor.yawTowardsPlayer + 0x8000;
             sDeathFlag++;
             sActionState = ENTORCH2_DEATH;
             Enemy_StartFinishingBlow(globalCtx, &this->actor);
@@ -618,11 +618,11 @@ void EnTorch2_Update(Actor* thisx, GlobalContext* globalCtx2) {
                 }
             } else {
                 this->actor.flags &= ~ACTOR_FLAG_0;
-                this->unk_8A0 = this->actor.colChkInfo.damage;
-                this->unk_8A1 = 1;
-                this->unk_8A8 = 6.0f;
-                this->unk_8A4 = 8.0f;
-                this->unk_8A2 = this->actor.yawTowardsPlayer + 0x8000;
+                this->damageAmount = this->actor.colChkInfo.damage;
+                this->damageEffect = 1;
+                this->knockbackVelY = 6.0f;
+                this->knockbackVelXZ = 8.0f;
+                this->damageYaw = this->actor.yawTowardsPlayer + 0x8000;
                 Actor_SetDropFlag(&this->actor, &this->cylinder.info, 1);
                 this->stateFlags3 &= ~4;
                 this->stateFlags3 |= 1;
@@ -635,7 +635,7 @@ void EnTorch2_Update(Actor* thisx, GlobalContext* globalCtx2) {
             }
         }
         this->actor.colChkInfo.damage = 0;
-        this->unk_8A0 = 0;
+        this->damageAmount = 0;
     }
 
     // Handles being frozen by a deku nut

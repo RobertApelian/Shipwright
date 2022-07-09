@@ -402,7 +402,7 @@ void BgYdanSp_WallWebIdle(BgYdanSp* this, GlobalContext* globalCtx) {
     if (Flags_GetSwitch(globalCtx, this->burnSwitchFlag) || (this->trisCollider.base.acFlags & 2)) {
         this->dyna.actor.home.pos.y = this->dyna.actor.world.pos.y + 80.0f;
         BgYdanSp_BurnWeb(this, globalCtx);
-    } else if (player->heldItemActionParam == PLAYER_AP_STICK && player->unk_860 != 0) {
+    } else if (player->heldItemActionParam == PLAYER_AP_STICK && player->fpsItemType != 0) {
         func_8002DBD0(&this->dyna.actor, &sp30, &player->swordInfo[0].tip);
         if (fabsf(sp30.x) < 100.0f && sp30.z < 1.0f && sp30.y < 200.0f) {
             OnePointCutscene_Init(globalCtx, 3020, 40, &this->dyna.actor, MAIN_CAM);

@@ -3788,6 +3788,9 @@
     <ClInclude Include="soh\Enhancements\cosmetics\CosmeticsEditor.h">
       <Filter>Header Files\include</Filter>
     </ClInclude>
+    <ClInclude Include="src\overlays\actors\ovl_player_actor\z_player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="SHIPOFHARKINIAN.ico" />

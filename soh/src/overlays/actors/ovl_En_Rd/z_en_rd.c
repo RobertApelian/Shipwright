@@ -328,7 +328,7 @@ void func_80AE2C1C(EnRd* this, GlobalContext* globalCtx) {
                 if (!(this->unk_312 & 0x80)) {
                     player->actor.freezeTimer = 40;
                     func_8008EEAC(globalCtx, &this->actor);
-                    GET_PLAYER(globalCtx)->unk_684 = &this->actor;
+                    GET_PLAYER(globalCtx)->forcedTargetActor = &this->actor;
                     func_800AA000(this->actor.xzDistToPlayer, 0xFF, 0x14, 0x96);
                 }
                 this->unk_306 = 0x3C;
@@ -751,8 +751,8 @@ void func_80AE4114(EnRd* this, GlobalContext* globalCtx) {
 
         if (this->unk_31B != 11) {
             Actor_SetDropFlag(&this->actor, &this->collider.info, 1);
-            if (player->unk_844 != 0) {
-                this->unk_31D = player->unk_845;
+            if (player->comboTimer != 0) {
+                this->unk_31D = player->slashCounter;
             }
 
             if ((this->unk_31C != 0) && (this->unk_31C != 6)) {
@@ -822,7 +822,7 @@ void EnRd_Update(Actor* thisx, GlobalContext* globalCtx) {
     if ((this->actor.colChkInfo.health > 0) && (this->unk_31B != 8)) {
         Collider_UpdateCylinder(&this->actor, &this->collider);
         CollisionCheck_SetOC(globalCtx, &globalCtx->colChkCtx, &this->collider.base);
-        if ((this->unk_31B != 9) || ((player->unk_844 != 0) && (player->unk_845 != this->unk_31D))) {
+        if ((this->unk_31B != 9) || ((player->comboTimer != 0) && (player->slashCounter != this->unk_31D))) {
             CollisionCheck_SetAC(globalCtx, &globalCtx->colChkCtx, &this->collider.base);
         }
     }

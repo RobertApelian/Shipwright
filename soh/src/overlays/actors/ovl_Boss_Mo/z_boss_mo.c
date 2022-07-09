@@ -765,7 +765,7 @@ void BossMo_Tentacle(BossMo* this, GlobalContext* globalCtx) {
                 }
             }
             if (this->work[MO_TENT_ACTION_STATE] == MO_TENT_GRAB) {
-                player->unk_850 = 0xA;
+                player->genericTimer = 0xA;
                 player->actor.speedXZ = player->actor.velocity.y = 0;
                 Math_ApproachF(&player->actor.world.pos.x, this->grabPosRot.pos.x, 0.5f, 20.0f);
                 Math_ApproachF(&player->actor.world.pos.y, this->grabPosRot.pos.y, 0.5f, 20.0f);
@@ -823,7 +823,7 @@ void BossMo_Tentacle(BossMo* this, GlobalContext* globalCtx) {
                     Math_ApproachS(&this->tentRot[indS1].z, tempf2, 1.0f / this->tentMaxAngle, this->tentSpeed);
                 }
             }
-            player->unk_850 = 0xA;
+            player->genericTimer = 0xA;
             player->actor.world.pos.x = this->grabPosRot.pos.x;
             player->actor.world.pos.y = this->grabPosRot.pos.y;
             player->actor.world.pos.z = this->grabPosRot.pos.z;
@@ -842,7 +842,7 @@ void BossMo_Tentacle(BossMo* this, GlobalContext* globalCtx) {
                     this->work[MO_TENT_ACTION_STATE] = MO_TENT_RETREAT;
                     this->work[MO_TENT_INVINC_TIMER] = 50;
                     if (&this->actor == player->actor.parent) {
-                        player->unk_850 = 0x65;
+                        player->genericTimer = 0x65;
                         player->actor.parent = NULL;
                         player->csMode = 0;
                         if (this->timers[0] == 0) {
@@ -872,7 +872,7 @@ void BossMo_Tentacle(BossMo* this, GlobalContext* globalCtx) {
         case MO_TENT_CUT:
             func_80078914(&this->tentTipPos, NA_SE_EV_WATER_WALL - SFX_FLAG);
             if (&this->actor == player->actor.parent) {
-                player->unk_850 = 0x65;
+                player->genericTimer = 0x65;
                 player->actor.parent = NULL;
                 player->csMode = 0;
             }
@@ -1787,7 +1787,7 @@ void BossMo_CoreCollisionCheck(BossMo* this, GlobalContext* globalCtx) {
                             sMorphaTent2->tent2KillTimer = 1;
                         }
                         if (player->actor.parent != NULL) {
-                            player->unk_850 = 0x65;
+                            player->genericTimer = 0x65;
                             player->actor.parent = NULL;
                             player->csMode = 0;
                         }
@@ -1806,7 +1806,7 @@ void BossMo_CoreCollisionCheck(BossMo* this, GlobalContext* globalCtx) {
                     sMorphaTent1->timers[0] = 40;
                     sMorphaTent1->actor.flags &= ~ACTOR_FLAG_0;
                     if (player->actor.parent == &sMorphaTent1->actor) {
-                        player->unk_850 = 0x65;
+                        player->genericTimer = 0x65;
                         player->actor.parent = NULL;
                         player->csMode = 0;
                     }

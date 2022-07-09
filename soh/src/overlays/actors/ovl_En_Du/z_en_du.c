@@ -324,7 +324,7 @@ void func_809FE3C0(EnDu* this, GlobalContext* globalCtx) {
     if (player->stateFlags2 & 0x1000000) {
         func_8010BD88(globalCtx, OCARINA_ACTION_CHECK_SARIA);
         player->stateFlags2 |= 0x2000000;
-        player->unk_6A8 = &this->actor;
+        player->ocarinaActor = &this->actor;
         EnDu_SetupAction(this, func_809FE4A4);
         return;
     }

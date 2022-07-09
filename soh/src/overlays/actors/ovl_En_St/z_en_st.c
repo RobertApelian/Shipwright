@@ -303,7 +303,7 @@ void EnSt_CheckBodyStickHit(EnSt* this, GlobalContext* globalCtx) {
     ColliderInfo* body = &this->colCylinder[0].info;
     Player* player = GET_PLAYER(globalCtx);
 
-    if (player->unk_860 != 0) {
+    if (player->fpsItemType != 0) {
         body->bumper.dmgFlags |= 2;
         this->colCylinder[1].info.bumper.dmgFlags &= ~2;
         this->colCylinder[2].info.bumper.dmgFlags &= ~2;

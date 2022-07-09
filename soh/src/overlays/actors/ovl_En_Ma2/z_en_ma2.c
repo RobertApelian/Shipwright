@@ -266,7 +266,7 @@ void func_80AA204C(EnMa2* this, GlobalContext* globalCtx) {
     Player* player = GET_PLAYER(globalCtx);
 
     if (player->stateFlags2 & 0x1000000) {
-        player->unk_6A8 = &this->actor;
+        player->ocarinaActor = &this->actor;
         player->stateFlags2 |= 0x2000000;
         func_8010BD58(globalCtx, OCARINA_ACTION_CHECK_EPONA);
         this->actionFunc = func_80AA20E4;

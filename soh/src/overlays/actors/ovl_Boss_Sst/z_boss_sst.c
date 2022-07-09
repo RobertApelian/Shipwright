@@ -1741,7 +1741,7 @@ void BossSst_HandClap(BossSst* this, GlobalContext* globalCtx) {
     }
 
     if (player->actor.parent == &this->actor) {
-        player->unk_850 = 0;
+        player->genericTimer = 0;
         player->actor.world.pos = this->actor.world.pos;
     }
 }
@@ -1836,7 +1836,7 @@ void BossSst_HandGrab(BossSst* this, GlobalContext* globalCtx) {
     this->actor.world.pos.x += this->actor.speedXZ * Math_SinS(this->actor.world.rot.y);
     this->actor.world.pos.z += this->actor.speedXZ * Math_CosS(this->actor.world.rot.y);
     if (player->stateFlags2 & 0x80) {
-        player->unk_850 = 0;
+        player->genericTimer = 0;
         player->actor.world.pos = this->actor.world.pos;
         player->actor.shape.rot.y = this->actor.shape.rot.y;
     }
@@ -1930,7 +1930,7 @@ void BossSst_HandSwing(BossSst* this, GlobalContext* globalCtx) {
     }
 
     if (player->stateFlags2 & 0x80) {
-        player->unk_850 = 0;
+        player->genericTimer = 0;
         Math_Vec3f_Copy(&player->actor.world.pos, &this->actor.world.pos);
         player->actor.shape.rot.x = this->actor.shape.rot.x;
         player->actor.shape.rot.z = (this->vParity * -0x4000) + this->actor.shape.rot.z;
@@ -2413,7 +2413,7 @@ void BossSst_HandReleasePlayer(BossSst* this, GlobalContext* globalCtx, s32 drop
 
     if (player->actor.parent == &this->actor) {
         player->actor.parent = NULL;
-        player->unk_850 = 100;
+        player->genericTimer = 100;
         this->colliderJntSph.base.ocFlags1 |= OC1_ON;
         OTHER_HAND(this)->colliderJntSph.base.ocFlags1 |= OC1_ON;
         if (dropPlayer) {

@@ -4360,7 +4360,7 @@ s32 Camera_Subj4(Camera* camera) {
     if ((anim->unk_28 < temp_f16) && !anim->unk_2E) {
         player = camera->player;
         anim->unk_2E = true;
-        func_800F4010(&player->actor.projectedPos, player->unk_89E + 0x8B0, 4.0f);
+        func_800F4010(&player->actor.projectedPos, player->surfaceMaterial + 0x8B0, 4.0f);
     } else if (anim->unk_28 > temp_f16) {
         anim->unk_2E = false;
     }

@@ -186,12 +186,12 @@ void ObjSyokudai_Update(Actor* thisx, GlobalContext* globalCtx2) {
         if (interactionType != 0) {
             if (this->litTimer != 0) {
                 if (interactionType < 0) {
-                    if (player->unk_860 == 0) {
-                        player->unk_860 = 210;
+                    if (player->fpsItemType == 0) {
+                        player->fpsItemType = 210;
                         Audio_PlaySoundGeneral(NA_SE_EV_FLAME_IGNITION, &this->actor.projectedPos, 4, &D_801333E0,
                                                &D_801333E0, &D_801333E8);
-                    } else if (player->unk_860 < 200) {
-                        player->unk_860 = 200;
+                    } else if (player->fpsItemType < 200) {
+                        player->fpsItemType = 200;
                     }
                 } else if (dmgFlags & 0x20) {
                     arrow = (EnArrow*)this->colliderFlame.base.ac;
@@ -204,10 +204,10 @@ void ObjSyokudai_Update(Actor* thisx, GlobalContext* globalCtx2) {
                     this->litTimer = 50 * litTimeScale + 100;
                 }
             } else if ((torchType != 0) && (((interactionType > 0) && (dmgFlags & 0x20800)) ||
-                                            ((interactionType < 0) && (player->unk_860 != 0)))) {
+                                            ((interactionType < 0) && (player->fpsItemType != 0)))) {
 
-                if ((interactionType < 0) && (player->unk_860 < 200)) {
-                    player->unk_860 = 200;
+                if ((interactionType < 0) && (player->fpsItemType < 200)) {
+                    player->fpsItemType = 200;
                 }
                 if (torchCount == 0) {
                     this->litTimer = -1;

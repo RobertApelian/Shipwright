@@ -628,7 +628,7 @@ void BossGanondrof_Neutral(BossGanondrof* this, GlobalContext* globalCtx) {
         }
     }
 
-    if (player->unk_A73 != 0) {
+    if (player->fpsItemShotTimer != 0) {
         BossGanondrof_SetupBlock(this, globalCtx);
     }
 

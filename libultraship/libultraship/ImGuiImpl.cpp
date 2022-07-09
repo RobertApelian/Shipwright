@@ -907,6 +907,15 @@ namespace SohImGui {
             {
                 if (ImGui::BeginMenu("Gameplay"))
                 {
+                    if (ImGui::BeginMenu("Chaos"))
+                    {
+                        EnhancementCheckbox("Disable first person view", "gDisableFPSView");
+                        EnhancementCheckbox("All arrows are normal arrows", "gForceNormalArrows");
+                        EnhancementCheckbox("Disable climbing ledges", "gDisableLedgeClimb");
+
+                        ImGui::EndMenu();
+                    }
+
                     if (ImGui::BeginMenu("Time Savers"))
                     {
                         EnhancementSliderInt("Text Speed: %dx", "##TEXTSPEED", "gTextSpeed", 1, 5, "");

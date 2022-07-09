@@ -353,7 +353,7 @@ void func_80AA0F44(EnMa1* this, GlobalContext* globalCtx) {
     if (gSaveContext.eventChkInf[1] & 0x40) {
         if (player->stateFlags2 & 0x1000000) {
             player->stateFlags2 |= 0x2000000;
-            player->unk_6A8 = &this->actor;
+            player->ocarinaActor = &this->actor;
             this->actor.textId = 0x2061;
             Message_StartTextbox(globalCtx, this->actor.textId, NULL);
             this->unk_1E8.unk_00 = 1;

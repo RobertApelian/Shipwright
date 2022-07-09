@@ -85,7 +85,7 @@ extern "C"
 	extern Gfx* D_80125DE8[];
 	extern Gfx* D_80125E08[];
 	extern Gfx* D_80125E18[];
-	extern Gfx* D_80125EF8[];
+	extern Gfx* gPlayerLeftHandBoomerangDLs[];
 	extern Gfx gCullBackDList[];
 	extern Gfx gCullFrontDList[];
 	extern Gfx gEmptyDL[];

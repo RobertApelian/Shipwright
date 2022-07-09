@@ -4263,7 +4263,7 @@ void KaleidoScope_Update(GlobalContext* globalCtx)
             osSyncPrintf("i=%d  LAST_TIME_TYPE=%d\n", i, gSaveContext.unk_13EE);
             gSaveContext.unk_13EA = 0;
             Interface_ChangeAlpha(gSaveContext.unk_13EE);
-            player->targetActor = NULL;
+            player->talkActor = NULL;
             Player_SetEquipmentData(globalCtx, player);
             osSyncPrintf(VT_RST);
             break;

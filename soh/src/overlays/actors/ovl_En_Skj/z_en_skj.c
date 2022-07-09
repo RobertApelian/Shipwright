@@ -720,7 +720,7 @@ void EnSkj_SariasSongKidIdle(EnSkj* this, GlobalContext* globalCtx) {
             if (EnSkj_RangeCheck(player, sSmallStumpSkullKid.skullkid)) {
                 EnSkj_SetupWaitInRange(this);
                 player->stateFlags2 |= 0x800000;
-                player->unk_6A8 = &sSmallStumpSkullKid.skullkid->actor;
+                player->ocarinaActor = &sSmallStumpSkullKid.skullkid->actor;
             }
         }
     } else {
@@ -904,7 +904,7 @@ void EnSkj_WaitInRange(EnSkj* this, GlobalContext* globalCtx) {
     // Link was probably supposed to be pointed towards skull kid as well
     if (player->stateFlags2 & 0x1000000) {
         player->stateFlags2 |= 0x2000000;
-        player->unk_6A8 = &sSmallStumpSkullKid.skullkid->actor;
+        player->ocarinaActor = &sSmallStumpSkullKid.skullkid->actor;
         player->actor.world.pos.x = sSmallStumpSkullKid.skullkid->actor.world.pos.x;
         player->actor.world.pos.y = sSmallStumpSkullKid.skullkid->actor.world.pos.y;
         player->actor.world.pos.z = sSmallStumpSkullKid.skullkid->actor.world.pos.z;
@@ -956,7 +956,7 @@ void EnSkj_WaitForSong(EnSkj* this, GlobalContext* globalCtx) {
                                                  (globalCtx->msgCtx.msgMode == MSGMODE_OCARINA_FAIL_NO_TEXT))) {
         globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
         Message_CloseTextbox(globalCtx);
-        player->unk_6A8 = &this->actor;
+        player->ocarinaActor = &this->actor;
         func_8002F2CC(&this->actor, globalCtx, EnSkj_GetItemXzRange(this));
         EnSkj_SetupWrongSong(this);
     } else {
@@ -977,7 +977,7 @@ void EnSkj_WaitForSong(EnSkj* this, GlobalContext* globalCtx) {
                 // Saria's song has been played for the first titme
                 globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
                 func_80078884(NA_SE_SY_CORRECT_CHIME);
-                player->unk_6A8 = &this->actor;
+                player->ocarinaActor = &this->actor;
                 func_8002F2CC(&this->actor, globalCtx, EnSkj_GetItemXzRange(this));
                 this->textId = 0x10BB;
                 EnSkj_SetupAfterSong(this);
@@ -994,13 +994,13 @@ void EnSkj_WaitForSong(EnSkj* this, GlobalContext* globalCtx) {
                 gSaveContext.sunsSongState = 0;
                 if (gSaveContext.itemGetInf[1] & 0x40) {
                     globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
-                    player->unk_6A8 = &this->actor;
+                    player->ocarinaActor = &this->actor;
                     func_8002F2CC(&this->actor, globalCtx, EnSkj_GetItemXzRange(this));
                     this->textId = 0x10BD;
                     EnSkj_SetupAfterSong(this);
                 } else {
                     globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
-                    player->unk_6A8 = &this->actor;
+                    player->ocarinaActor = &this->actor;
                     func_8002F2CC(&this->actor, globalCtx, EnSkj_GetItemXzRange(this));
                     EnSkj_SetupWrongSong(this);
                 }
@@ -1202,7 +1202,7 @@ void EnSkj_SariasSongWaitForTextClear(EnSkj* this, GlobalContext* globalCtx) {
     if (state == TEXT_STATE_DONE && Message_ShouldAdvance(globalCtx)) {
         EnSkj_SetupWaitInRange(this);
         player->stateFlags2 |= 0x800000;
-        player->unk_6A8 = (Actor*)sSmallStumpSkullKid.skullkid;
+        player->ocarinaActor = (Actor*)sSmallStumpSkullKid.skullkid;
     }
 }
 
@@ -1368,7 +1368,7 @@ void EnSkj_SetupWaitForOcarina(EnSkj* this, GlobalContext* globalCtx) {
             player->stateFlags2 |= 0x2000000;
             func_800F5BF0(NATURE_ID_KOKIRI_REGION);
             EnSkj_TurnPlayer(this, player);
-            player->unk_6A8 = &this->actor;
+            player->ocarinaActor = &this->actor;
             Message_StartTextbox(globalCtx, 0x10BE, &this->actor);
             this->actionFunc = EnSkj_StartOcarinaMinigame;
         } else {
@@ -1384,7 +1384,7 @@ void EnSkj_WaitForOcarina(EnSkj* this, GlobalContext* globalCtx) {
         player->stateFlags2 |= 0x2000000;
         func_800F5BF0(NATURE_ID_KOKIRI_REGION);
         EnSkj_TurnPlayer(this, player);
-        player->unk_6A8 = &this->actor;
+        player->ocarinaActor = &this->actor;
         Message_StartTextbox(globalCtx, 0x10BE, &this->actor);
         this->actionFunc = EnSkj_StartOcarinaMinigame;
     } else if (EnSkj_RangeCheck(player, this)) {
@@ -1416,7 +1416,7 @@ void EnSkj_WaitForPlayback(EnSkj* this, GlobalContext* globalCtx) {
     if (globalCtx->msgCtx.ocarinaMode == OCARINA_MODE_03) { // failed the game
         Message_CloseTextbox(globalCtx);
         globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
-        player->unk_6A8 = &this->actor;
+        player->ocarinaActor = &this->actor;
         func_8002F2CC(&this->actor, globalCtx, 26.0f);
         this->textId = 0x102D;
         this->actionFunc = EnSkj_FailedMiniGame;
@@ -1424,7 +1424,7 @@ void EnSkj_WaitForPlayback(EnSkj* this, GlobalContext* globalCtx) {
         func_80078884(NA_SE_SY_CORRECT_CHIME);
         Message_CloseTextbox(globalCtx);
         globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
-        player->unk_6A8 = &this->actor;
+        player->ocarinaActor = &this->actor;
         func_8002F2CC(&this->actor, globalCtx, 26.0f);
         this->textId = 0x10BF;
         this->actionFunc = EnSkj_WonOcarinaMiniGame;
@@ -1458,7 +1458,7 @@ void EnSkj_WaitForPlayback(EnSkj* this, GlobalContext* globalCtx) {
                     func_80078884(NA_SE_SY_OCARINA_ERROR);
                     Message_CloseTextbox(globalCtx);
                     globalCtx->msgCtx.ocarinaMode = OCARINA_MODE_04;
-                    player->unk_6A8 = &this->actor;
+                    player->ocarinaActor = &this->actor;
                     func_8002F2CC(&this->actor, globalCtx, 26.0f);
                     this->textId = 0x102D;
                     this->actionFunc = EnSkj_FailedMiniGame;

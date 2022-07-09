@@ -659,7 +659,7 @@ void DrawActorViewer(bool& open) {
 
             if (ImGui::Button("Fetch from Target")) {
                 Player* player = GET_PLAYER(gGlobalCtx);
-                fetch = player->targetActor;
+                fetch = player->talkActor;
                 if (fetch != NULL) {
                     display = *fetch;
                     category = fetch->category;
