@@ -624,6 +624,8 @@ static GetItemEntry sGetItemTable[] = {
     GET_ITEM_NONE,
 };
 
+#define GET_PLAYER_ANIM(group, type) sPlayerAnimations[group * PLAYER_ANIMTYPE_MAX + type];
+
 static LinkAnimationHeader* sPlayerAnimations[PLAYER_ANIMGROUP_MAX * PLAYER_ANIMTYPE_MAX] = {
     /* PLAYER_ANIMGROUP_STANDING_STILL */
     &gPlayerAnim_003240, // PLAYER_ANIMTYPE_DEFAULT
@@ -1907,7 +1909,7 @@ void Player_SetGetItemDrawIdPlusOne(Player* this, GlobalContext* globalCtx) {
 }
 
 static LinkAnimationHeader* Player_GetStandingStillAnim(Player* this) {
-    return sPlayerAnimations[PLAYER_ANIMGROUP_STANDING_STILL][this->modelAnimType];
+    return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_STANDING_STILL, this->modelAnimType);
 }
 
 s32 Player_IsPlayingIdleAnim(Player* this) {
@@ -1934,12 +1936,12 @@ void Player_PlayIdleAnimSfx(Player* this, s32 arg1) {
 
 LinkAnimationHeader* Player_GetRunningAnim(Player* this) {
     if (this->runDamageTimer != 0) {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_RUNNING_DAMAGED][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_RUNNING_DAMAGED, this->modelAnimType);
     } else if (!(this->stateFlags1 & (PLAYER_STATE1_SWIMMING | PLAYER_STATE1_IN_CUTSCENE)) &&
                (this->currentBoots == PLAYER_BOOTS_IRON)) {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_IRON_BOOTS][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_IRON_BOOTS, this->modelAnimType);
     } else {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_RUNNING][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_RUNNING, this->modelAnimType);
     }
 }
 
@@ -1951,7 +1953,7 @@ LinkAnimationHeader* Player_GetFightingRightAnim(Player* this) {
     if (Player_IsAimingReadyBoomerang(this)) {
         return &gPlayerAnim_002638;
     } else {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_FIGHTING_RIGHT_OF_ENEMY][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_FIGHTING_RIGHT_OF_ENEMY, this->modelAnimType);
     }
 }
 
@@ -1959,7 +1961,7 @@ LinkAnimationHeader* Player_GetFightingLeftAnim(Player* this) {
     if (Player_IsAimingReadyBoomerang(this)) {
         return &gPlayerAnim_002630;
     } else {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_FIGHTING_LEFT_OF_ENEMY][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_FIGHTING_LEFT_OF_ENEMY, this->modelAnimType);
     }
 }
 
@@ -1967,7 +1969,7 @@ LinkAnimationHeader* Player_GetEndSidewalkAnim(Player* this) {
     if (Actor_PlayerIsAimingReadyFpsItem(this)) {
         return &gPlayerAnim_0026E8;
     } else {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_END_SIDEWALKING][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_SIDEWALKING, this->modelAnimType);
     }
 }
 
@@ -1975,7 +1977,7 @@ LinkAnimationHeader* Player_GetSidewalkRightAnim(Player* this) {
     if (Player_IsAimingReadyBoomerang(this)) {
         return &gPlayerAnim_002620;
     } else {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_SIDEWALKING_RIGHT][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SIDEWALKING_RIGHT, this->modelAnimType);
     }
 }
 
@@ -1983,7 +1985,7 @@ LinkAnimationHeader* Player_GetSidewalkLeftAnim(Player* this) {
     if (Player_IsAimingReadyBoomerang(this)) {
         return &gPlayerAnim_002618;
     } else {
-        return sPlayerAnimations[PLAYER_ANIMGROUP_SIDEWALKING_LEFT][this->modelAnimType];
+        return GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SIDEWALKING_LEFT, this->modelAnimType);
     }
 }
 
@@ -2011,7 +2013,7 @@ void Player_SetupChangeItemAnim(GlobalContext* globalCtx, Player* this, s8 actio
     Player_ChangeItem(globalCtx, this, actionParam);
 
     if (i < PLAYER_ANIMGROUP_MAX) {
-        this->skelAnime.animation = sPlayerAnimations[i][this->modelAnimType];
+        this->skelAnime.animation = GET_PLAYER_ANIM(i, this->modelAnimType);
     }
 }
 
@@ -2599,8 +2601,7 @@ s32 Player_EndDefend(Player* this, GlobalContext* globalCtx) {
 
     if (sUsingItemAlreadyInHand || LinkAnimation_Update(globalCtx, &this->skelAnimeUpper)) {
         Player_SetUpperActionFunc(this, sUpperBodyItemFuncs[this->heldItemActionParam]);
-        LinkAnimation_PlayLoop(globalCtx, &this->skelAnimeUpper,
-                               sPlayerAnimations[PLAYER_ANIMGROUP_STANDING_STILL][this->modelAnimType]);
+        LinkAnimation_PlayLoop(globalCtx, &this->skelAnimeUpper, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_STANDING_STILL, this->modelAnimType));
         this->idleCounter = 0;
         this->upperActionFunc(this, globalCtx);
         return 0;
@@ -2632,7 +2633,7 @@ s32 Player_SetupUseFpsItem(Player* this, GlobalContext* globalCtx) {
     if (this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) {
         Player_PlayAnimLoop(globalCtx, this, &gPlayerAnim_003380);
     } else if ((this->actor.bgCheckFlags & 1) && !Player_SetupStartUnfriendlyZTargeting(this)) {
-        Player_PlayAnimLoop(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_STANDING_STILL][this->modelAnimType]);
+        Player_PlayAnimLoop(play, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_STANDING_STILL, this->modelAnimType));
     }
 
     return 1;
@@ -3969,7 +3970,7 @@ void Player_SetupDamage(GlobalContext* globalCtx, Player* this, s32 damageReacti
                 this->actor.velocity.y = 6.0f;
 
                 Player_ChangeAnimOnce(globalCtx, this,
-                                      sPlayerAnimations[PLAYER_ANIMGROUP_RUNNING_DAMAGED][this->modelAnimType]);
+                                      GET_PLAYER_ANIM(PLAYER_ANIMGROUP_RUNNING_DAMAGED, this->modelAnimType));
                 Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_DAMAGE_S);
             } else {
                 this->actor.speedXZ = knockbackVelXZ;
@@ -4702,13 +4703,13 @@ s32 Player_SetupOpenDoor(Player* this, GlobalContext* globalCtx) {
                                                          : (LINK_IS_ADULT ? KNOB_ANIM_ADULT_R : KNOB_ANIM_CHILD_R);
 
                 if (door->animStyle == KNOB_ANIM_ADULT_L) {
-                    anim = sPlayerAnimations[PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_LEFT][this->modelAnimType];
+                    anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_LEFT, this->modelAnimType);
                 } else if (door->animStyle == KNOB_ANIM_CHILD_L) {
-                    anim = sPlayerAnimations[PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_LEFT][this->modelAnimType];
+                    anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_LEFT, this->modelAnimType);
                 } else if (door->animStyle == KNOB_ANIM_ADULT_R) {
-                    anim = sPlayerAnimations[PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_RIGHT][this->modelAnimType];
+                    anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_RIGHT, this->modelAnimType);
                 } else {
-                    anim = sPlayerAnimations[PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_RIGHT][this->modelAnimType];
+                    anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_RIGHT, this->modelAnimType);
                 }
 
                 Player_SetActionFunc(globalCtx, this, Player_OpenDoor, 0);
@@ -4885,7 +4886,7 @@ void Player_SetupHoldActor(GlobalContext* globalCtx, Player* this) {
                 anim = &gPlayerAnim_003060;
             } else {
                 Player_SetActionFunc(globalCtx, this, Player_LiftActor, 0);
-                anim = sPlayerAnimations[PLAYER_ANIMGROUP_HOLDING_OBJECT][this->modelAnimType];
+                anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_HOLDING_OBJECT, this->modelAnimType);
             }
 
             Player_PlayAnimOnce(globalCtx, this, anim);
@@ -5308,7 +5309,7 @@ s32 Player_SetupItemCutsceneOrFirstPerson(Player* this, GlobalContext* globalCtx
                         if (this->genericVar < 0) {
                             Player_ChangeAnimMorphToLastFrame(
                                 globalCtx, this,
-                                sPlayerAnimations[PLAYER_ANIMGROUP_START_CHECKING_OR_SPEAKING][this->modelAnimType]);
+                                GET_PLAYER_ANIM(PLAYER_ANIMGROUP_START_CHECKING_OR_SPEAKING, this->modelAnimType));
                         } else {
                             Player_PlayAnimOnce(globalCtx, this, sExchangeItemAnims[this->genericVar]);
                         }
@@ -5515,7 +5516,8 @@ s32 Player_SetupMidairJumpSlash(Player* this, GlobalContext* globalCtx) {
 void Player_SetupRolling(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_Rolling, 0);
     LinkAnimation_PlayOnceSetSpeed(globalCtx, &this->skelAnime,
-                                   sPlayerAnimations[PLAYER_ANIMGROUP_ROLLING][this->modelAnimType], 1.25f * sWaterSpeedScale);
+                                   GET_PLAYER_ANIM(PLAYER_ANIMGROUP_ROLLING, this->modelAnimType),
+                                   1.25f * sWaterSpeedScale);
 }
 
 s32 Player_CanRoll(Player* this, GlobalContext* globalCtx) {
@@ -5587,14 +5589,14 @@ void Player_EndRun(Player* this, GlobalContext* globalCtx) {
     }
 
     if (frame < 14.0f) {
-        anim = sPlayerAnimations[PLAYER_ANIMGROUP_END_WALK_ON_LEFT_FOOT][this->modelAnimType];
+        anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_WALK_ON_LEFT_FOOT, this->modelAnimType);
         frame = 11.0f - frame;
         if (frame < 0.0f) {
             frame = 1.375f * -frame;
         }
         frame /= 11.0f;
     } else {
-        anim = sPlayerAnimations[PLAYER_ANIMGROUP_END_WALK_ON_RIGHT_FOOT][this->modelAnimType];
+        anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_WALK_ON_RIGHT_FOOT, this->modelAnimType);
         frame = 26.0f - frame;
         if (frame < 0.0f) {
             frame = 2 * -frame;
@@ -5667,7 +5669,7 @@ s32 Player_SetupDefend(Player* this, GlobalContext* globalCtx) {
 
             if (!Player_IsChildWithHylianShield(this)) {
                 Player_SetModelsForHoldingShield(this);
-                anim = sPlayerAnimations[PLAYER_ANIMGROUP_START_DEFENDING][this->modelAnimType];
+                anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_START_DEFENDING, this->modelAnimType);
             } else {
                 anim = &gPlayerAnim_002400;
             }
@@ -5804,7 +5806,7 @@ void Player_SetupRun(Player* this, GlobalContext* globalCtx) {
     }
 
     Player_SetActionFunc(globalCtx, this, func, 1);
-    Player_ChangeAnimShortMorphLoop(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_RUNNING][this->modelAnimType]);
+    Player_ChangeAnimShortMorphLoop(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_RUNNING, this->modelAnimType));
 
     this->walkAngleToFloorX = 0;
     this->unk_864 = this->walkFrame = 0.0f;
@@ -5877,7 +5879,7 @@ void Player_SetupFriendlyBackwalk(Player* this, s16 yaw, GlobalContext* globalCt
 
 void Player_SetupFriendlySidewalk(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_EndSidewalk, 1);
-    Player_ChangeAnimShortMorphLoop(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_WALKING][this->modelAnimType]);
+    Player_ChangeAnimShortMorphLoop(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType));
 }
 
 void Player_SetupUnfriendlyBackwalk(Player* this, s16 yaw, GlobalContext* globalCtx) {
@@ -5891,7 +5893,7 @@ void Player_SetupUnfriendlyBackwalk(Player* this, s16 yaw, GlobalContext* global
 void Player_SetupSidewalk(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_Sidewalk, 1);
     Player_ChangeAnimShortMorphLoop(globalCtx, this,
-                                    sPlayerAnimations[PLAYER_ANIMGROUP_SIDEWALKING_RIGHT][this->modelAnimType]);
+                                    GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SIDEWALKING_RIGHT, this->modelAnimType));
     this->walkFrame = 0.0f;
 }
 
@@ -5905,7 +5907,8 @@ void Player_SetupTurn(GlobalContext* globalCtx, Player* this, s16 yaw) {
     Player_SetActionFunc(globalCtx, this, Player_Turn, 1);
     this->unk_87E = 1200;
     this->unk_87E *= sWaterSpeedScale;
-    LinkAnimation_Change(globalCtx, &this->skelAnime, sPlayerAnimations[PLAYER_ANIMGROUP_SHUFFLE_TURN][this->modelAnimType],
+    LinkAnimation_Change(globalCtx, &this->skelAnime,
+                         GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SHUFFLE_TURN, this->modelAnimType),
                          1.0f, 0.0f, 0.0f, ANIMMODE_LOOP, -6.0f);
 }
 
@@ -5915,9 +5918,9 @@ void Player_EndUnfriendlyZTarget(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_StandingStill, 1);
 
     if (this->leftRightBlendWeight < 0.5f) {
-        anim = sPlayerAnimations[PLAYER_ANIMGROUP_END_FIGHTING_RIGHT_OF_ENEMY][this->modelAnimType];
+        anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_FIGHTING_RIGHT_OF_ENEMY, this->modelAnimType);
     } else {
-        anim = sPlayerAnimations[PLAYER_ANIMGROUP_END_FIGHTING_LEFT_OF_ENEMY][this->modelAnimType];
+        anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_FIGHTING_LEFT_OF_ENEMY, this->modelAnimType);
     }
     Player_PlayAnimOnce(globalCtx, this, anim);
 
@@ -5927,7 +5930,7 @@ void Player_EndUnfriendlyZTarget(Player* this, GlobalContext* globalCtx) {
 void Player_SetupUnfriendlyZTarget(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_UnfriendlyZTargetStandingStill, 1);
     Player_ChangeAnimMorphToLastFrame(globalCtx, this,
-                                      sPlayerAnimations[PLAYER_ANIMGROUP_START_FIGHTING][this->modelAnimType]);
+                                      GET_PLAYER_ANIM(PLAYER_ANIMGROUP_START_FIGHTING, this->modelAnimType));
     this->genericTimer = 1;
 }
 
@@ -6551,7 +6554,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
 
 void func_8083EA94(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_StartThrowActor, 1);
-    Player_PlayAnimOnce(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_THROWING_OBJECT][this->modelAnimType]);
+    Player_PlayAnimOnce(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_THROWING_OBJECT, this->modelAnimType));
 }
 
 s32 func_8083EAF0(Player* this, Actor* actor) {
@@ -6574,7 +6577,7 @@ s32 Player_SetupPutDownOrThrowActor(Player* this, GlobalContext* globalCtx) {
             if (!func_8083EAF0(this, this->heldActor)) {
                 Player_SetActionFunc(globalCtx, this, Player_SetupPutDownActor, 1);
                 Player_PlayAnimOnce(globalCtx, this,
-                                    sPlayerAnimations[PLAYER_ANIMGROUP_PUTTING_DOWN_OBJECT][this->modelAnimType]);
+                                    GET_PLAYER_ANIM(PLAYER_ANIMGROUP_PUTTING_DOWN_OBJECT, this->modelAnimType));
             } else {
                 func_8083EA94(this, globalCtx);
             }
@@ -6945,7 +6948,7 @@ void func_8083FAB8(Player* this, GlobalContext* globalCtx) {
 void func_8083FB14(Player* this, GlobalContext* globalCtx) {
     Player_SetActionFunc(globalCtx, this, Player_PullWall, 0);
     this->stateFlags2 |= PLAYER_STATE2_MOVING_PUSH_PULL_WALL;
-    Player_PlayAnimOnce(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_END_PULL_OBJECT][this->modelAnimType]);
+    Player_PlayAnimOnce(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_PULL_OBJECT, this->modelAnimType));
 }
 
 void func_8083FB7C(Player* this, GlobalContext* globalCtx) {
@@ -7476,7 +7479,7 @@ void func_80841138(Player* this, GlobalContext* globalCtx) {
         temp1 = R_UPDATE_RATE * 0.5f;
         func_8084029C(this, REG(35) / 1000.0f);
         LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
-                                  sPlayerAnimations[PLAYER_ANIMGROUP_BACKWALKING][this->modelAnimType], this->walkFrame);
+                                  GET_PLAYER_ANIM(PLAYER_ANIMGROUP_BACKWALKING, this->modelAnimType), this->walkFrame);
         this->unk_864 += 1 * temp1;
         if (this->unk_864 >= 1.0f) {
             this->unk_864 = 1.0f;
@@ -7488,7 +7491,7 @@ void func_80841138(Player* this, GlobalContext* globalCtx) {
             temp1 = 1.0f;
             func_8084029C(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
-                                      sPlayerAnimations[PLAYER_ANIMGROUP_BACKWALKING][this->modelAnimType], this->walkFrame);
+                                      GET_PLAYER_ANIM(PLAYER_ANIMGROUP_BACKWALKING, this->modelAnimType),
         } else {
             temp1 = (REG(37) / 1000.0f) * temp2;
             if (temp1 < 1.0f) {
@@ -7498,7 +7501,7 @@ void func_80841138(Player* this, GlobalContext* globalCtx) {
                 func_8084029C(this, 1.2f + ((REG(38) / 1000.0f) * temp2));
             }
             LinkAnimation_LoadToMorph(globalCtx, &this->skelAnime,
-                                      sPlayerAnimations[PLAYER_ANIMGROUP_BACKWALKING][this->modelAnimType], this->walkFrame);
+                                      GET_PLAYER_ANIM(PLAYER_ANIMGROUP_BACKWALKING, this->modelAnimType),
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime, &gPlayerAnim_002DD0,
                                       this->walkFrame * (16.0f / 29.0f));
         }
@@ -7614,19 +7617,16 @@ void Player_EndHaltFriendlyBackwalk(Player* this, GlobalContext* globalCtx) {
 
 void func_80841860(GlobalContext* globalCtx, Player* this) {
     f32 frame;
-    // fake match? see func_80833664
-    LinkAnimationHeader* sp38 =
-        sPlayerAnimations[0][this->modelAnimType + PLAYER_ANIMGROUP_SIDEWALKING_LEFT * ARRAY_COUNT(sPlayerAnimations[0])];
-    LinkAnimationHeader* sp34 =
-        sPlayerAnimations[0][this->modelAnimType + PLAYER_ANIMGROUP_SIDEWALKING_RIGHT * ARRAY_COUNT(sPlayerAnimations[0])];
+    LinkAnimationHeader* sidewalkLeftAnim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SIDEWALKING_LEFT, this->modelAnimType);
+    LinkAnimationHeader* sidewalkRightAnim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SIDEWALKING_RIGHT, this->modelAnimType);
 
-    this->skelAnime.animation = sp38;
+    this->skelAnime.animation = sidewalkLeftAnim;
 
-    func_8084029C(this, (REG(30) / 1000.0f) + ((REG(32) / 1000.0f) * this->linearVelocity));
+    Player_SetupWalkSfx(this, (REG(30) / 1000.0f) + ((REG(32) / 1000.0f) * this->linearVelocity));
 
     frame = this->walkFrame * (16.0f / 29.0f);
-    LinkAnimation_BlendToJoint(globalCtx, &this->skelAnime, sp34, frame, sp38, frame, this->leftRightBlendWeight,
-                               this->blendTable);
+    LinkAnimation_BlendToJoint(globalCtx, &this->skelAnime, sidewalkRightAnim, frame, sidewalkLeftAnim, frame,
+                               this->leftRightBlendWeight, this->blendTable);
 }
 
 void Player_Sidewalk(Player* this, GlobalContext* globalCtx) {
@@ -7737,10 +7737,10 @@ void func_80841CC4(Player* this, s32 arg1, GlobalContext* globalCtx) {
         ((this->walkAngleToFloorX == 0) && (this->shapeOffsetY <= 0.0f))) {
         if (arg1 == 0) {
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
-                                      sPlayerAnimations[PLAYER_ANIMGROUP_WALKING][this->modelAnimType], this->walkFrame);
+                                      GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame);
         } else {
             LinkAnimation_LoadToMorph(globalCtx, &this->skelAnime,
-                                      sPlayerAnimations[PLAYER_ANIMGROUP_WALKING][this->modelAnimType], this->walkFrame);
+                                      GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame);
         }
         return;
     }
@@ -7766,12 +7766,12 @@ void func_80841CC4(Player* this, s32 arg1, GlobalContext* globalCtx) {
 
     if (arg1 == 0) {
         LinkAnimation_BlendToJoint(globalCtx, &this->skelAnime,
-                                   sPlayerAnimations[PLAYER_ANIMGROUP_WALKING][this->modelAnimType], this->walkFrame, anim,
-                                   this->walkFrame, rate, this->blendTable);
+                                   GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame,
+                                   anim, this->walkFrame, blendWeight, this->blendTable);
     } else {
         LinkAnimation_BlendToMorph(globalCtx, &this->skelAnime,
-                                   sPlayerAnimations[PLAYER_ANIMGROUP_WALKING][this->modelAnimType], this->walkFrame, anim,
-                                   this->walkFrame, rate, this->blendTable);
+                                   GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame,
+                                   anim, this->walkFrame, blendWeight, this->blendTable);
     }
 }
 
@@ -7784,7 +7784,7 @@ void func_80841EE4(Player* this, GlobalContext* globalCtx) {
 
         func_8084029C(this, REG(35) / 1000.0f);
         LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
-                                  sPlayerAnimations[PLAYER_ANIMGROUP_WALKING][this->modelAnimType], this->walkFrame);
+                                  GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame);
 
         this->unk_864 += 1 * temp1;
         if (this->unk_864 >= 1.0f) {
@@ -7966,11 +7966,12 @@ s32 func_8084269C(GlobalContext* globalCtx, Player* this) {
 
 void func_8084279C(Player* this, GlobalContext* globalCtx) {
     Player_LoopAnimContinuously(globalCtx, this,
-                                sPlayerAnimations[PLAYER_ANIMGROUP_CHECKING_OR_SPEAKING][this->modelAnimType]);
+                                GET_PLAYER_ANIM(PLAYER_ANIMGROUP_CHECKING_OR_SPEAKING, this->modelAnimType));
 
     if (DECR(this->genericTimer) == 0) {
         if (!Player_SetupItemCutsceneOrFirstPerson(this, globalCtx)) {
-            Player_SetupReturnToStandStillSetAnim(this, sPlayerAnimations[PLAYER_ANIMGROUP_END_CHECKING_OR_SPEAKING][this->modelAnimType], globalCtx);
+            Player_SetupReturnToStandStillSetAnim(
+                this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_CHECKING_OR_SPEAKING, this->modelAnimType), globalCtx);
         }
 
         this->actor.flags &= ~ACTOR_FLAG_8;
@@ -8194,7 +8195,7 @@ void Player_AimShieldCrouched(Player* this, GlobalContext* globalCtx) {
 
     if (LinkAnimation_Update(globalCtx, &this->skelAnime)) {
         if (!Player_IsChildWithHylianShield(this)) {
-            Player_PlayAnimLoop(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_DEFENDING][this->modelAnimType]);
+            Player_PlayAnimLoop(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_DEFENDING, this->modelAnimType));
         }
         this->genericTimer = 1;
         this->genericVar = 0;
@@ -8261,7 +8262,8 @@ void Player_AimShieldCrouched(Player* this, GlobalContext* globalCtx) {
                     if (this->itemActionParam < 0) {
                         Player_SetHeldItem(this);
                     }
-                    Player_SetupReturnToStandStillSetAnim(this, sPlayerAnimations[PLAYER_ANIMGROUP_END_DEFENDING][this->modelAnimType], globalCtx);
+                    Player_SetupReturnToStandStillSetAnim(
+                        this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_DEFENDING, this->modelAnimType), globalCtx);
                 }
 
                 func_8002F7DC(&this->actor, NA_SE_IT_SHIELD_REMOVE);
@@ -8297,7 +8299,7 @@ void Player_DeflectAttackWithShield(Player* this, GlobalContext* globalCtx) {
             Player_SetActionFunc(globalCtx, this, Player_AimShieldCrouched, 1);
             this->stateFlags1 |= PLAYER_STATE1_SHIELDING;
             Player_SetModelsForHoldingShield(this);
-            anim = sPlayerAnimations[PLAYER_ANIMGROUP_START_DEFENDING][this->modelAnimType];
+            anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_START_DEFENDING, this->modelAnimType);
             frames = Animation_GetLastFrame(anim);
             LinkAnimation_Change(globalCtx, &this->skelAnime, anim, 1.0f, frames, frames, ANIMMODE_ONCE, 0.0f);
         }
@@ -8645,7 +8647,7 @@ void Player_UpdateMidair(Player* this, GlobalContext* globalCtx) {
                             }
                             this->actor.world.pos.y += this->wallHeight;
                             Player_SetupGrabLedge(globalCtx, this, this->actor.wallPoly, this->wallDistance,
-                                          sPlayerAnimations[PLAYER_ANIMGROUP_HANGING_FROM_LEDGE][this->modelAnimType]);
+                                GET_PLAYER_ANIM(PLAYER_ANIMGROUP_HANGING_FROM_LEDGE, this->modelAnimType));
                             this->actor.shape.rot.y = this->currentYaw += 0x8000;
                             this->stateFlags1 |= PLAYER_STATE1_HANGING_FROM_LEDGE_SLIP;
                         }
@@ -8654,7 +8656,7 @@ void Player_UpdateMidair(Player* this, GlobalContext* globalCtx) {
             }
         }
     } else {
-        LinkAnimationHeader* anim = sPlayerAnimations[PLAYER_ANIMGROUP_TALL_JUMP_LANDING][this->modelAnimType];
+        LinkAnimationHeader* anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_TALL_JUMP_LANDING, this->modelAnimType);
         s32 sp3C;
 
         if (this->stateFlags2 & PLAYER_STATE2_BACKFLIPPING_OR_SIDEHOPPING) {
@@ -8669,7 +8671,7 @@ void Player_UpdateMidair(Player* this, GlobalContext* globalCtx) {
             anim = &gPlayerAnim_002538;
             Player_ResetLeftRightBlendWeight(this);
         } else if (this->fallDistance <= 80) {
-            anim = sPlayerAnimations[PLAYER_ANIMGROUP_SHORT_JUMP_LANDING][this->modelAnimType];
+            anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SHORT_JUMP_LANDING, this->modelAnimType);
         } else if ((this->fallDistance < 800) && (this->relativeAnalogStickInputs[this->inputFrameCounter] == 0) &&
                    !(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR)) {
             Player_SetupRolling(this, globalCtx);
@@ -8679,7 +8681,8 @@ void Player_UpdateMidair(Player* this, GlobalContext* globalCtx) {
         sp3C = func_80843E64(globalCtx, this);
 
         if (sp3C > 0) {
-            Player_SetupReturnToStandStillSetAnim(this, sPlayerAnimations[PLAYER_ANIMGROUP_TALL_JUMP_LANDING][this->modelAnimType], globalCtx);
+            Player_SetupReturnToStandStillSetAnim(
+                this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_TALL_JUMP_LANDING, this->modelAnimType), globalCtx);
             this->skelAnime.endFrame = 8.0f;
             if (sp3C == 1) {
                 this->genericTimer = 10;
@@ -8743,7 +8746,7 @@ void Player_Rolling(Player* this, GlobalContext* globalCtx) {
                     }
 
                     Player_PlayAnimOnce(globalCtx, this,
-                                        sPlayerAnimations[PLAYER_ANIMGROUP_ROLL_BONKING][this->modelAnimType]);
+                                        GET_PLAYER_ANIM(PLAYER_ANIMGROUP_ROLL_BONKING, this->modelAnimType));
                     this->linearVelocity = -this->linearVelocity;
                     func_808429B4(globalCtx, 33267, 3, 12);
                     Player_RequestRumble(this, 255, 20, 150, 0);
@@ -9638,7 +9641,7 @@ void Player_InitCommon(Player* this, GlobalContext* globalCtx, FlexSkeletonHeade
     Player_SetupHeldItemUpperActionFunc(globalCtx, this);
 
     SkelAnime_InitLink(globalCtx, &this->skelAnime, skelHeader,
-                       sPlayerAnimations[PLAYER_ANIMGROUP_STANDING_STILL][this->modelAnimType], 9, this->jointTable,
+                       GET_PLAYER_ANIM(PLAYER_ANIMGROUP_STANDING_STILL, this->modelAnimType), 9, this->jointTable,
                        this->morphTable, PLAYER_LIMB_MAX);
     this->skelAnime.baseTransl = D_80854730;
     SkelAnime_InitLink(globalCtx, &this->skelAnimeUpper, skelHeader, Player_GetStandingStillAnim(this), 9,
@@ -11662,7 +11665,7 @@ void Player_PullWall(Player* this, GlobalContext* globalCtx) {
     Vec3f sp44;
     Vec3f sp38;
 
-    anim = sPlayerAnimations[PLAYER_ANIMGROUP_PULL_OBJECT][this->modelAnimType];
+    anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_PULL_OBJECT, this->modelAnimType);
     this->stateFlags2 |= PLAYER_STATE2_CAN_GRAB_PUSH_PULL_WALL | PLAYER_STATE2_ALWAYS_DISABLE_MOVE_ROTATION |
                          PLAYER_STATE2_ENABLE_PUSH_PULL_CAM;
 
@@ -11686,7 +11689,7 @@ void Player_PullWall(Player* this, GlobalContext* globalCtx) {
         if (temp1 > 0) {
             func_8083FAB8(this, globalCtx);
         } else if (temp1 == 0) {
-            func_8083F72C(this, sPlayerAnimations[PLAYER_ANIMGROUP_PUSH_OBJECT][this->modelAnimType], globalCtx);
+            func_8083F72C(this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_PUSH_OBJECT, this->modelAnimType);
         } else {
             this->stateFlags2 |= PLAYER_STATE2_MOVING_PUSH_PULL_WALL;
         }
@@ -11718,7 +11721,7 @@ void Player_GrabLedge(Player* this, GlobalContext* globalCtx) {
 
     if (LinkAnimation_Update(globalCtx, &this->skelAnime)) {
         // clang-format off
-        anim = (this->genericVar > 0) ? &gPlayerAnim_002F28 : sPlayerAnimations[PLAYER_ANIMGROUP_CLIMBING_IDLE][this->modelAnimType]; Player_PlayAnimLoop(globalCtx, this, anim);
+        anim = (this->genericVar > 0) ? &gPlayerAnim_002F28 : GET_PLAYER_ANIM(PLAYER_ANIMGROUP_CLIMBING_IDLE, this->modelAnimType); Player_PlayAnimLoop(globalCtx, this, anim);
         // clang-format on
     } else if (this->genericVar == 0) {
         if (this->skelAnime.animation == &gPlayerAnim_002F10) {
@@ -11743,9 +11746,9 @@ void Player_GrabLedge(Player* this, GlobalContext* globalCtx) {
         Player_GetTargetVelocityAndYaw(this, &sp3C, &sp3A, 0.0f, globalCtx);
         if (this->analogStickInputs[this->inputFrameCounter] >= 0) {
             if (this->genericVar > 0) {
-                anim = sPlayerAnimations[PLAYER_ANIMGROUP_KNOCKED_FROM_CLIMBING][this->modelAnimType];
+                anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_KNOCKED_FROM_CLIMBING, this->modelAnimType);
             } else {
-                anim = sPlayerAnimations[PLAYER_ANIMGROUP_CLIMBING][this->modelAnimType];
+                anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_CLIMBING, this->modelAnimType);
             }
             Player_SetupClimbOntoLedge(this, anim, globalCtx);
             return;
@@ -12400,7 +12403,8 @@ void Player_UpdateSwimIdle(Player* this, GlobalContext* globalCtx) {
             sp32 = this->actor.shape.rot.y;
 
             if (this->actor.bgCheckFlags & 1) {
-                Player_SetupReturnToStandStillSetAnim(this, sPlayerAnimations[PLAYER_ANIMGROUP_SHORT_JUMP_LANDING][this->modelAnimType], globalCtx);
+                Player_SetupReturnToStandStillSetAnim(
+                    this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SHORT_JUMP_LANDING, this->modelAnimType), globalCtx);
                 Player_PlayLandingSfx(this);
             }
         } else {
@@ -13274,9 +13278,9 @@ void Player_SlipOnSlope(Player* this, GlobalContext* globalCtx) {
         if (Math_AsymStepToF(&this->linearVelocity, sp50, sp4C, sp48) && (sp50 == 0)) {
             LinkAnimationHeader* anim;
             if (this->genericVar == 0) {
-                anim = sPlayerAnimations[PLAYER_ANIMGROUP_SLIDING_DOWN_SLOPE][this->modelAnimType];
+                anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_SLIDING_DOWN_SLOPE, this->modelAnimType);
             } else {
-                anim = sPlayerAnimations[PLAYER_ANIMGROUP_END_SLIDING_DOWN_SLOPE][this->modelAnimType];
+                anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_SLIDING_DOWN_SLOPE, this->modelAnimType);
             }
             Player_SetupReturnToStandStillSetAnim(this, anim, globalCtx);
         }
@@ -14324,7 +14328,7 @@ void Player_CutsceneSetupIdle(GlobalContext* globalCtx, Player* this, CsCmdActor
         return;
     }
 
-    anim = sPlayerAnimations[PLAYER_ANIMGROUP_RELAX][this->modelAnimType];
+    anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_RELAX, this->modelAnimType);
 
     if ((this->csAction == 6) || (this->csAction == 0x2E)) {
         Player_PlayAnimOnce(globalCtx, this, anim);
@@ -14648,7 +14652,7 @@ void Player_CutsceneRaisedByWarp(GlobalContext* globalCtx, Player* this, CsCmdAc
 }
 
 void Player_CutsceneSetupIdle3(GlobalContext* globalCtx, Player* this, CsCmdActorAction* arg2) {
-    Player_ChangeAnimMorphToLastFrame(globalCtx, this, sPlayerAnimations[PLAYER_ANIMGROUP_RELAX][this->modelAnimType]);
+    Player_ChangeAnimMorphToLastFrame(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_RELAX, this->modelAnimType));
     Player_StopMovement(this);
 }
 
