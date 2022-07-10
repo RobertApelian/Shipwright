@@ -81,7 +81,7 @@ typedef struct {
 typedef struct {
     /* 0x00 */ u16 sfxId;
     /* 0x02 */ s16 field;
-} struct_80832924; // size = 0x04
+} PlayerAnimSfxEntry; // size = 0x04
 
 typedef struct {
     /* 0x00 */ u16 unk_00;
@@ -964,54 +964,54 @@ static LinkAnimationHeader* sIdleAnims[][2] = {
     { &gPlayerAnim_003418, &gPlayerAnim_003418 }, { &gPlayerAnim_003428, &gPlayerAnim_003428 }
 };
 
-static struct_80832924 D_80853DEC[] = {
+static PlayerAnimSfxEntry D_80853DEC[] = {
     { NA_SE_VO_LI_SNEEZE, -0x2008 },
 };
 
-static struct_80832924 D_80853DF0[] = {
+static PlayerAnimSfxEntry D_80853DF0[] = {
     { NA_SE_VO_LI_SWEAT, -0x2012 },
 };
 
-static struct_80832924 D_80853DF4[] = {
+static PlayerAnimSfxEntry D_80853DF4[] = {
     { NA_SE_VO_LI_BREATH_REST, -0x200D },
 };
 
-static struct_80832924 D_80853DF8[] = {
+static PlayerAnimSfxEntry D_80853DF8[] = {
     { NA_SE_VO_LI_BREATH_REST, -0x200A },
 };
 
-static struct_80832924 D_80853DFC[] = {
+static PlayerAnimSfxEntry D_80853DFC[] = {
     { NA_SE_PL_CALM_HIT, 0x82C }, { NA_SE_PL_CALM_HIT, 0x830 },  { NA_SE_PL_CALM_HIT, 0x834 },
     { NA_SE_PL_CALM_HIT, 0x838 }, { NA_SE_PL_CALM_HIT, -0x83C },
 };
 
-static struct_80832924 D_80853E10[] = {
+static PlayerAnimSfxEntry D_80853E10[] = {
     { 0, 0x4019 }, { 0, 0x401E }, { 0, 0x402C }, { 0, 0x4030 }, { 0, 0x4034 }, { 0, -0x4038 },
 };
 
-static struct_80832924 D_80853E28[] = {
+static PlayerAnimSfxEntry D_80853E28[] = {
     { NA_SE_IT_SHIELD_POSTURE, 0x810 },
     { NA_SE_IT_SHIELD_POSTURE, 0x814 },
     { NA_SE_IT_SHIELD_POSTURE, -0x846 },
 };
 
-static struct_80832924 D_80853E34[] = {
+static PlayerAnimSfxEntry D_80853E34[] = {
     { NA_SE_IT_HAMMER_SWING, 0x80A },
     { NA_SE_VO_LI_AUTO_JUMP, 0x200A },
     { NA_SE_IT_SWORD_SWING, 0x816 },
     { NA_SE_VO_LI_SWORD_N, -0x2016 },
 };
 
-static struct_80832924 D_80853E44[] = {
+static PlayerAnimSfxEntry D_80853E44[] = {
     { NA_SE_IT_SWORD_SWING, 0x827 },
     { NA_SE_VO_LI_SWORD_N, -0x2027 },
 };
 
-static struct_80832924 D_80853E4C[] = {
+static PlayerAnimSfxEntry D_80853E4C[] = {
     { NA_SE_VO_LI_RELAX, -0x2014 },
 };
 
-static struct_80832924* D_80853E50[] = {
+static PlayerAnimSfxEntry* D_80853E50[] = {
     D_80853DEC, D_80853DF0, D_80853DF4, D_80853DF8, D_80853DFC, D_80853E10,
     D_80853E28, D_80853E34, D_80853E44, D_80853E4C, NULL,
 };
@@ -1687,7 +1687,7 @@ void Player_PlayReactableSfx(Player* this, u16 sfxId) {
     this->stateFlags2 |= PLAYER_STATE2_MAKING_REACTABLE_NOISE;
 }
 
-void Player_PlayAnimSfx(Player* this, struct_80832924* entry) {
+void Player_PlayAnimSfx(Player* this, PlayerAnimSfxEntry* entry) {
     s32 data;
     s32 flags;
     u32 cont;
@@ -5663,8 +5663,10 @@ void Player_ClearLookAndAttention(Player* this, GlobalContext* globalCtx) {
 }
 
 s32 Player_SetupRollOrPutAway(Player* this, GlobalContext* globalCtx) {
-    if (!Player_SetupStartUnfriendlyZTargeting(this) && (D_808535E0 == 0) && !(this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) &&
-        CHECK_BTN_ALL(sControlInput->press.button, BTN_A)) {
+    if (CVar_GetS32("gSonicRoll", 0)) {
+        Player_SetupRolling(this, globalCtx);
+    } else if (!Player_SetupStartUnfriendlyZTargeting(this) && (D_808535E0 == 0) &&
+               !(this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) && CHECK_BTN_ALL(sControlInput->press.button, BTN_A)) {
         if (Player_CanRoll(this, globalCtx)) {
             return 1;
         }
@@ -6306,7 +6308,7 @@ void func_8083DDC8(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-void func_8083DF68(Player* this, f32 arg1, s16 arg2) {
+void Player_SetRunVelocityAndYaw(Player* this, f32 arg1, s16 arg2) {
     Math_AsymStepToF(&this->linearVelocity, arg1, REG(19) / 100.0f, 1.5f);
     Math_ScaledStepToS(&this->currentYaw, arg2, REG(27));
 }
@@ -7867,7 +7869,7 @@ void Player_Run(Player* this, GlobalContext* globalCtx) {
             if (CVar_GetS32("gMMBunnyHood", 0) != 0 && this->currentMask == PLAYER_MASK_BUNNY) {
                 sp2C *= 1.5f;
             }
-            func_8083DF68(this, sp2C, sp2A);
+            Player_SetRunVelocityAndYaw(this, sp2C, sp2A);
             func_8083DDC8(this, globalCtx);
 
             if ((this->linearVelocity == 0.0f) && (sp2C == 0.0f)) {
@@ -7899,7 +7901,7 @@ void Player_ZTargetingRun(Player* this, GlobalContext* globalCtx) {
                 return;
             }
 
-            func_8083DF68(this, sp2C, sp2A);
+            Player_SetRunVelocityAndYaw(this, sp2C, sp2A);
             func_8083DDC8(this, globalCtx);
 
             if ((this->linearVelocity == 0) && (sp2C == 0)) {
@@ -7975,7 +7977,7 @@ void func_8084260C(Vec3f* src, Vec3f* dest, f32 arg2, f32 arg3, f32 arg4) {
 static Vec3f D_808545B4 = { 0.0f, 0.0f, 0.0f };
 static Vec3f D_808545C0 = { 0.0f, 0.0f, 0.0f };
 
-s32 func_8084269C(GlobalContext* globalCtx, Player* this) {
+s32 Player_SetupSpawnDustAtFeet(GlobalContext* globalCtx, Player* this) {
     Vec3f sp2C;
 
     if ((this->surfaceMaterial == 0) || (this->surfaceMaterial == 1)) {
@@ -8414,7 +8416,7 @@ void Player_DownFromKnockback(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_808545DC[] = {
+static PlayerAnimSfxEntry D_808545DC[] = {
     { 0, 0x4014 },
     { 0, -0x401E },
 };
@@ -8485,7 +8487,7 @@ void func_80843AE8(GlobalContext* globalCtx, Player* this) {
     }
 }
 
-static struct_80832924 D_808545F0[] = {
+static PlayerAnimSfxEntry D_808545F0[] = {
     { NA_SE_PL_BOUND, 0x103C },
     { 0, 0x408C },
     { 0, 0x40A4 },
@@ -8722,7 +8724,7 @@ void Player_UpdateMidair(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_8085460C[] = {
+static PlayerAnimSfxEntry D_8085460C[] = {
     { NA_SE_VO_LI_SWORD_N, 0x2001 },
     { NA_SE_PL_WALK_GROUND, 0x1806 },
     { NA_SE_PL_ROLL, 0x806 },
@@ -8735,8 +8737,8 @@ void Player_Rolling(Player* this, GlobalContext* globalCtx) {
     s32 sp44;
     DynaPolyActor* wallPolyActor;
     s32 pad;
-    f32 sp38;
-    s16 sp36;
+    f32 targetVelocity;
+    s16 targetYaw;
 
     this->stateFlags2 |= PLAYER_STATE2_DISABLE_MOVE_ROTATION_WHILE_Z_TARGETING;
 
@@ -8749,7 +8751,9 @@ void Player_Rolling(Player* this, GlobalContext* globalCtx) {
 
     if (func_80842964(this, globalCtx) == 0) {
         if (this->genericTimer != 0) {
-            Math_StepToF(&this->linearVelocity, 0.0f, 2.0f);
+            if (!CVar_GetS32("gSonicRoll", 0)) {
+                Math_StepToF(&this->linearVelocity, 0.0f, 2.0f);
+            }
 
             temp = Player_IsActionInterrupted(globalCtx, this, &this->skelAnime, 5.0f);
             if ((temp != 0) && ((temp > 0) || sp44)) {
@@ -8786,20 +8790,33 @@ void Player_Rolling(Player* this, GlobalContext* globalCtx) {
 
             if ((this->skelAnime.curFrame < 15.0f) || !Player_SetupStartMeleeWeaponAttack(this, globalCtx)) {
                 if (this->skelAnime.curFrame >= 20.0f) {
-                    Player_SetupReturnToStandStill(this, globalCtx);
+                    if (CVar_GetS32("gSonicRoll", 0)) {
+                        Player_SetupRolling(this, globalCtx);
+                    } else {
+                        Player_SetupReturnToStandStill(this, globalCtx);
+                    }
                     return;
                 }
 
-                Player_GetTargetVelocityAndYaw(this, &sp38, &sp36, 0.018f, globalCtx);
+                Player_GetTargetVelocityAndYaw(this, &targetVelocity, &targetYaw, 0.018f, globalCtx);
 
-                sp38 *= 1.5f;
-                if ((sp38 < 3.0f) || (this->relativeAnalogStickInputs[this->inputFrameCounter] != 0)) {
-                    sp38 = 3.0f;
+                targetVelocity *= 1.5f;
+                if ((targetVelocity < 3.0f) || (this->relativeAnalogStickInputs[this->inputFrameCounter] != 0)) {
+                    targetVelocity = 3.0f;
                 }
 
-                func_8083DF68(this, sp38, this->actor.shape.rot.y);
+                if (CVar_GetS32("gSonicRoll", 0)) {
+                    targetVelocity *= 4.5f;
+                    Player_SetRunVelocityAndYaw(this, targetVelocity, targetYaw);
+                    if (this->linearVelocity < 30.0f) {
+                        this->linearVelocity = 30.0f;
+                    }
+                }
+                else {
+                    Player_SetRunVelocityAndYaw(this, targetVelocity, this->actor.shape.rot.y);
+                }
 
-                if (func_8084269C(globalCtx, this)) {
+                if (Player_SetupSpawnDustAtFeet(globalCtx, this)) {
                     func_8002F8F0(&this->actor, NA_SE_PL_ROLL_DUST - SFX_FLAG);
                 }
 
@@ -9200,7 +9217,7 @@ s32 func_80845964(GlobalContext* globalCtx, Player* this, CsCmdActorAction* arg2
 
     this->stateFlags2 |= PLAYER_STATE2_DISABLE_MOVE_ROTATION_WHILE_Z_TARGETING;
     func_80841EE4(this, globalCtx);
-    func_8083DF68(this, arg3, arg4);
+    Player_SetRunVelocityAndYaw(this, arg3, arg4);
 
     if ((arg3 == 0.0f) && (this->linearVelocity == 0.0f)) {
         Player_EndRun(this, globalCtx);
@@ -9353,7 +9370,7 @@ void Player_LiftActor(Player* this, GlobalContext* globalCtx) {
     Math_ScaledStepToS(&this->leftHandRot.y, 0, 4000);
 }
 
-static struct_80832924 D_8085461C[] = {
+static PlayerAnimSfxEntry D_8085461C[] = {
     { NA_SE_VO_LI_SWORD_L, 0x2031 },
     { NA_SE_VO_LI_SWORD_N, -0x20E6 },
 };
@@ -10652,6 +10669,8 @@ static Vec3f D_80854814 = { 0.0f, 0.0f, 200.0f };
 static f32 D_80854820[] = { 2.0f, 4.0f, 7.0f };
 static f32 D_8085482C[] = { 0.5f, 1.0f, 3.0f };
 
+void Player_SetupSwim(GlobalContext* globalCtx, Player* this, s16 yaw);
+
 void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     s32 pad;
 
@@ -11429,7 +11448,7 @@ s16 func_8084ABD8(GlobalContext* globalCtx, Player* this, s32 arg2, s16 arg3) {
            arg3;
 }
 
-void func_8084AEEC(Player* this, f32* arg1, f32 arg2, s16 arg3) {
+void Player_UpdateSwimMovement(Player* this, f32* arg1, f32 arg2, s16 arg3) {
     f32 temp1;
     f32 temp2;
 
@@ -11522,7 +11541,7 @@ void func_8084B158(GlobalContext* globalCtx, Player* this, Input* input, f32 arg
 void Player_FirstPersonAiming(Player* this, GlobalContext* globalCtx) {
     if (this->stateFlags1 & PLAYER_STATE1_SWIMMING) {
         func_8084B000(this);
-        func_8084AEEC(this, &this->linearVelocity, 0, this->actor.shape.rot.y);
+        Player_UpdateSwimMovement(this, &this->linearVelocity, 0, this->actor.shape.rot.y);
     } else {
         Player_StepLinearVelocityToZero(this);
     }
@@ -11674,7 +11693,7 @@ void func_8084B840(GlobalContext* globalCtx, Player* this, f32 arg2) {
     }
 }
 
-static struct_80832924 D_80854870[] = {
+static PlayerAnimSfxEntry D_80854870[] = {
     { NA_SE_PL_SLIP, 0x1003 },
     { NA_SE_PL_SLIP, -0x1015 },
 };
@@ -11716,7 +11735,7 @@ void Player_PushWall(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_80854878[] = {
+static PlayerAnimSfxEntry D_80854878[] = {
     { NA_SE_PL_SLIP, 0x1004 },
     { NA_SE_PL_SLIP, -0x1018 },
 };
@@ -12004,7 +12023,7 @@ void Player_ClimbingWallOrDownLedge(Player* this, GlobalContext* globalCtx) {
 static f32 D_80854898[] = { 10.0f, 20.0f };
 static f32 D_808548A0[] = { 40.0f, 50.0f };
 
-static struct_80832924 D_808548A8[] = {
+static PlayerAnimSfxEntry D_808548A8[] = {
     { NA_SE_PL_WALK_LADDER, 0x80A },
     { NA_SE_PL_WALK_LADDER, 0x814 },
     { NA_SE_PL_WALK_LADDER, -0x81E },
@@ -12050,7 +12069,7 @@ void Player_EndClimb(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_808548B4[] = {
+static PlayerAnimSfxEntry D_808548B4[] = {
     { 0, 0x3028 }, { 0, 0x3030 }, { 0, 0x3038 }, { 0, 0x3040 },  { 0, 0x3048 },
     { 0, 0x3050 }, { 0, 0x3058 }, { 0, 0x3060 }, { 0, -0x3068 },
 };
@@ -12075,7 +12094,7 @@ void Player_InsideCrawlspace(Player* this, GlobalContext* globalCtx) {
     Player_PlayAnimSfx(this, D_808548B4);
 }
 
-static struct_80832924 D_808548D8[] = {
+static PlayerAnimSfxEntry D_808548D8[] = {
     { 0, 0x300A }, { 0, 0x3012 }, { 0, 0x301A }, { 0, 0x3022 },  { 0, 0x3034 },
     { 0, 0x303C }, { 0, 0x3044 }, { 0, 0x304C }, { 0, -0x3054 },
 };
@@ -12219,7 +12238,7 @@ static u8 D_80854998[2][2] = {
 
 static Vec3s D_8085499C = { -69, 7146, -266 };
 
-static struct_80832924 D_808549A4[] = {
+static PlayerAnimSfxEntry D_808549A4[] = {
     { NA_SE_PL_CALM_HIT, 0x830 }, { NA_SE_PL_CALM_HIT, 0x83A },  { NA_SE_PL_CALM_HIT, 0x844 },
     { NA_SE_PL_CALM_PAT, 0x85C }, { NA_SE_PL_CALM_PAT, 0x86E },  { NA_SE_PL_CALM_PAT, 0x87E },
     { NA_SE_PL_CALM_PAT, 0x884 }, { NA_SE_PL_CALM_PAT, -0x888 },
@@ -12399,7 +12418,7 @@ void Player_RideHorse(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_808549C4[] = {
+static PlayerAnimSfxEntry D_808549C4[] = {
     { 0, 0x2800 },
     { NA_SE_PL_GET_OFF_HORSE, 0x80A },
     { NA_SE_PL_SLIPDOWN, -0x819 },
@@ -12435,22 +12454,22 @@ void Player_DismountHorse(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_808549D0[] = {
+static PlayerAnimSfxEntry sSwimAnimSfx[] = {
     { NA_SE_PL_SWIM, -0x800 },
 };
 
-void func_8084D530(Player* this, f32* arg1, f32 arg2, s16 arg3) {
-    func_8084AEEC(this, arg1, arg2, arg3);
-    Player_PlayAnimSfx(this, D_808549D0);
+void Player_SetupSwimMovement(Player* this, f32* arg1, f32 arg2, s16 arg3) {
+    Player_UpdateSwimMovement(this, arg1, arg2, arg3);
+    Player_PlayAnimSfx(this, sSwimAnimSfx);
 }
 
-void func_8084D574(GlobalContext* globalCtx, Player* this, s16 arg2) {
+void Player_SetupSwim(GlobalContext* globalCtx, Player* this, s16 arg2) {
     Player_SetActionFunc(globalCtx, this, Player_Swim, 0);
     this->actor.shape.rot.y = this->currentYaw = arg2;
     Player_ChangeAnimLongMorphLoop(globalCtx, this, &gPlayerAnim_0032F0);
 }
 
-void func_8084D5CC(GlobalContext* globalCtx, Player* this) {
+void Player_SetupZTargetSwimming(GlobalContext* globalCtx, Player* this) {
     Player_SetActionFunc(globalCtx, this, Player_ZTargetSwimming, 0);
     Player_ChangeAnimLongMorphLoop(globalCtx, this, &gPlayerAnim_0032F0);
 }
@@ -12488,14 +12507,14 @@ void Player_UpdateSwimIdle(Player* this, GlobalContext* globalCtx) {
                 }
 
                 if (Player_IsZTargetingSetupStartUnfriendly(this)) {
-                    func_8084D5CC(globalCtx, this);
+                    Player_SetupZTargetSwimming(globalCtx, this);
                 } else {
-                    func_8084D574(globalCtx, this, sp32);
+                    Player_SetupSwim(globalCtx, this, sp32);
                 }
             }
         }
 
-        func_8084AEEC(this, &this->linearVelocity, sp34, sp32);
+        Player_UpdateSwimMovement(this, &this->linearVelocity, sp34, sp32);
     }
 }
 
@@ -12529,10 +12548,10 @@ void Player_Swim(Player* this, GlobalContext* globalCtx) {
         if ((sp34 == 0.0f) || (ABS(temp) > 0x6000) || (this->currentBoots == PLAYER_BOOTS_IRON)) {
             Player_SetupSwimIdle(globalCtx, this);
         } else if (Player_IsZTargetingSetupStartUnfriendly(this)) {
-            func_8084D5CC(globalCtx, this);
+            Player_SetupZTargetSwimming(globalCtx, this);
         }
 
-        func_8084D530(this, &this->linearVelocity, sp34, sp32);
+        Player_SetupSwimMovement(this, &this->linearVelocity, sp34, sp32);
     }
 }
 
@@ -12587,12 +12606,12 @@ void Player_ZTargetSwimming(Player* this, GlobalContext* globalCtx) {
         if (sp2C == 0.0f) {
             Player_SetupSwimIdle(globalCtx, this);
         } else if (!Player_IsZTargetingSetupStartUnfriendly(this)) {
-            func_8084D574(globalCtx, this, sp2A);
+            Player_SetupSwim(globalCtx, this, sp2A);
         } else {
             func_8084D980(globalCtx, this, &sp2C, &sp2A);
         }
 
-        func_8084D530(this, &this->linearVelocity, sp2C, sp2A);
+        Player_SetupSwimMovement(this, &this->linearVelocity, sp2C, sp2A);
     }
 }
 
@@ -12601,8 +12620,8 @@ void func_8084DBC4(GlobalContext* globalCtx, Player* this, f32 arg2) {
     s16 sp2A;
 
     Player_GetTargetVelocityAndYaw(this, &sp2C, &sp2A, 0.0f, globalCtx);
-    func_8084AEEC(this, &this->linearVelocity, sp2C * 0.5f, sp2A);
-    func_8084AEEC(this, &this->actor.velocity.y, arg2, this->currentYaw);
+    Player_UpdateSwimMovement(this, &this->linearVelocity, sp2C * 0.5f, sp2A);
+    Player_UpdateSwimMovement(this, &this->actor.velocity.y, arg2, this->currentYaw);
 }
 
 void Player_Dive(Player* this, GlobalContext* globalCtx) {
@@ -12752,7 +12771,7 @@ void Player_GetItemInWater(Player* this, GlobalContext* globalCtx) {
     }
 
     func_8084B000(this);
-    func_8084AEEC(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
+    Player_UpdateSwimMovement(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
 }
 
 void Player_DamagedSwim(Player* this, GlobalContext* globalCtx) {
@@ -12762,7 +12781,7 @@ void Player_DamagedSwim(Player* this, GlobalContext* globalCtx) {
         Player_SetupSwimIdle(globalCtx, this);
     }
 
-    func_8084AEEC(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
+    Player_UpdateSwimMovement(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
 }
 
 void Player_Drown(Player* this, GlobalContext* globalCtx) {
@@ -12772,7 +12791,7 @@ void Player_Drown(Player* this, GlobalContext* globalCtx) {
         func_80843AE8(globalCtx, this);
     }
 
-    func_8084AEEC(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
+    Player_UpdateSwimMovement(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
 }
 
 static s16 D_808549D4[] = { 0x0600, 0x04F6, 0x0604, 0x01F1, 0x0568, 0x05F4 };
@@ -12846,7 +12865,7 @@ void Player_ThrowDekuNut(Player* this, GlobalContext* globalCtx) {
     Player_StepLinearVelocityToZero(this);
 }
 
-static struct_80832924 D_808549E0[] = {
+static PlayerAnimSfxEntry D_808549E0[] = {
     { 0, 0x3857 },
     { NA_SE_VO_LI_CLIMB_END, 0x2057 },
     { NA_SE_VO_LI_AUTO_JUMP, 0x2045 },
@@ -12923,7 +12942,7 @@ void Player_GetItem(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-static struct_80832924 D_808549F0[] = {
+static PlayerAnimSfxEntry D_808549F0[] = {
     { NA_SE_IT_MASTER_SWORD_SWING, -0x83C },
 };
 
@@ -12931,7 +12950,7 @@ void func_8084E988(Player* this) {
     Player_PlayAnimSfx(this, D_808549F0);
 }
 
-static struct_80832924 D_808549F4[] = {
+static PlayerAnimSfxEntry D_808549F4[] = {
     { NA_SE_VO_LI_AUTO_JUMP, 0x2005 },
     { 0, -0x280F },
 };
@@ -13193,7 +13212,7 @@ static BottleDropInfo D_80854A28[] = {
     { ACTOR_EN_INSECT, 2 },
 };
 
-static struct_80832924 D_80854A34[] = {
+static PlayerAnimSfxEntry D_80854A34[] = {
     { NA_SE_VO_LI_AUTO_JUMP, 0x2026 },
     { NA_SE_EV_BOTTLE_CAP_OPEN, -0x828 },
 };
@@ -13222,7 +13241,7 @@ void Player_DropItemFromBottle(Player* this, GlobalContext* globalCtx) {
     Player_PlayAnimSfx(this, D_80854A34);
 }
 
-static struct_80832924 D_80854A3C[] = {
+static PlayerAnimSfxEntry D_80854A3C[] = {
     { NA_SE_PL_PUT_OUT_ITEM, -0x81E },
 };
 
@@ -13309,7 +13328,7 @@ void Player_SlipOnSlope(Player* this, GlobalContext* globalCtx) {
     this->stateFlags2 |=
         PLAYER_STATE2_DISABLE_MOVE_ROTATION_WHILE_Z_TARGETING | PLAYER_STATE2_ALWAYS_DISABLE_MOVE_ROTATION;
     LinkAnimation_Update(globalCtx, &this->skelAnime);
-    func_8084269C(globalCtx, this);
+    Player_SetupSpawnDustAtFeet(globalCtx, this);
     func_800F4138(&this->actor.projectedPos, NA_SE_PL_SLIP_LEVEL - SFX_FLAG, this->actor.speedXZ);
 
     if (Player_SetupItemCutsceneOrFirstPerson(this, globalCtx) == 0) {
@@ -13672,7 +13691,7 @@ void Player_MeleeWeaponAttack(Player* this, GlobalContext* globalCtx) {
         }
 
         if (this->linearVelocity > 12.0f) {
-            func_8084269C(globalCtx, this);
+            Player_SetupSpawnDustAtFeet(globalCtx, this);
         }
 
         Math_StepToF(&this->linearVelocity, 0.0f, 5.0f);
@@ -13804,13 +13823,13 @@ static LinkAnimationHeader* D_80854A70[] = {
 
 static u8 D_80854A7C[] = { 70, 10, 10 };
 
-static struct_80832924 D_80854A80[] = {
+static PlayerAnimSfxEntry D_80854A80[] = {
     { NA_SE_PL_SKIP, 0x814 },
     { NA_SE_VO_LI_SWORD_N, 0x2014 },
     { 0, -0x301A },
 };
 
-static struct_80832924 D_80854A8C[][2] = {
+static PlayerAnimSfxEntry D_80854A8C[][2] = {
     {
         { 0, 0x4014 },
         { NA_SE_VO_LI_MAGIC_FROL, -0x201E },
@@ -13990,18 +14009,18 @@ static void (*D_80854AA4[])(GlobalContext*, Player*, void*) = {
     Player_AnimPlaybackType17,
 };
 
-static struct_80832924 D_80854AF0[] = {
+static PlayerAnimSfxEntry D_80854AF0[] = {
     { 0, 0x2822 },
     { NA_SE_PL_CALM_HIT, 0x82D },
     { NA_SE_PL_CALM_HIT, 0x833 },
     { NA_SE_PL_CALM_HIT, -0x840 },
 };
 
-static struct_80832924 D_80854B00[] = {
+static PlayerAnimSfxEntry D_80854B00[] = {
     { NA_SE_VO_LI_SURPRISE, 0x2003 }, { 0, 0x300F }, { 0, 0x3018 }, { 0, 0x301E }, { NA_SE_VO_LI_FALL_L, -0x201F },
 };
 
-static struct_80832924 D_80854B14[] = {
+static PlayerAnimSfxEntry D_80854B14[] = {
     { 0, -0x300A },
 };
 
@@ -14349,7 +14368,7 @@ void Player_CutsceneSurfaceFromDive(GlobalContext* globalCtx, Player* this, CsCm
         } else {
             func_8084B158(globalCtx, this, NULL, fabsf(this->actor.velocity.y));
             Math_ScaledStepToS(&this->shapePitchOffset, -10000, 800);
-            func_8084AEEC(this, &this->actor.velocity.y, 4.0f, this->currentYaw);
+            Player_UpdateSwimMovement(this, &this->actor.velocity.y, 4.0f, this->currentYaw);
         }
         return;
     }
@@ -14363,7 +14382,7 @@ void Player_CutsceneSurfaceFromDive(GlobalContext* globalCtx, Player* this, CsCm
     }
 
     func_8084B000(this);
-    func_8084AEEC(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
+    Player_UpdateSwimMovement(this, &this->linearVelocity, 0.0f, this->actor.shape.rot.y);
 }
 
 void Player_CutsceneIdle(GlobalContext* globalCtx, Player* this, CsCmdActorAction* arg2) {
@@ -14431,7 +14450,7 @@ void Player_CutsceneWait(GlobalContext* globalCtx, Player* this, CsCmdActorActio
     }
 }
 
-static struct_80832924 D_80855188[] = {
+static PlayerAnimSfxEntry D_80855188[] = {
     { 0, 0x302A },
     { 0, -0x3030 },
 };
@@ -14524,7 +14543,7 @@ static struct_808551A4 D_808551A4[] = {
     { NA_SE_IT_SWORD_STICK_STN, NA_SE_VO_LI_SWORD_N },
 };
 
-static struct_80832924 D_808551AC[] = {
+static PlayerAnimSfxEntry D_808551AC[] = {
     { 0, 0x401D },
     { 0, -0x4027 },
 };
@@ -14565,7 +14584,7 @@ void Player_CutsceneSetupWarpToSages(GlobalContext* globalCtx, Player* this, CsC
                          0.0f);
 }
 
-static struct_80832924 D_808551B4[] = {
+static PlayerAnimSfxEntry D_808551B4[] = {
     { 0, -0x281E },
 };
 
@@ -14601,7 +14620,7 @@ void Player_CutsceneSetupStartPlayOcarina(GlobalContext* globalCtx, Player* this
     Player_SetModels(this, Player_ActionToModelGroup(this, this->itemActionParam));
 }
 
-static struct_80832924 D_808551B8[] = {
+static PlayerAnimSfxEntry D_808551B8[] = {
     { NA_SE_IT_SWORD_PICKOUT, -0x80C },
 };
 
@@ -14640,7 +14659,7 @@ void Player_CutsceneSleeping(GlobalContext* globalCtx, Player* this, CsCmdActorA
     }
 }
 
-void func_80851F14(GlobalContext* globalCtx, Player* this, LinkAnimationHeader* anim, struct_80832924* arg3) {
+void func_80851F14(GlobalContext* globalCtx, Player* this, LinkAnimationHeader* anim, PlayerAnimSfxEntry* arg3) {
     if (LinkAnimation_Update(globalCtx, &this->skelAnime)) {
         Player_PlayAnimLoopSlowed(globalCtx, this, anim);
         this->genericTimer = 1;
@@ -14654,7 +14673,7 @@ void Player_CutsceneSetupSleepingRestless(GlobalContext* globalCtx, Player* this
     Player_AnimPlaybackType7(globalCtx, this, &gPlayerAnim_002420);
 }
 
-static struct_80832924 D_808551BC[] = {
+static PlayerAnimSfxEntry D_808551BC[] = {
     { NA_SE_VO_LI_RELAX, 0x2023 },
     { NA_SE_PL_SLIPDOWN, 0x8EC },
     { NA_SE_PL_SLIPDOWN, -0x900 },
@@ -14672,7 +14691,7 @@ void Player_CutsceneAwaken(GlobalContext* globalCtx, Player* this, CsCmdActorAct
     }
 }
 
-static struct_80832924 D_808551C8[] = {
+static PlayerAnimSfxEntry D_808551C8[] = {
     { NA_SE_PL_LAND_LADDER, 0x843 },
     { 0, 0x4854 },
     { 0, 0x485A },
@@ -14703,7 +14722,7 @@ void func_808520BC(GlobalContext* globalCtx, Player* this, CsCmdActorAction* arg
     this->actor.world.pos.z = distZ * sp4 + startZ;
 }
 
-static struct_80832924 D_808551D8[] = {
+static PlayerAnimSfxEntry D_808551D8[] = {
     { NA_SE_PL_BOUND, 0x1014 },
     { NA_SE_PL_BOUND, -0x101E },
 };
@@ -14749,7 +14768,7 @@ void Player_CutsceneDrawSwordChild(GlobalContext* globalCtx, Player* this, CsCmd
     }
 }
 
-static struct_80832924 D_808551E0[] = {
+static PlayerAnimSfxEntry D_808551E0[] = {
     { 0, 0x300A },
     { 0, -0x3018 },
 };
@@ -14758,7 +14777,7 @@ void Player_CutsceneTurnAroundSlowly(GlobalContext* globalCtx, Player* this, CsC
     func_80851F14(globalCtx, this, &gPlayerAnim_002770, D_808551E0);
 }
 
-static struct_80832924 D_808551E8[] = {
+static PlayerAnimSfxEntry D_808551E8[] = {
     { 0, 0x400F },
     { 0, -0x4023 },
 };
@@ -14780,14 +14799,14 @@ void Player_CutsceneStartPassOcarina(GlobalContext* globalCtx, Player* this, CsC
     }
 }
 
-void func_80852414(GlobalContext* globalCtx, Player* this, LinkAnimationHeader* anim, struct_80832924* arg3) {
+void func_80852414(GlobalContext* globalCtx, Player* this, LinkAnimationHeader* anim, PlayerAnimSfxEntry* arg3) {
     Player_AnimPlaybackType12(globalCtx, this, anim);
     if (this->genericTimer == 0) {
         Player_PlayAnimSfx(this, arg3);
     }
 }
 
-static struct_80832924 D_808551F0[] = {
+static PlayerAnimSfxEntry D_808551F0[] = {
     { 0, 0x300F },
     { 0, -0x3021 },
 };
@@ -14796,7 +14815,7 @@ void Player_CutsceneStepBackCautiously(GlobalContext* globalCtx, Player* this, C
     func_80852414(globalCtx, this, &gPlayerAnim_002378, D_808551F0);
 }
 
-static struct_80832924 D_808551F8[] = {
+static PlayerAnimSfxEntry D_808551F8[] = {
     { NA_SE_PL_KNOCK, -0x84E },
 };
 

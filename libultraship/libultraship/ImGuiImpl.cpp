@@ -920,6 +920,7 @@ namespace SohImGui {
                         EnhancementCheckbox("Disables turning", "gDisableTurning");
                         EnhancementCheckbox("Puts Link in Jail", "gJailTime");
                         EnhancementCheckbox("Places gameplay on hold", "gOnHold");
+                        EnhancementCheckbox("Sonic the Hedgehog rolling", "gSonicRoll");
 
                         ImGui::EndMenu();
                     }
