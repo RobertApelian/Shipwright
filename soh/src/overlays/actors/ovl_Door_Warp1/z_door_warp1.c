@@ -473,8 +473,8 @@ void GivePlayerRandoReward(DoorWarp1* this, Player* player, GlobalContext* globa
         if (adult) {
             OnePointCutscene_Init(globalCtx, 0x25E8, 999, &this->actor, MAIN_CAM);
             func_8002DF54(globalCtx, &this->actor, 10);
-            player->unk_450.x = this->actor.world.pos.x;
-            player->unk_450.z = this->actor.world.pos.z;
+            player->csStartPos.x = this->actor.world.pos.x;
+            player->csStartPos.z = this->actor.world.pos.z;
             this->unk_1B2 = 20;
             DoorWarp1_SetupAction(this, func_8099A508);
         } else {
@@ -489,8 +489,8 @@ void GivePlayerRandoReward(DoorWarp1* this, Player* player, GlobalContext* globa
                 OnePointCutscene_Init(globalCtx, 0x25E7, 999, &this->actor, MAIN_CAM);
                 func_8002DF54(globalCtx, &this->actor, 10);
 
-                player->unk_450.x = this->actor.world.pos.x;
-                player->unk_450.z = this->actor.world.pos.z;
+                player->csStartPos.x = this->actor.world.pos.x;
+                player->csStartPos.z = this->actor.world.pos.z;
                 this->unk_1B2 = 1;
 
                 DoorWarp1_SetupAction(this, DoorWarp1_ChildWarpOut);

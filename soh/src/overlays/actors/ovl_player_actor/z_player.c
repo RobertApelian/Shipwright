@@ -6519,9 +6519,9 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                 iREG(67) = false;
 
                 if (gSaveContext.n64ddFlag && this->getItemId == GI_ICE_TRAP) {
-                    this->stateFlags1 &= ~(PLAYER_STATE1_10 | PLAYER_STATE1_11);
+                    this->stateFlags1 &= ~(PLAYER_STATE1_GETTING_ITEM | PLAYER_STATE1_HOLDING_ACTOR);
                     this->actor.colChkInfo.damage = 0;
-                    func_80837C0C(globalCtx, this, 3, 0.0f, 0.0f, 0, 20);
+                    Player_SetupDamage(globalCtx, this, 3, 0.0f, 0.0f, 0, 20);
                     return;
                 }
 
@@ -6549,9 +6549,8 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                 func_8083E4C4(globalCtx, this, giEntry);
                 this->getItemId = GI_NONE;
             }
-        }
-        else if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) && !(this->stateFlags1 & PLAYER_STATE1_11) &&
-            !(this->stateFlags2 & PLAYER_STATE2_10)) {
+        } else if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) &&
+                   !(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) && !(this->stateFlags2 & PLAYER_STATE2_DIVING)) {
             if (this->getItemId != GI_NONE) {
                 GetItemEntry* giEntry = &sGetItemTable[-this->getItemId - 1];
                 EnBox* chest = (EnBox*)interactedActor;
@@ -6586,7 +6585,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                     Camera_ChangeSetting(Gameplay_GetCamera(globalCtx, 0), CAM_SET_SLOW_CHEST_CS);
                 }
                 else {
-                    func_80832264(globalCtx, this, &gPlayerAnim_002DF8);
+                    Player_PlayAnimOnce(globalCtx, this, &gPlayerAnim_002DF8);
                     chest->unk_1F4 = -1;
                 }
 
@@ -6604,10 +6603,10 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
 
                     if (sp24 == PLAYER_AP_SWORD_MASTER) {
                         this->nextModelGroup = Player_ActionToModelGroup(this, PLAYER_AP_LAST_USED);
-                        func_8083399C(globalCtx, this, PLAYER_AP_LAST_USED);
+                        Player_ChangeItem(globalCtx, this, PLAYER_AP_LAST_USED);
                     }
                     else {
-                        func_80835F44(globalCtx, this, ITEM_LAST_USED);
+                        Player_UseItem(globalCtx, this, ITEM_LAST_USED);
                     }
                 }
                 else {
@@ -15150,8 +15149,8 @@ s32 Player_StartFishing(GlobalContext* globalCtx) {
         }
     }
 
-    func_80832564(globalCtx, this);
-    func_80835F44(globalCtx, this, ITEM_FISHING_POLE);
+    Player_ResetAttributesAndHeldActor(globalCtx, this);
+    Player_UseItem(globalCtx, this, ITEM_FISHING_POLE);
     return 1;
 }
 
