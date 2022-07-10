@@ -755,7 +755,7 @@ void func_80AAB948(EnMd* this, GlobalContext* globalCtx) {
     if ((this->unk_1E0.unk_00 == 0) && (globalCtx->sceneNum == SCENE_SPOT10)) {
         if (player->stateFlags2 & 0x1000000) {
             player->stateFlags2 |= 0x2000000;
-            player->unk_6A8 = &this->actor;
+            player->ocarinaActor = &this->actor;
             func_8010BD58(globalCtx, OCARINA_ACTION_CHECK_SARIA);
             this->actionFunc = func_80AABC10;
             return;

@@ -434,7 +434,7 @@ void EnSsh_CheckBodyStickHit(EnSsh* this, GlobalContext* globalCtx) {
     ColliderInfo* info = &this->colCylinder[0].info;
     Player* player = GET_PLAYER(globalCtx);
 
-    if (player->unk_860 != 0) {
+    if (player->fpsItemType != 0) {
         info->bumper.dmgFlags |= 2;
         this->colCylinder[1].info.bumper.dmgFlags &= ~2;
         this->colCylinder[2].info.bumper.dmgFlags &= ~2;

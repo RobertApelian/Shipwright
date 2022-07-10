@@ -221,7 +221,7 @@ Gfx* D_80125EE8[] = {
     gLinkChildLeftHandFarDL,
 };
 
-Gfx* D_80125EF8[] = {
+Gfx* gPlayerLeftHandBoomerangDLs[] = {
     gLinkAdultLeftHandNearDL,
     gLinkChildLeftFistAndBoomerangNearDL,
     gLinkAdultLeftHandFarDL,
@@ -262,7 +262,7 @@ Gfx* sHoldingFirstPersonWeaponDLs[] = {
 
 // Indexed by model types (left hand, right hand, sheath or waist)
 Gfx** sPlayerDListGroups[] = {
-    D_80125E08, D_80125E18, D_80125E38, D_80125E28, D_80125DE8, D_80125EE8, D_80125EF8,
+    D_80125E08, D_80125E18, D_80125E38, D_80125E28, D_80125DE8, D_80125EE8, gPlayerLeftHandBoomerangDLs,
     D_80125F08, D_80125E48, D_80125E58, D_80125CE8, D_80125E68, D_80125EA8, D_80125EB8,
     D_80125EC8, D_80125ED8, D_80125E78, D_80125E88, D_80125D28, D_80125D88, D_80125E98,
 };
@@ -336,10 +336,10 @@ s32 Player_InBlockingCsMode(GlobalContext* globalCtx, Player* this) {
 s32 Player_InCsMode(GlobalContext* globalCtx) {
     Player* this = GET_PLAYER(globalCtx);
 
-    return Player_InBlockingCsMode(globalCtx, this) || (this->unk_6AD == 4);
+    return Player_InBlockingCsMode(globalCtx, this) || (this->attentionMode == 4);
 }
 
-s32 func_8008E9C4(Player* this) {
+s32 Player_IsUnfriendlyZTargeting(Player* this) {
     return (this->stateFlags1 & 0x10);
 }
 
@@ -405,10 +405,10 @@ void Player_SetModelGroup(Player* this, s32 modelGroup) {
     Player_SetModels(this, modelGroup);
 }
 
-void func_8008EC70(Player* this) {
+void Player_SetHeldItem(Player* this) {
     this->itemActionParam = this->heldItemActionParam;
     Player_SetModelGroup(this, Player_ActionToModelGroup(this, this->heldItemActionParam));
-    this->unk_6AD = 0;
+    this->attentionMode = 0;
 }
 
 void Player_SetEquipmentData(GlobalContext* globalCtx, Player* this) {
@@ -434,7 +434,7 @@ void Player_UpdateBottleHeld(GlobalContext* globalCtx, Player* this, s32 item, s
 }
 
 void func_8008EDF0(Player* this) {
-    this->unk_664 = NULL;
+    this->targetActor = NULL;
     this->stateFlags2 &= ~0x2000;
 }
 
@@ -453,8 +453,8 @@ void func_8008EEAC(GlobalContext* globalCtx, Actor* actor) {
     Player* this = GET_PLAYER(globalCtx);
 
     func_8008EE08(this);
-    this->unk_664 = actor;
-    this->unk_684 = actor;
+    this->targetActor = actor;
+    this->forcedTargetActor = actor;
     this->stateFlags1 |= 0x10000;
     Camera_SetParam(Gameplay_GetCamera(globalCtx, 0), 8, actor);
     Camera_ChangeMode(Gameplay_GetCamera(globalCtx, 0), 2);
@@ -476,7 +476,7 @@ s32 Player_IsBurningStickInRange(GlobalContext* globalCtx, Vec3f* pos, f32 xzRan
     Vec3f diff;
     s32 pad;
 
-    if ((this->heldItemActionParam == PLAYER_AP_STICK) && (this->unk_860 != 0)) {
+    if ((this->heldItemActionParam == PLAYER_AP_STICK) && (this->fpsItemType != 0)) {
         Math_Vec3f_Diff(&this->swordInfo[0].tip, pos, &diff);
         return ((SQ(diff.x) + SQ(diff.z)) <= SQ(xzRange)) && (0.0f <= diff.y) && (diff.y <= yRange);
     } else {
@@ -536,7 +536,7 @@ s32 Player_HoldsHookshot(Player* this) {
     return (this->heldItemActionParam == PLAYER_AP_HOOKSHOT) || (this->heldItemActionParam == PLAYER_AP_LONGSHOT);
 }
 
-s32 func_8008F128(Player* this) {
+s32 Player_IsShootingHookshot(Player* this) {
     return Player_HoldsHookshot(this) && (this->heldActor == NULL);
 }
 
@@ -594,7 +594,7 @@ s32 Player_GetExplosiveHeld(Player* this) {
     return Player_ActionToExplosive(this, this->heldItemActionParam);
 }
 
-s32 func_8008F2BC(Player* this, s32 actionParam) {
+s32 Player_GetSwordItemAP(Player* this, s32 actionParam) {
     s32 sword = 0;
 
     if (actionParam != PLAYER_AP_LAST_USED) {
@@ -859,7 +859,7 @@ void func_8008F87C(GlobalContext* globalCtx, Player* this, SkelAnime* skelAnime,
 
         sp7C = D_80126058[gSaveContext.linkAge];
         sp78 = D_80126060[gSaveContext.linkAge];
-        sp74 = D_80126068[gSaveContext.linkAge] - this->unk_6C4;
+        sp74 = D_80126068[gSaveContext.linkAge] - this->shapeOffsetY;
 
         Matrix_Push();
         Matrix_TranslateRotateZYX(pos, rot);
@@ -914,7 +914,8 @@ void func_8008F87C(GlobalContext* globalCtx, Player* this, SkelAnime* skelAnime,
 
             temp3 = func_80041D4C(&globalCtx->colCtx, sp88, sp84);
 
-            if ((temp3 >= 2) && (temp3 < 4) && !SurfaceType_IsWallDamage(&globalCtx->colCtx, sp88, sp84)) {
+            if (((temp3 >= 2) && (temp3 < 4) && !SurfaceType_IsWallDamage(&globalCtx->colCtx, sp88, sp84)) ||
+                CVar_GetS32("gFloorIsLava", 0)) {
                 footprintPos.y = sp80;
                 EffectSsGFire_Spawn(globalCtx, &footprintPos);
             }
@@ -941,11 +942,11 @@ s32 func_8008FCC8(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* p
             }
         }
 
-        pos->y -= this->unk_6C4;
+        pos->y -= this->shapeOffsetY;
 
-        if (this->unk_6C2 != 0) {
-            Matrix_Translate(pos->x, ((Math_CosS(this->unk_6C2) - 1.0f) * 200.0f) + pos->y, pos->z, MTXMODE_APPLY);
-            Matrix_RotateX(this->unk_6C2 * (M_PI / 0x8000), MTXMODE_APPLY);
+        if (this->shapePitchOffset != 0) {
+            Matrix_Translate(pos->x, ((Math_CosS(this->shapePitchOffset) - 1.0f) * 200.0f) + pos->y, pos->z, MTXMODE_APPLY);
+            Matrix_RotateX(this->shapePitchOffset * (M_PI / 0x8000), MTXMODE_APPLY);
             Matrix_RotateZYX(rot->x, rot->y, rot->z, MTXMODE_APPLY);
             pos->x = pos->y = pos->z = 0.0f;
             rot->x = rot->y = rot->z = 0;
@@ -956,22 +957,22 @@ s32 func_8008FCC8(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* p
         }
 
         if (limbIndex == PLAYER_LIMB_HEAD) {
-            rot->x += this->unk_6BA;
-            rot->y -= this->unk_6B8;
-            rot->z += this->unk_6B6;
+            rot->x += this->headRot.z;
+            rot->y -= this->headRot.y;
+            rot->z += this->headRot.x;
         } else if (limbIndex == PLAYER_LIMB_UPPER) {
-            if (this->unk_6B0 != 0) {
+            if (this->upperBodyYawOffset != 0) {
                 Matrix_RotateZ(0x44C * (M_PI / 0x8000), MTXMODE_APPLY);
-                Matrix_RotateY(this->unk_6B0 * (M_PI / 0x8000), MTXMODE_APPLY);
+                Matrix_RotateY(this->upperBodyYawOffset * (M_PI / 0x8000), MTXMODE_APPLY);
             }
-            if (this->unk_6BE != 0) {
-                Matrix_RotateY(this->unk_6BE * (M_PI / 0x8000), MTXMODE_APPLY);
+            if (this->upperBodyRot.y != 0) {
+                Matrix_RotateY(this->upperBodyRot.y * (M_PI / 0x8000), MTXMODE_APPLY);
             }
-            if (this->unk_6BC != 0) {
-                Matrix_RotateX(this->unk_6BC * (M_PI / 0x8000), MTXMODE_APPLY);
+            if (this->upperBodyRot.x != 0) {
+                Matrix_RotateX(this->upperBodyRot.x * (M_PI / 0x8000), MTXMODE_APPLY);
             }
-            if (this->unk_6C0 != 0) {
-                Matrix_RotateZ(this->unk_6C0 * (M_PI / 0x8000), MTXMODE_APPLY);
+            if (this->upperBodyRot.z != 0) {
+                Matrix_RotateZ(this->upperBodyRot.z * (M_PI / 0x8000), MTXMODE_APPLY);
             }
         } else if (limbIndex == PLAYER_LIMB_L_THIGH) {
             func_8008F87C(globalCtx, this, &this->skelAnime, pos, rot, PLAYER_LIMB_L_THIGH, PLAYER_LIMB_L_SHIN,
@@ -1050,7 +1051,7 @@ s32 func_800902F0(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* p
     Player* this = (Player*)thisx;
 
     if (!func_8008FCC8(globalCtx, limbIndex, dList, pos, rot, thisx)) {
-        if (this->unk_6AD != 2) {
+        if (this->attentionMode != 2) {
             *dList = NULL;
         } else if (limbIndex == PLAYER_LIMB_L_FOREARM) {
             *dList = sArmOutDLs[gSaveContext.linkAge];
@@ -1185,16 +1186,16 @@ void Player_DrawGetItem(GlobalContext* globalCtx, Player* this) {
     //if (!this->giObjectLoading || !osRecvMesg(&this->giObjectLoadQueue, NULL, OS_MESG_NOBLOCK)) // OTRTODO: Do something about osRecvMesg here...
     {
         this->giObjectLoading = false;
-        Player_DrawGetItemImpl(globalCtx, this, &sGetItemRefPos, ABS(this->unk_862));
+        Player_DrawGetItemImpl(globalCtx, this, &sGetItemRefPos, ABS(this->giDrawIdPlusOne));
     }
 }
 
 void func_80090A28(Player* this, Vec3f* vecs) {
     D_8012608C.x = D_80126080.x;
 
-    if (this->unk_845 >= 3) {
-        this->unk_845 += 1;
-        D_8012608C.x *= 1.0f + ((9 - this->unk_845) * 0.1f);
+    if (this->slashCounter >= 3) {
+        this->slashCounter += 1;
+        D_8012608C.x *= 1.0f + ((9 - this->slashCounter) * 0.1f);
     }
 
     D_8012608C.x += 1200.0f;
@@ -1364,14 +1365,14 @@ void func_80090D20(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* 
                     Matrix_MtxFToYXZRotS(&sp14C, &spB8, 0);
 
                     if (hookedActor->flags & ACTOR_FLAG_17) {
-                        hookedActor->world.rot.x = hookedActor->shape.rot.x = spB8.x - this->unk_3BC.x;
+                        hookedActor->world.rot.x = hookedActor->shape.rot.x = spB8.x - this->leftHandRot.x;
                     } else {
-                        hookedActor->world.rot.y = hookedActor->shape.rot.y = this->actor.shape.rot.y + this->unk_3BC.y;
+                        hookedActor->world.rot.y = hookedActor->shape.rot.y = this->actor.shape.rot.y + this->leftHandRot.y;
                     }
                 }
             } else {
                 Matrix_Get(&this->mf_9E0);
-                Matrix_MtxFToYXZRotS(&this->mf_9E0, &this->unk_3BC, 0);
+                Matrix_MtxFToYXZRotS(&this->mf_9E0, &this->leftHandRot, 0);
             }
         }
     } else if (limbIndex == PLAYER_LIMB_R_HAND) {
@@ -1387,7 +1388,7 @@ void func_80090D20(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* 
             Matrix_Push();
             Matrix_Translate(stringData->pos.x, stringData->pos.y, stringData->pos.z, MTXMODE_APPLY);
 
-            if ((this->stateFlags1 & 0x200) && (this->unk_860 >= 0) && (this->unk_834 <= 10)) {
+            if ((this->stateFlags1 & 0x200) && (this->fpsItemType >= 0) && (this->fpsItemTimer <= 10)) {
                 Vec3f sp90;
                 f32 distXYZ;
 
@@ -1428,7 +1429,7 @@ void func_80090D20(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* 
         if (this->actor.scale.y >= 0.0f) {
             if ((this->heldItemActionParam == PLAYER_AP_HOOKSHOT) ||
                 (this->heldItemActionParam == PLAYER_AP_LONGSHOT)) {
-                Matrix_MultVec3f(&D_80126184, &this->unk_3C8);
+                Matrix_MultVec3f(&D_80126184, &this->hookshotHeldPos);
 
                 if (heldActor != NULL) {
                     MtxF sp44;
@@ -1440,7 +1441,7 @@ void func_80090D20(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* 
                     Matrix_MtxFToYXZRotS(&sp44, &heldActor->world.rot, 0);
                     heldActor->shape.rot = heldActor->world.rot;
 
-                    if (func_8002DD78(this) != 0) {
+                    if (Actor_PlayerIsAimingReadyFpsItem(this) != 0) {
                         Matrix_Translate(500.0f, 300.0f, 0.0f, MTXMODE_APPLY);
                         Player_DrawHookshotReticle(
                             globalCtx, this, (this->heldItemActionParam == PLAYER_AP_HOOKSHOT) ? 38600.0f : 77600.0f);
@@ -1448,8 +1449,8 @@ void func_80090D20(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* 
                 }
             }
 
-            if ((this->unk_862 != 0) || ((func_8002DD6C(this) == 0) && (heldActor != NULL))) {
-                if (!(this->stateFlags1 & 0x400) && (this->unk_862 != 0) && (this->exchangeItemId != EXCH_ITEM_NONE)) {
+            if ((this->giDrawIdPlusOne != 0) || ((Actor_PlayerIsAimingFpsItem(this) == 0) && (heldActor != NULL))) {
+                if (!(this->stateFlags1 & 0x400) && (this->giDrawIdPlusOne != 0) && (this->exchangeItemId != EXCH_ITEM_NONE)) {
                     Math_Vec3f_Copy(&sGetItemRefPos, &this->leftHandPos);
                 } else {
                     sGetItemRefPos.x = (this->bodyPartsPos[15].x + this->leftHandPos.x) * 0.5f;
@@ -1457,7 +1458,7 @@ void func_80090D20(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* 
                     sGetItemRefPos.z = (this->bodyPartsPos[15].z + this->leftHandPos.z) * 0.5f;
                 }
 
-                if (this->unk_862 == 0) {
+                if (this->giDrawIdPlusOne == 0) {
                     Math_Vec3f_Copy(&heldActor->world.pos, &sGetItemRefPos);
                 }
             }

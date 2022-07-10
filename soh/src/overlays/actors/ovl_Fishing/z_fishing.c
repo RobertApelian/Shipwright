@@ -2225,11 +2225,11 @@ void Fishing_UpdateLure(Fishing* this, GlobalContext* globalCtx) {
 
             if (player->stateFlags1 & 0x8000000) {
                 D_80B7E0B4 = 0;
-                player->unk_860 = 0;
+                player->fpsItemType = 0;
             }
 
             if (D_80B7E0B4 == 0) {
-                if ((D_80B7E0B0 == 0) && (player->unk_860 == 1)) {
+                if ((D_80B7E0B0 == 0) && (player->fpsItemType == 1)) {
                     D_80B7E0B4 = 37;
                     Message_CloseTextbox(globalCtx);
                 }
@@ -2411,7 +2411,7 @@ void Fishing_UpdateLure(Fishing* this, GlobalContext* globalCtx) {
                 D_80B7A690 = 1;
             }
 
-            player->unk_860 = 2;
+            player->fpsItemType = 2;
 
             if (D_80B7E138 < 3.0f) {
                 spD0 = D_80B7E10C * Math_SinS(D_80B7E0AE * 0x1060);
@@ -3861,7 +3861,7 @@ void Fishing_UpdateFish(Actor* thisx, GlobalContext* globalCtx2) {
             } else if (this->actor.xzDistToPlayer < (KREG(59) + 50.0f) || getInstantFish() == 1) {
                 this->unk_158 = 6;
                 this->unk_17A[0] = 100;
-                player->unk_860 = 3;
+                player->fpsItemType = 3;
                 func_800A9F6C(0.0f, 1, 3, 1);
                 D_80B7E084++;
                 func_80064520(globalCtx, &globalCtx->csCtx);
@@ -5439,7 +5439,7 @@ void Fishing_UpdateOwner(Actor* thisx, GlobalContext* globalCtx2) {
             sCameraId = 0;
             Environment_EnableUnderwaterLights(globalCtx, 0);
             globalCtx->envCtx.adjFogNear = 0;
-            player->unk_860 = -5;
+            player->fpsItemType = -5;
             D_80B7E0B0 = 5;
             break;
         }
@@ -5584,7 +5584,7 @@ void Fishing_UpdateOwner(Actor* thisx, GlobalContext* globalCtx2) {
                         func_8002DF54(globalCtx, &this->actor, 7);
                         D_80B7A6CC = 0;
                         sCameraId = 0;
-                        player->unk_860 = -5;
+                        player->fpsItemType = -5;
                         D_80B7E0B0 = 5;
                         D_80B7A6D4 = 0;
                         D_80B7E0A6 = 20;

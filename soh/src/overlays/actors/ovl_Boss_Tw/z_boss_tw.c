@@ -2858,7 +2858,7 @@ void BossTw_Update(Actor* thisx, GlobalContext* globalCtx) {
     if (this->actionFunc == BossTw_FlyTo || this->actionFunc == BossTw_Spin ||
         this->actionFunc == BossTw_TurnToPlayer) {
         if ((s16)(player->actor.shape.rot.y - this->actor.yawTowardsPlayer + 0x8000) < 0x1000 &&
-            (s16)(player->actor.shape.rot.y - this->actor.yawTowardsPlayer + 0x8000) > -0x1000 && player->unk_A73) {
+            (s16)(player->actor.shape.rot.y - this->actor.yawTowardsPlayer + 0x8000) > -0x1000 && player->fpsItemShotTimer) {
             BossTw_SetupSpin(this, globalCtx);
         }
     }
@@ -2978,7 +2978,7 @@ void BossTw_TwinrovaUpdate(Actor* thisx, GlobalContext* globalCtx2) {
     if (this->actionFunc != BossTw_TwinrovaShootBlast && this->actionFunc != BossTw_TwinrovaChargeBlast &&
         this->visible && this->unk_5F8 == 0 &&
         (s16)(player->actor.shape.rot.y - this->actor.yawTowardsPlayer + 0x8000) < 0x1000 &&
-        (s16)(player->actor.shape.rot.y - this->actor.yawTowardsPlayer + 0x8000) > -0x1000 && player->unk_A73 != 0) {
+        (s16)(player->actor.shape.rot.y - this->actor.yawTowardsPlayer + 0x8000) > -0x1000 && player->fpsItemShotTimer != 0) {
         BossTw_TwinrovaSetupSpin(this, globalCtx);
     }
 

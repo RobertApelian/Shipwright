@@ -2845,7 +2845,7 @@ void BossGanon_Update(Actor* thisx, GlobalContext* globalCtx2) {
 
     // block players attack if hes shooting something
     if ((this->actionFunc == BossGanon_Wait) || (this->actionFunc == BossGanon_Block)) {
-        if (player->unk_A73 != 0) {
+        if (player->fpsItemShotTimer != 0) {
             BossGanon_SetupBlock(this, globalCtx);
         }
     }

@@ -101,9 +101,11 @@ void EnAObj_Init(Actor* thisx, GlobalContext* globalCtx) {
             Actor_SetScale(thisx, 0.05f);
             break;
         case A_OBJ_BLOCK_HUGE:
-        case A_OBJ_CUBE_SMALL:
         case A_OBJ_UNKNOWN_6:
             Actor_SetScale(thisx, 0.1f);
+            break;
+        case A_OBJ_CUBE_SMALL:
+            Actor_SetScale(thisx, 0.25f);
             break;
         case A_OBJ_BLOCK_SMALL_ROT:
             Actor_SetScale(thisx, 0.005f);
@@ -169,6 +171,11 @@ void EnAObj_Init(Actor* thisx, GlobalContext* globalCtx) {
             thisx->gravity = -1.5f;
             EnAObj_SetupBoulderFragment(this, thisx->params);
             break;
+        case A_OBJ_CUBE_SMALL:
+            this->dyna.bgId = 4;
+            thisx->gravity = 0;
+            thisx->colChkInfo.mass = MASS_IMMOVABLE;
+            EnAObj_SetupWaitTalk(this, thisx->params);
         default:
             thisx->gravity = -2.0f;
             EnAObj_SetupWaitTalk(this, thisx->params);
@@ -321,26 +328,28 @@ void EnAObj_Block(EnAObj* this, GlobalContext* globalCtx) {
 void EnAObj_Update(Actor* thisx, GlobalContext* globalCtx) {
     EnAObj* this = (EnAObj*)thisx;
 
-    this->actionFunc(this, globalCtx);
-    Actor_MoveForward(&this->dyna.actor);
+    if (this->dyna.actor.params != A_OBJ_CUBE_SMALL) {
+        this->actionFunc(this, globalCtx);
+            Actor_MoveForward(&this->dyna.actor);
 
-    if (this->dyna.actor.gravity != 0.0f) {
-        if (this->dyna.actor.params != A_OBJ_BOULDER_FRAGMENT) {
-            Actor_UpdateBgCheckInfo(globalCtx, &this->dyna.actor, 5.0f, 40.0f, 0.0f, 0x1D);
-        } else {
-            Actor_UpdateBgCheckInfo(globalCtx, &this->dyna.actor, 5.0f, 20.0f, 0.0f, 0x1D);
+        if (this->dyna.actor.gravity != 0.0f) {
+            if (this->dyna.actor.params != A_OBJ_BOULDER_FRAGMENT) {
+                Actor_UpdateBgCheckInfo(globalCtx, &this->dyna.actor, 5.0f, 40.0f, 0.0f, 0x1D);
+            } else {
+                Actor_UpdateBgCheckInfo(globalCtx, &this->dyna.actor, 5.0f, 20.0f, 0.0f, 0x1D);
+            }
         }
-    }
 
-    this->dyna.actor.focus.pos = this->dyna.actor.world.pos;
-    this->dyna.actor.focus.pos.y += this->focusYoffset;
+        this->dyna.actor.focus.pos = this->dyna.actor.world.pos;
+        this->dyna.actor.focus.pos.y += this->focusYoffset;
 
-    switch (this->dyna.actor.params) {
-        case A_OBJ_SIGNPOST_OBLONG:
-        case A_OBJ_SIGNPOST_ARROW:
-            Collider_UpdateCylinder(&this->dyna.actor, &this->collider);
-            CollisionCheck_SetOC(globalCtx, &globalCtx->colChkCtx, &this->collider.base);
-            break;
+        switch (this->dyna.actor.params) {
+            case A_OBJ_SIGNPOST_OBLONG:
+            case A_OBJ_SIGNPOST_ARROW:
+                Collider_UpdateCylinder(&this->dyna.actor, &this->collider);
+                CollisionCheck_SetOC(globalCtx, &globalCtx->colChkCtx, &this->collider.base);
+                break;
+        }
     }
 }
 
