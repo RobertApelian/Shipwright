@@ -101,9 +101,11 @@ void EnAObj_Init(Actor* thisx, GlobalContext* globalCtx) {
             Actor_SetScale(thisx, 0.05f);
             break;
         case A_OBJ_BLOCK_HUGE:
-        case A_OBJ_CUBE_SMALL:
         case A_OBJ_UNKNOWN_6:
             Actor_SetScale(thisx, 0.1f);
+            break;
+        case A_OBJ_CUBE_SMALL:
+            Actor_SetScale(thisx, 0.25f);
             break;
         case A_OBJ_BLOCK_SMALL_ROT:
             Actor_SetScale(thisx, 0.005f);
@@ -169,6 +171,8 @@ void EnAObj_Init(Actor* thisx, GlobalContext* globalCtx) {
             thisx->gravity = -1.5f;
             EnAObj_SetupBoulderFragment(this, thisx->params);
             break;
+        case A_OBJ_CUBE_SMALL:
+            this->dyna.bgId = 4;
         default:
             thisx->gravity = -2.0f;
             EnAObj_SetupWaitTalk(this, thisx->params);

@@ -21,6 +21,9 @@
 #include "objects/object_link_child/object_link_child.h"
 #include "textures/icon_item_24_static/icon_item_24_static.h"
 
+#include "overlays/actors/ovl_En_Bom/z_en_bom.h"
+#include "overlays/actors/ovl_Bg_Hidan_Curtain/z_bg_hidan_curtain.h"
+
 typedef struct {
     /* 0x00 */ u8 itemId;
     /* 0x01 */ u8 field; // various bit-packed data
@@ -624,7 +627,7 @@ static GetItemEntry sGetItemTable[] = {
     GET_ITEM_NONE,
 };
 
-#define GET_PLAYER_ANIM(group, type) sPlayerAnimations[group * PLAYER_ANIMTYPE_MAX + type];
+#define GET_PLAYER_ANIM(group, type) sPlayerAnimations[group * PLAYER_ANIMTYPE_MAX + type]
 
 static LinkAnimationHeader* sPlayerAnimations[PLAYER_ANIMGROUP_MAX * PLAYER_ANIMTYPE_MAX] = {
     /* PLAYER_ANIMGROUP_STANDING_STILL */
@@ -2402,7 +2405,7 @@ s32 Player_SetupReadyFpsItemToShoot(Player* this, GlobalContext* globalCtx) {
 
             if (!Player_HoldsHookshot(this) && (Player_GetFpsItemAmmo(globalCtx, this, &item, &arrowType) > 0)) {
                 // Chaos
-                if (!CVar_GetS32("gForceNormalArrows", 0)) {
+                if (CVar_GetS32("gForceNormalArrows", 0)) {
                     arrowType = ARROW_NORMAL;
                 }
 
@@ -2633,7 +2636,7 @@ s32 Player_SetupUseFpsItem(Player* this, GlobalContext* globalCtx) {
     if (this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) {
         Player_PlayAnimLoop(globalCtx, this, &gPlayerAnim_003380);
     } else if ((this->actor.bgCheckFlags & 1) && !Player_SetupStartUnfriendlyZTargeting(this)) {
-        Player_PlayAnimLoop(play, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_STANDING_STILL, this->modelAnimType));
+        Player_PlayAnimLoop(globalCtx, this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_STANDING_STILL, this->modelAnimType));
     }
 
     return 1;
@@ -3414,8 +3417,8 @@ void Player_SetupZTargeting(Player* this, GlobalContext* globalCtx) {
         (this->stateFlags1 & (PLAYER_STATE1_IN_DEATH_CUTSCENE | PLAYER_STATE1_IN_CUTSCENE)) ||
         (this->stateFlags3 & PLAYER_STATE3_MOVING_ALONG_HOOKSHOT_PATH)) {
         this->targetSwitchTimer = 0;
-    } else if (zTrigPressed || (this->stateFlags2 & PLAYER_STATE2_USING_SWITCH_Z_TARGETING) ||
-               (this->forcedTargetActor != NULL)) {
+    } else if ((zTrigPressed && !CVar_GetS32("gDisableTargeting", 0)) ||
+               (this->stateFlags2 & PLAYER_STATE2_USING_SWITCH_Z_TARGETING) || (this->forcedTargetActor != NULL)) {
         if (this->targetSwitchTimer <= 5) {
             this->targetSwitchTimer = 5;
         } else {
@@ -4240,15 +4243,16 @@ s32 Player_UpdateDamage(Player* this, GlobalContext* globalCtx) {
                 return 0;
             } else {
                 static u8 D_808544F4[] = { 120, 60 };
-                s32 sp48 = Player_GetHurtFloorType(sFloorSpecialProperty);
+                s32 hurtFloorType = Player_GetHurtFloorType(sFloorSpecialProperty);
 
                 if (((this->actor.wallPoly != NULL) &&
                      SurfaceType_IsWallDamage(&globalCtx->colCtx, this->actor.wallPoly, this->actor.wallBgId)) ||
-                    ((sp48 >= 0) &&
+                    ((hurtFloorType >= 0) &&
                      SurfaceType_IsWallDamage(&globalCtx->colCtx, this->actor.floorPoly, this->actor.floorBgId) &&
-                     (this->hurtFloorTimer >= D_808544F4[sp48])) ||
-                    ((sp48 >= 0) && ((this->currentTunic != PLAYER_TUNIC_GORON && CVar_GetS32("gSuperTunic", 0) == 0) ||
-                                     (this->hurtFloorTimer >= D_808544F4[sp48])))) {
+                     (this->hurtFloorTimer >= D_808544F4[hurtFloorType])) ||
+                    ((hurtFloorType >= 0) && ((this->currentTunic != PLAYER_TUNIC_GORON && CVar_GetS32("gSuperTunic", 0) == 0) ||
+                                     (this->hurtFloorTimer >= D_808544F4[hurtFloorType]))) ||
+                    (CVar_GetS32("gFloorIsLava", 0) && this->actor.bgCheckFlags & BGCHECKFLAG_GROUND)) {
                     this->hurtFloorTimer = 0;
                     this->actor.colChkInfo.damage = 4;
                     Player_SetupDamage(globalCtx, this, 0, 4.0f, 5.0f, this->actor.shape.rot.y, 20);
@@ -4321,7 +4325,7 @@ s32 Player_SetupWallJumpBehavior(Player* this, GlobalContext* globalCtx) {
         }
 
         // Chaos
-        if (!CVar_GetS32("gDisableLedgeClimb", 0)) {
+        if (CVar_GetS32("gDisableLedgeClimb", 0)) {
             canJumpToLedge = 0;
         }
 
@@ -5514,10 +5518,31 @@ s32 Player_SetupMidairJumpSlash(Player* this, GlobalContext* globalCtx) {
 }
 
 void Player_SetupRolling(Player* this, GlobalContext* globalCtx) {
-    Player_SetActionFunc(globalCtx, this, Player_Rolling, 0);
-    LinkAnimation_PlayOnceSetSpeed(globalCtx, &this->skelAnime,
-                                   GET_PLAYER_ANIM(PLAYER_ANIMGROUP_ROLLING, this->modelAnimType),
-                                   1.25f * sWaterSpeedScale);
+    EnBom* bomb;
+
+    // Chaos
+    if (CVar_GetS32("gExplodingRolls", 0)) {
+        bomb = (EnBom*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_BOM, this->actor.world.pos.x,
+                                   this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 6, BOMB_BODY);
+        if (bomb != NULL) {
+            bomb->timer = 0;
+        }
+
+        Player_Damage(globalCtx, this, -16);
+        Player_SetupDamage(globalCtx, this, PLAYER_DMGREACTION_KNOCKBACK, 0.0f, 0.0f, 0, 20);
+    }
+    if (CVar_GetS32("gFreezingRolls", 0)) {
+        this->actor.colChkInfo.damage = 0;
+        Player_SetupDamage(globalCtx, this, PLAYER_DMGREACTION_FROZEN, 0.0f, 0.0f, 0, 20);
+    }
+    else {
+        Player_SetActionFunc(globalCtx, this, Player_Rolling, 0);
+
+        LinkAnimation_PlayOnceSetSpeed(globalCtx, &this->skelAnime,
+                                       GET_PLAYER_ANIM(PLAYER_ANIMGROUP_ROLLING, this->modelAnimType),
+                                       1.25f * sWaterSpeedScale);
+    }
+
 }
 
 s32 Player_CanRoll(Player* this, GlobalContext* globalCtx) {
@@ -7094,27 +7119,27 @@ s32 func_8084021C(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     return 0;
 }
 
-void func_8084029C(Player* this, f32 arg1) {
+void Player_SetupWalkSfx(Player* this, f32 frameStep) {
     f32 updateScale = R_UPDATE_RATE * 0.5f;
 
-    arg1 *= updateScale;
-    if (arg1 < -7.25) {
-        arg1 = -7.25;
-    } else if (arg1 > 7.25f) {
-        arg1 = 7.25f;
+    frameStep *= updateScale;
+    if (frameStep < -7.25) {
+        frameStep = -7.25;
+    } else if (frameStep > 7.25f) {
+        frameStep = 7.25f;
     }
 
     if ((this->currentBoots == PLAYER_BOOTS_HOVER) && !(this->actor.bgCheckFlags & 1) && (this->hoverBootsTimer != 0)) {
         func_8002F8F0(&this->actor, NA_SE_PL_HOBBERBOOTS_LV - SFX_FLAG);
-    } else if (func_8084021C(this->walkFrame, arg1, 29.0f, 10.0f) ||
-               func_8084021C(this->walkFrame, arg1, 29.0f, 24.0f)) {
+    } else if (func_8084021C(this->walkFrame, frameStep, 29.0f, 10.0f) ||
+               func_8084021C(this->walkFrame, frameStep, 29.0f, 24.0f)) {
         Player_PlayWalkSfx(this, this->linearVelocity);
         if (this->linearVelocity > 4.0f) {
             this->stateFlags2 |= PLAYER_STATE2_MAKING_REACTABLE_NOISE;
         }
     }
 
-    this->walkFrame += arg1;
+    this->walkFrame += frameStep;
 
     if (this->walkFrame < 0.0f) {
         this->walkFrame += 29.0f;
@@ -7179,7 +7204,7 @@ void Player_UnfriendlyZTargetStandingStill(Player* this, GlobalContext* globalCt
             return;
         }
 
-        func_8084029C(this, (this->linearVelocity * 0.3f) + 1.0f);
+        Player_SetupWalkSfx(this, (this->linearVelocity * 0.3f) + 1.0f);
         func_80840138(this, sp44, sp42);
 
         temp2 = this->walkFrame;
@@ -7477,7 +7502,7 @@ void func_80841138(Player* this, GlobalContext* globalCtx) {
 
     if (this->unk_864 < 1.0f) {
         temp1 = R_UPDATE_RATE * 0.5f;
-        func_8084029C(this, REG(35) / 1000.0f);
+        Player_SetupWalkSfx(this, REG(35) / 1000.0f);
         LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
                                   GET_PLAYER_ANIM(PLAYER_ANIMGROUP_BACKWALKING, this->modelAnimType), this->walkFrame);
         this->unk_864 += 1 * temp1;
@@ -7489,19 +7514,21 @@ void func_80841138(Player* this, GlobalContext* globalCtx) {
         temp2 = this->linearVelocity - (REG(48) / 100.0f);
         if (temp2 < 0.0f) {
             temp1 = 1.0f;
-            func_8084029C(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
+            Player_SetupWalkSfx(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
                                       GET_PLAYER_ANIM(PLAYER_ANIMGROUP_BACKWALKING, this->modelAnimType),
+                                      this->walkFrame);
         } else {
             temp1 = (REG(37) / 1000.0f) * temp2;
             if (temp1 < 1.0f) {
-                func_8084029C(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
+                Player_SetupWalkSfx(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
             } else {
                 temp1 = 1.0f;
-                func_8084029C(this, 1.2f + ((REG(38) / 1000.0f) * temp2));
+                Player_SetupWalkSfx(this, 1.2f + ((REG(38) / 1000.0f) * temp2));
             }
             LinkAnimation_LoadToMorph(globalCtx, &this->skelAnime,
                                       GET_PLAYER_ANIM(PLAYER_ANIMGROUP_BACKWALKING, this->modelAnimType),
+                                      this->walkFrame);
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime, &gPlayerAnim_002DD0,
                                       this->walkFrame * (16.0f / 29.0f));
         }
@@ -7720,22 +7747,22 @@ void Player_Turn(Player* this, GlobalContext* globalCtx) {
     }
 }
 
-void func_80841CC4(Player* this, s32 arg1, GlobalContext* globalCtx) {
+void Player_BlendWalkAnims(Player* this, s32 blendToMorph, GlobalContext* globalCtx) {
     LinkAnimationHeader* anim;
-    s16 target;
-    f32 rate;
+    s16 targetPitch;
+    f32 blendWeight;
 
     if (ABS(sAngleToFloorX) < 3640) {
-        target = 0;
+        targetPitch = 0;
     } else {
-        target = CLAMP(sAngleToFloorX, -10922, 10922);
+        targetPitch = CLAMP(sAngleToFloorX, -10922, 10922);
     }
 
-    Math_ScaledStepToS(&this->walkAngleToFloorX, target, 400);
+    Math_ScaledStepToS(&this->walkAngleToFloorX, targetPitch, 400);
 
     if ((this->modelAnimType == PLAYER_ANIMTYPE_HOLDING_TWO_HAND_WEAPON) ||
         ((this->walkAngleToFloorX == 0) && (this->shapeOffsetY <= 0.0f))) {
-        if (arg1 == 0) {
+        if (blendToMorph == 0) {
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
                                       GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame);
         } else {
@@ -7746,25 +7773,25 @@ void func_80841CC4(Player* this, s32 arg1, GlobalContext* globalCtx) {
     }
 
     if (this->walkAngleToFloorX != 0) {
-        rate = this->walkAngleToFloorX / 10922.0f;
+        blendWeight = this->walkAngleToFloorX / 10922.0f;
     } else {
-        rate = this->shapeOffsetY * 0.0006f;
+        blendWeight = this->shapeOffsetY * 0.0006f;
     }
 
-    rate *= fabsf(this->linearVelocity) * 0.5f;
+    blendWeight *= fabsf(this->linearVelocity) * 0.5f;
 
-    if (rate > 1.0f) {
-        rate = 1.0f;
+    if (blendWeight > 1.0f) {
+        blendWeight = 1.0f;
     }
 
-    if (rate < 0.0f) {
+    if (blendWeight < 0.0f) {
         anim = &gPlayerAnim_002E48;
-        rate = -rate;
+        blendWeight = -blendWeight;
     } else {
         anim = &gPlayerAnim_002E90;
     }
 
-    if (arg1 == 0) {
+    if (blendToMorph == 0) {
         LinkAnimation_BlendToJoint(globalCtx, &this->skelAnime,
                                    GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame,
                                    anim, this->walkFrame, blendWeight, this->blendTable);
@@ -7782,7 +7809,7 @@ void func_80841EE4(Player* this, GlobalContext* globalCtx) {
     if (this->unk_864 < 1.0f) {
         temp1 = R_UPDATE_RATE * 0.5f;
 
-        func_8084029C(this, REG(35) / 1000.0f);
+        Player_SetupWalkSfx(this, REG(35) / 1000.0f);
         LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime,
                                   GET_PLAYER_ANIM(PLAYER_ANIMGROUP_WALKING, this->modelAnimType), this->walkFrame);
 
@@ -7797,19 +7824,19 @@ void func_80841EE4(Player* this, GlobalContext* globalCtx) {
 
         if (temp2 < 0.0f) {
             temp1 = 1.0f;
-            func_8084029C(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
+            Player_SetupWalkSfx(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
 
-            func_80841CC4(this, 0, globalCtx);
+            Player_BlendWalkAnims(this, 0, globalCtx);
         } else {
             temp1 = (REG(37) / 1000.0f) * temp2;
             if (temp1 < 1.0f) {
-                func_8084029C(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
+                Player_SetupWalkSfx(this, (REG(35) / 1000.0f) + ((REG(36) / 1000.0f) * this->linearVelocity));
             } else {
                 temp1 = 1.0f;
-                func_8084029C(this, 1.2f + ((REG(38) / 1000.0f) * temp2));
+                Player_SetupWalkSfx(this, 1.2f + ((REG(38) / 1000.0f) * temp2));
             }
 
-            func_80841CC4(this, 1, globalCtx);
+            Player_BlendWalkAnims(this, 1, globalCtx);
 
             LinkAnimation_LoadToJoint(globalCtx, &this->skelAnime, Player_GetRunningAnim(this),
                                       this->walkFrame * (20.0f / 29.0f));
@@ -8943,7 +8970,7 @@ void Player_WalkChargingSpinAttack(Player* this, GlobalContext* globalCtx) {
 
     sp58 = ((temp2 < 0x4000) ? -1.0f : 1.0f) * sp58;
 
-    func_8084029C(this, sp58);
+    Player_SetupWalkSfx(this, sp58);
 
     sp58 = CLAMP(sp5C * 0.5f, 0.5f, 1.0f);
 
@@ -9004,13 +9031,13 @@ void Player_SidewalkChargingSpinAttack(Player* this, GlobalContext* globalCtx) {
         if (sp5C < 400.0f) {
             sp5C = 0.0f;
         }
-        func_8084029C(this, ((this->unk_87C >= 0) ? 1 : -1) * sp5C);
+        Player_SetupWalkSfx(this, ((this->unk_87C >= 0) ? 1 : -1) * sp5C);
     } else {
         sp58 = sp5C * 1.5f;
         if (sp58 < 1.5f) {
             sp58 = 1.5f;
         }
-        func_8084029C(this, sp58);
+        Player_SetupWalkSfx(this, sp58);
     }
 
     sp58 = CLAMP(sp5C * 0.5f, 0.5f, 1.0f);
@@ -10638,6 +10665,40 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
     }
 
+    static u8 inJail = false;
+    static EnAObj* jail1 = NULL;
+    static EnAObj* jail2 = NULL;
+    static EnAObj* jail3 = NULL;
+    static EnAObj* jail4 = NULL;
+
+    #define PLAYER_JAIL_DIST 150
+
+    if (CVar_GetS32("gJailTime", 0)) {
+        if (!inJail) {
+            jail1 = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ,
+                                         this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y,
+                                         this->actor.world.pos.z, 0, 0, 0, 5);
+            jail2 = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ,
+                                         this->actor.world.pos.x - PLAYER_JAIL_DIST, this->actor.world.pos.y,
+                                         this->actor.world.pos.z, 0, 0, 0, 5);
+            jail3 =
+                (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
+                                     this->actor.world.pos.y, this->actor.world.pos.z + PLAYER_JAIL_DIST, 0, 0, 0, 5);
+            jail4 =
+                (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
+                                     this->actor.world.pos.y, this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 5);
+            inJail = true;
+        }
+    } else {
+        if (inJail) {
+            Actor_Kill(jail1);
+            Actor_Kill(jail2);
+            Actor_Kill(jail3);
+            Actor_Kill(jail4);
+            inJail = false;
+        }
+    }
+
     Math_Vec3f_Copy(&this->actor.prevPos, &this->actor.home.pos);
 
     if (this->fpsItemShotTimer != 0) {
@@ -10665,6 +10726,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     func_808473D4(globalCtx, this);
     Player_SetupZTargeting(this, globalCtx);
 
+
     if ((this->heldItemActionParam == PLAYER_AP_STICK) && (this->fpsItemType != 0)) {
         func_80848A04(globalCtx, this);
     } else if ((this->heldItemActionParam == PLAYER_AP_FISHING_POLE) && (this->fpsItemType < 0)) {
@@ -10686,7 +10748,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         this->stateFlags3 &= ~PLAYER_STATE3_RESTORE_NAYRUS_LOVE;
     }
 
-    if (this->stateFlags2 & PLAYER_STATE2_PAUSE_MOST_UPDATING) {
+    if (this->stateFlags2 & PLAYER_STATE2_PAUSE_MOST_UPDATING || CVar_GetS32("gOnHold", 0)) {
         if (!(this->actor.bgCheckFlags & 1)) {
             Player_StopMovement(this);
             Actor_MoveForward(&this->actor);
@@ -10917,6 +10979,10 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
               PLAYER_STATE2_CAN_ENTER_CRAWLSPACE | PLAYER_STATE2_CAN_DISMOUNT_HORSE | PLAYER_STATE2_ENABLE_REFLECTION);
         this->stateFlags3 &= ~PLAYER_STATE3_CHECKING_FLOOR_AND_WATER_COLLISION;
 
+        if (CVar_GetS32("gDisableTurning", 0)) {
+            this->stateFlags2 |= PLAYER_STATE2_ALWAYS_DISABLE_MOVE_ROTATION;
+        }
+
         func_80847298(this);
         Player_StoreAnalogStickInput(globalCtx, this);
 
@@ -11025,6 +11091,10 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
 
     this->stateFlags3 &= ~PLAYER_STATE3_PAUSE_ACTION_FUNC;
+
+    if (CVar_GetS32("gMegaLetterbox", 0)) {
+        ShrinkWindow_SetVal(110);
+    }
 
     Collider_ResetCylinderAC(globalCtx, &this->cylinder.base);
 
@@ -11689,7 +11759,7 @@ void Player_PullWall(Player* this, GlobalContext* globalCtx) {
         if (temp1 > 0) {
             func_8083FAB8(this, globalCtx);
         } else if (temp1 == 0) {
-            func_8083F72C(this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_PUSH_OBJECT, this->modelAnimType);
+            func_8083F72C(this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_PUSH_OBJECT, this->modelAnimType), globalCtx);
         } else {
             this->stateFlags2 |= PLAYER_STATE2_MOVING_PUSH_PULL_WALL;
         }
