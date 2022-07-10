@@ -10689,6 +10689,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     static EnAObj* jail2 = NULL;
     static EnAObj* jail3 = NULL;
     static EnAObj* jail4 = NULL;
+    static EnAObj* jail5 = NULL;
 
     #define PLAYER_JAIL_DIST 150
 
@@ -10706,6 +10707,9 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             jail4 =
                 (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
                                      this->actor.world.pos.y, this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 5);
+            jail5 =
+                (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
+                                     this->actor.world.pos.y - PLAYER_JAIL_DIST, this->actor.world.pos.z, 0, 0, 0, 5);
             inJail = true;
         }
     } else {
@@ -10714,7 +10718,17 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             Actor_Kill(jail2);
             Actor_Kill(jail3);
             Actor_Kill(jail4);
+            Actor_Kill(jail5);
             inJail = false;
+        }
+    }
+
+    if (CVar_GetS32("gNaviSpam", 0)) {
+        if (!(globalCtx->state.frames % 10)) {
+            Audio_PlaySoundGeneral(NA_SE_VO_NAVY_CALL, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        }
+        if (!(globalCtx->state.frames % 24)) {
+            Audio_PlaySoundGeneral(NA_SE_VO_NAVY_HELLO, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         }
     }
 
@@ -11309,8 +11323,11 @@ void Player_Draw(Actor* thisx, GlobalContext* globalCtx2) {
             lod = 1;
         }
 
-        if (CVar_GetS32("gDisableLOD", 0) != 0)
+        if (CVar_GetS32("gScuffedLink", 0)) {
+            lod = 1;
+        } else if (CVar_GetS32("gDisableLOD", 0) != 0) {
             lod = 0;
+        }
 
         func_80093C80(globalCtx);
         func_80093D84(globalCtx->state.gfxCtx);

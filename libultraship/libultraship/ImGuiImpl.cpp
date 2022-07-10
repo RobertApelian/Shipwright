@@ -916,11 +916,13 @@ namespace SohImGui {
                         EnhancementCheckbox("Rolling causes an explosion", "gExplodingRolls");
                         EnhancementCheckbox("Rolling causes Link to freeze", "gFreezingRolls");
                         EnhancementCheckbox("Disable Z targeting", "gDisableTargeting");
-                        EnhancementCheckbox("Forces mega big letterbox", "gMegaLetterbox");
+                        EnhancementCheckbox("Force mega big letterbox", "gMegaLetterbox");
                         EnhancementCheckbox("Disables turning", "gDisableTurning");
                         EnhancementCheckbox("Puts Link in Jail", "gJailTime");
                         EnhancementCheckbox("Places gameplay on hold", "gOnHold");
                         EnhancementCheckbox("Sonic the Hedgehog rolling", "gSonicRoll");
+                        EnhancementCheckbox("Force Navi spam", "gNaviSpam");
+                        EnhancementCheckbox("Scuffed Link model", "gScuffedLink");
 
                         ImGui::EndMenu();
                     }
