@@ -10783,6 +10783,91 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
     }
 
+    if (CVar_GetS32("gInvisPlayer", 0)) {
+        this->actor.draw = NULL;
+    }
+
+    #define SCREEN_COLOR_RATE 15
+
+    static u8 colorMode = 0;
+
+    if (CVar_GetS32("gRaveMode", 0)) {
+        switch (colorMode) {
+            case 0:
+                D_801614B0.r = 255;
+                D_801614B0.g += SCREEN_COLOR_RATE;
+                D_801614B0.b = 0;
+                D_801614B0.a = 255;
+
+                if (D_801614B0.g == 255) {
+                    colorMode = 1;
+                }
+                break;
+
+            case 1:
+                D_801614B0.r -= SCREEN_COLOR_RATE;
+                D_801614B0.g = 255;
+                D_801614B0.b = 0;
+                D_801614B0.a = 255;
+
+                if (D_801614B0.r == 0) {
+                    colorMode = 2;
+                }
+                break;
+        
+            case 2:
+                D_801614B0.r = 0;
+                D_801614B0.g = 255;
+                D_801614B0.b += SCREEN_COLOR_RATE;
+                D_801614B0.a = 255;
+
+                if (D_801614B0.b == 255) {
+                    colorMode = 3;
+                }
+                break;
+
+            case 3:
+                D_801614B0.r = 0;
+                D_801614B0.g -= SCREEN_COLOR_RATE;
+                D_801614B0.b = 255;
+                D_801614B0.a = 255;
+
+                if (D_801614B0.g == 0) {
+                    colorMode = 4;
+                }
+                break;
+
+            case 4:
+                D_801614B0.r += SCREEN_COLOR_RATE;
+                D_801614B0.g = 0;
+                D_801614B0.b = 255;
+                D_801614B0.a = 255;
+
+                if (D_801614B0.r == 255) {
+                    colorMode = 5;
+                }
+                break;
+
+            case 5:
+                D_801614B0.r = 255;
+                D_801614B0.g = 0;
+                D_801614B0.b -= SCREEN_COLOR_RATE;
+                D_801614B0.a = 255;
+
+                if (D_801614B0.b == 0) {
+                    colorMode = 0;
+                }
+                break;
+        }
+    }
+    else {
+        D_801614B0.r = 0;
+        D_801614B0.g = 0;
+        D_801614B0.b = 0;
+        D_801614B0.a = 0;
+        colorMode = 0;
+    }
+
     Math_Vec3f_Copy(&this->actor.prevPos, &this->actor.home.pos);
 
     if (this->fpsItemShotTimer != 0) {

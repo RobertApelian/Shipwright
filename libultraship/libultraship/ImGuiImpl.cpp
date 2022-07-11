@@ -933,6 +933,8 @@ namespace SohImGui {
                         EnhancementCheckbox("Sonic the Hedgehog rolling", "gSonicRoll");
                         EnhancementCheckbox("Force Navi spam", "gNaviSpam");
                         EnhancementCheckbox("Scuffed Link model", "gScuffedLink");
+                        EnhancementCheckbox("Rave mode", "gRaveMode");
+                        EnhancementCheckbox("Invisible player", "gInvisPlayer");
 
                         ImGui::EndMenu();
                     }
