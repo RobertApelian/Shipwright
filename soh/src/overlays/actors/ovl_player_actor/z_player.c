@@ -130,6 +130,8 @@ typedef struct {
     /* 0x08 */ s16 unk_08;
 } struct_80858AC8; // size = 0x0A
 
+void Player_Draw(Actor* thisx, GlobalContext* globalCtx2);
+
 void Player_DoNothing(GlobalContext* globalCtx, Player* this);
 void Player_DoNothing2(GlobalContext* globalCtx, Player* this);
 void Player_SetupBowOrSlingshot(GlobalContext* globalCtx, Player* this);
@@ -4122,7 +4124,7 @@ void Player_StartBurning(Player* this) {
 }
 
 void Player_PlayFallSfxAndCheckBurning(Player* this) {
-    if (this->actor.colChkInfo.acHitEffect == 1) {
+    if (this->actor.colChkInfo.acHitEffect == 1 || CVar_GetS32("gFireDamage", 0)) {
         Player_StartBurning(this);
     }
     Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_FALL_L);
@@ -4268,11 +4270,13 @@ s32 Player_UpdateDamage(Player* this, GlobalContext* globalCtx) {
 
                 if (this->stateFlags1 & PLAYER_STATE1_SWIMMING) {
                     damageReaction = PLAYER_DMGREACTION_DEFAULT;
-                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ICE) {
+                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ICE || CVar_GetS32("gIceDamage", 0)) {
                     damageReaction = PLAYER_DMGREACTION_FROZEN;
-                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ELECTRIC) {
+                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ELECTRIC ||
+                           CVar_GetS32("gElectricDamage", 0)) {
                     damageReaction = PLAYER_DMGREACTION_ELECTRIC_SHOCKED;
-                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_POWERFUL_HIT) {
+                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_POWERFUL_HIT ||
+                           CVar_GetS32("gKnockbackDamage", 0)) {
                     damageReaction = PLAYER_DMGREACTION_KNOCKBACK;
                 } else {
                     Player_PlayFallSfxAndCheckBurning(this);
@@ -10786,6 +10790,9 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     if (CVar_GetS32("gInvisPlayer", 0)) {
         this->actor.draw = NULL;
     }
+    else {
+        this->actor.draw = Player_Draw;
+    }
 
     #define SCREEN_COLOR_RATE 15
 
@@ -10979,9 +10986,9 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
 
         if (!(this->skelAnime.moveFlags & 0x80)) {
-            if (((this->actor.bgCheckFlags & 1) && (sFloorSpecialProperty == 5) &&
+            if (((this->actor.bgCheckFlags & 1) && (((sFloorSpecialProperty == 5) &&
                  (this->currentBoots != PLAYER_BOOTS_IRON)) ||
-                ((this->currentBoots == PLAYER_BOOTS_HOVER) &&
+                  ((this->currentBoots == PLAYER_BOOTS_HOVER)) || CVar_GetS32("gSlipperyFloor", 0)) &&
                  !(this->stateFlags1 & (PLAYER_STATE1_SWIMMING | PLAYER_STATE1_IN_CUTSCENE)))) {
                 f32 sp70 = this->linearVelocity;
                 s16 sp6E = this->currentYaw;
@@ -10993,7 +11000,8 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
                     sp6E += 0x8000;
                 }
 
-                if (Math_StepToF(&this->actor.speedXZ, sp70, 0.35f) && (sp70 == 0.0f)) {
+                if (Math_StepToF(&this->actor.speedXZ, sp70, CVar_GetS32("gSlipperyFloor", 0) ? 0.15f: 0.35f) &&
+                    (sp70 == 0.0f)) {
                     this->actor.world.rot.y = this->currentYaw;
                 }
 
@@ -11263,6 +11271,10 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
 
     if (CVar_GetS32("gMegaLetterbox", 0)) {
         ShrinkWindow_SetVal(110);
+    }
+
+    if (CVar_GetS32("gPlayerGravity", 0) != 0) {
+        this->actor.gravity += CVar_GetS32("gPlayerGravity", 0) * 0.1f;
     }
 
     Collider_ResetCylinderAC(globalCtx, &this->cylinder.base);
@@ -12070,7 +12082,12 @@ void Player_ClimbingWallOrDownLedge(Player* this, GlobalContext* globalCtx) {
         phi_f2 = -1.0f;
     }
 
-    this->skelAnime.playSpeed = phi_f2 * phi_f0 + phi_f2 * CVar_GetS32("gClimbSpeed", 0);
+    if (CVar_GetS32("gChaosClimbSpeed", 0) != 0) {
+        this->skelAnime.playSpeed = (phi_f2 * phi_f0) * (1.0f - CVar_GetS32("gChaosClimbSpeed", 0) * 0.1f);
+    }
+    else {
+        this->skelAnime.playSpeed = phi_f2 * phi_f0 + phi_f2 * CVar_GetS32("gClimbSpeed", 0);
+    }
 
     if (this->genericTimer >= 0) {
         if ((this->actor.wallPoly != NULL) && (this->actor.wallBgId != BGCHECK_SCENE)) {

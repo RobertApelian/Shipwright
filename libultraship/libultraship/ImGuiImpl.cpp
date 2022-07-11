@@ -935,6 +935,13 @@ namespace SohImGui {
                         EnhancementCheckbox("Scuffed Link model", "gScuffedLink");
                         EnhancementCheckbox("Rave mode", "gRaveMode");
                         EnhancementCheckbox("Invisible player", "gInvisPlayer");
+                        EnhancementCheckbox("Slippery floor", "gSlipperyFloor");
+                        EnhancementCheckbox("All damage is ice damage", "gIceDamage");
+                        EnhancementCheckbox("All damage is electric damage", "gElectricDamage");
+                        EnhancementCheckbox("All damage is knockback damage", "gKnockbackDamage");
+                        EnhancementCheckbox("All damage is fire damage", "gFireDamage");
+                        EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
+                        EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
 
                         ImGui::EndMenu();
                     }
