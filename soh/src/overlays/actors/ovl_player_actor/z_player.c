@@ -4268,19 +4268,32 @@ s32 Player_UpdateDamage(Player* this, GlobalContext* globalCtx) {
                     func_8002F7DC(&this->actor, NA_SE_PL_BODY_HIT);
                 }
 
-                if (this->stateFlags1 & PLAYER_STATE1_SWIMMING) {
-                    damageReaction = PLAYER_DMGREACTION_DEFAULT;
-                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ICE || CVar_GetS32("gIceDamage", 0)) {
-                    damageReaction = PLAYER_DMGREACTION_FROZEN;
-                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ELECTRIC ||
-                           CVar_GetS32("gElectricDamage", 0)) {
-                    damageReaction = PLAYER_DMGREACTION_ELECTRIC_SHOCKED;
-                } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_POWERFUL_HIT ||
-                           CVar_GetS32("gKnockbackDamage", 0)) {
-                    damageReaction = PLAYER_DMGREACTION_KNOCKBACK;
+                u8 damageOverride = CVar_GetS32("gIceDamage", 0) || CVar_GetS32("gElectricDamage", 0) ||
+                                    CVar_GetS32("gKnockbackDamage", 0);
+
+                if (!damageOverride) {
+                    if (this->stateFlags1 & PLAYER_STATE1_SWIMMING) {
+                        damageReaction = PLAYER_DMGREACTION_DEFAULT;
+                    } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ICE) {
+                        damageReaction = PLAYER_DMGREACTION_FROZEN;
+                    } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_ELECTRIC) {
+                        damageReaction = PLAYER_DMGREACTION_ELECTRIC_SHOCKED;
+                    } else if (this->actor.colChkInfo.acHitEffect == PLAYER_HITEFFECTAC_POWERFUL_HIT) {
+                        damageReaction = PLAYER_DMGREACTION_KNOCKBACK;
+                    } else {
+                        Player_PlayFallSfxAndCheckBurning(this);
+                        damageReaction = PLAYER_DMGREACTION_DEFAULT;
+                    }
                 } else {
-                    Player_PlayFallSfxAndCheckBurning(this);
-                    damageReaction = PLAYER_DMGREACTION_DEFAULT;
+                    if (CVar_GetS32("gIceDamage", 0)) {
+                        damageReaction = PLAYER_DMGREACTION_FROZEN;
+                    }
+                    if (CVar_GetS32("gElectricDamage", 0)) {
+                        damageReaction = PLAYER_DMGREACTION_ELECTRIC_SHOCKED;
+                    }
+                    if (CVar_GetS32("gKnockbackDamage", 0)) {
+                        damageReaction = PLAYER_DMGREACTION_KNOCKBACK;
+                    }
                 }
 
                 Player_SetupDamage(globalCtx, this, damageReaction, 4.0f, 5.0f,
