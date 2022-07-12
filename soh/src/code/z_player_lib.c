@@ -957,6 +957,13 @@ s32 func_8008FCC8(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* p
         }
 
         if (limbIndex == PLAYER_LIMB_HEAD) {
+            if (CVar_GetS32("gBigHead", 0)) {
+                Matrix_Scale(3.0f, 3.0f, 3.0f, MTXMODE_APPLY);
+                Matrix_Translate(-1000.0f, 0.0f, 0.0f, MTXMODE_APPLY);
+            } else if (CVar_GetS32("gTinyHead", 0)) {
+                Matrix_Scale(0.65f, 0.65f, 0.65f, MTXMODE_APPLY);
+                Matrix_Translate(800.0f, 0.0f, 0.0f, MTXMODE_APPLY);
+            }
             rot->x += this->headRot.z;
             rot->y -= this->headRot.y;
             rot->z += this->headRot.x;

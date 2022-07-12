@@ -991,7 +991,7 @@ static LinkAnimationHeader* sPlayerAnimations[PLAYER_ANIMGROUP_MAX * PLAYER_ANIM
     &gPlayerAnim_003468, // PLAYER_ANIMTYPE_USED_EXPLOSIVE
 };
 
-static LinkAnimationHeader* D_80853D4C[][3] = {
+static LinkAnimationHeader* sManualJumpAnims[][3] = {
     { &gPlayerAnim_002A28, &gPlayerAnim_002A38, &gPlayerAnim_002A30 },
     { &gPlayerAnim_002950, &gPlayerAnim_002960, &gPlayerAnim_002958 },
     { &gPlayerAnim_0029D0, &gPlayerAnim_0029E0, &gPlayerAnim_0029D8 },
@@ -5604,17 +5604,8 @@ void Player_SetupRolling(Player* this, GlobalContext* globalCtx) {
 
 }
 
-s32 Player_CanRoll(Player* this, GlobalContext* globalCtx) {
-    if ((this->relativeAnalogStickInputs[this->inputFrameCounter] == 0) && (sFloorSpecialProperty != 7)) {
-        Player_SetupRolling(this, globalCtx);
-        return 1;
-    }
-
-    return 0;
-}
-
 void Player_SetupBackflipOrSidehop(Player* this, GlobalContext* globalCtx, s32 relativeStickInput) {
-    Player_SetupJumpWithSfx(this, D_80853D4C[relativeStickInput][0], !(relativeStickInput & 1) ? 5.8f : 3.5f, globalCtx, NA_SE_VO_LI_SWORD_N);
+    Player_SetupJumpWithSfx(this, sManualJumpAnims[relativeStickInput][0], !(relativeStickInput & 1) ? 5.8f : 3.5f, globalCtx, NA_SE_VO_LI_SWORD_N);
 
     if (relativeStickInput) {}
 
@@ -5629,6 +5620,20 @@ void Player_SetupBackflipOrSidehop(Player* this, GlobalContext* globalCtx, s32 r
     func_8002F7DC(&this->actor, ((relativeStickInput << 0xE) == 0x8000) ? NA_SE_PL_ROLL : NA_SE_PL_SKIP);
 }
 
+s32 Player_CanRoll(Player* this, GlobalContext* globalCtx) {
+    if ((this->relativeAnalogStickInputs[this->inputFrameCounter] == 0) && (sFloorSpecialProperty != 7)) {
+        if (CVar_GetS32("gForwardJump", 0)) {
+            Player_SetupBackflipOrSidehop(this, globalCtx, this->relativeAnalogStickInputs[this->inputFrameCounter]);
+        }
+        else {
+            Player_SetupRolling(this, globalCtx);
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
 s32 Player_SetupJumpSlashOrRoll(Player* this, GlobalContext* globalCtx) {
     s32 relativeStickInput;
 
@@ -5639,11 +5644,16 @@ s32 Player_SetupJumpSlashOrRoll(Player* this, GlobalContext* globalCtx) {
 
         if (relativeStickInput <= 0) {
             if (Player_IsZTargeting(this)) {
-                if (this->actor.category != ACTORCAT_PLAYER) {
+                if (this->actor.category != ACTORCAT_PLAYER || CVar_GetS32("gForwardJump", 0)) {
                     if (relativeStickInput < 0) {
                         Player_SetupJump(this, &gPlayerAnim_002FE0, REG(69) / 100.0f, globalCtx);
                     } else {
-                        Player_SetupRolling(this, globalCtx);
+                        if (CVar_GetS32("gForwardJump", 0)) {
+                            Player_SetupBackflipOrSidehop(this, globalCtx, relativeStickInput);
+                        }
+                        else {
+                            Player_SetupRolling(this, globalCtx);
+                        }
                     }
                 } else {
                     if (Player_GetSwordHeld(this) && Player_CanUseItem(this)) {
@@ -8758,9 +8768,9 @@ void Player_UpdateMidair(Player* this, GlobalContext* globalCtx) {
 
         if (this->stateFlags2 & PLAYER_STATE2_BACKFLIPPING_OR_SIDEHOPPING) {
             if (Player_IsUnfriendlyZTargeting(this)) {
-                anim = D_80853D4C[this->genericVar][2];
+                anim = sManualJumpAnims[this->genericVar][2];
             } else {
-                anim = D_80853D4C[this->genericVar][1];
+                anim = sManualJumpAnims[this->genericVar][1];
             }
         } else if (this->skelAnime.animation == &gPlayerAnim_003148) {
             anim = &gPlayerAnim_003150;
@@ -10797,6 +10807,26 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
         if (!(globalCtx->state.frames % 24)) {
             Audio_PlaySoundGeneral(NA_SE_VO_NAVY_HELLO, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        }
+    }
+
+    static u8 adjustLight = false;
+    static f32 lightIntensity = -1;
+
+    if (adjustLight == true) {
+        Environment_AdjustLights(globalCtx, lightIntensity, this->actor.projectedPos.z + 600.0f, 0.2f, 0.5f);
+    }
+
+    if (CVar_GetS32("gDarkenArea", 0)) {
+        adjustLight = true;
+        Math_SmoothStepToF(&lightIntensity, 1.0f, 0.5f, 0.2f, 0.01f);
+    }
+    else {
+        if (lightIntensity == 0) {
+            adjustLight = false;
+        }
+        else if (lightIntensity > 0) {
+            Math_SmoothStepToF(&lightIntensity, 0.0f, 0.5f, 0.2f, 0.01f);
         }
     }
 

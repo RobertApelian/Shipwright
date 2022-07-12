@@ -937,6 +937,10 @@ namespace SohImGui {
                         EnhancementCheckbox("All damage is electric damage", "gElectricDamage");
                         EnhancementCheckbox("All damage is knockback damage", "gKnockbackDamage");
                         EnhancementCheckbox("All damage is fire damage", "gFireDamage");
+                        EnhancementCheckbox("Forward jump replaces rolling", "gForwardJump");
+                        EnhancementCheckbox("Big-headed Link", "gBigHead");
+                        EnhancementCheckbox("Tiny-headed Link", "gTinyHead");
+                        EnhancementCheckbox("Darken area around Link", "gDarkenArea");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
 
