@@ -87,6 +87,10 @@ void ArmsHook_Wait(ArmsHook* this, GlobalContext* globalCtx) {
         // get correct timer length for hookshot or longshot
         s32 length = (player->heldItemActionParam == PLAYER_AP_HOOKSHOT) ? 13 : 26;
 
+        if (CVar_GetS32("gHookshotLengthRemove", 0)) {
+            length = length * (1.0f - CVar_GetS32("gHookshotLengthRemove", 0) * 0.05f);
+        }
+
         ArmsHook_SetupAction(this, ArmsHook_Shoot);
         func_8002D9A4(&this->actor, 20.0f);
         this->actor.parent = &GET_PLAYER(globalCtx)->actor;

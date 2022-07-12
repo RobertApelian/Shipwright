@@ -941,8 +941,12 @@ namespace SohImGui {
                         EnhancementCheckbox("Big-headed Link", "gBigHead");
                         EnhancementCheckbox("Tiny-headed Link", "gTinyHead");
                         EnhancementCheckbox("Darken area around Link", "gDarkenArea");
+                        EnhancementCheckbox("Chaos spin", "gChaosSpin");
+                        EnhancementCheckbox("Spawn explosion on Link", "gSpawnExplosion");
+                        EnhancementCheckbox("Restrain Link", "gRestrainLink");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
+                        EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");
 
                         ImGui::EndMenu();
                     }

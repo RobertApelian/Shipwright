@@ -132,6 +132,8 @@ typedef struct {
 
 void Player_Draw(Actor* thisx, GlobalContext* globalCtx2);
 
+void Player_SpawnExplosion(GlobalContext* globalCtx, Player* this);
+
 void Player_DoNothing(GlobalContext* globalCtx, Player* this);
 void Player_DoNothing2(GlobalContext* globalCtx, Player* this);
 void Player_SetupBowOrSlingshot(GlobalContext* globalCtx, Player* this);
@@ -5618,18 +5620,9 @@ s32 Player_SetupMidairJumpSlash(Player* this, GlobalContext* globalCtx) {
 }
 
 void Player_SetupRolling(Player* this, GlobalContext* globalCtx) {
-    EnBom* bomb;
-
     // Chaos
     if (CVar_GetS32("gExplodingRolls", 0)) {
-        bomb = (EnBom*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_BOM, this->actor.world.pos.x,
-                                   this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 6, BOMB_BODY);
-        if (bomb != NULL) {
-            bomb->timer = 0;
-        }
-
-        Player_Damage(globalCtx, this, -16);
-        Player_SetupDamage(globalCtx, this, PLAYER_DMGREACTION_KNOCKBACK, 0.0f, 0.0f, 0, 20);
+        Player_SpawnExplosion(globalCtx, this);
     }
     if (CVar_GetS32("gFreezingRolls", 0)) {
         this->actor.colChkInfo.damage = 0;
@@ -6609,7 +6602,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                         return 0;
                     }                    
 
-                    Player_DetatchHeldActorglobalCtx, this);
+                    Player_DetatchHeldActor(globalCtx, this);
                     Player_LoadGetItemObject(this, giEntry->objectId);
 
                     if (!(this->stateFlags2 & PLAYER_STATE2_DIVING) || (this->currentBoots == PLAYER_BOOTS_IRON)) {
@@ -10799,6 +10792,17 @@ static f32 D_8085482C[] = { 0.5f, 1.0f, 3.0f };
 
 void Player_SetupSwim(GlobalContext* globalCtx, Player* this, s16 yaw);
 
+void Player_SpawnExplosion(GlobalContext* globalCtx, Player* this) {
+    EnBom* bomb = (EnBom*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_BOM, this->actor.world.pos.x,
+                               this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 6, BOMB_BODY);
+    if (bomb != NULL) {
+        bomb->timer = 0;
+    }
+
+    Player_Damage(globalCtx, this, -16);
+    Player_SetupDamage(globalCtx, this, PLAYER_DMGREACTION_KNOCKBACK, 0.0f, 0.0f, 0, 20);
+}
+
 void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     s32 pad;
 
@@ -10860,6 +10864,11 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
     }
 
+    if (CVar_GetS32("gSpawnExplosion", 0)) {
+        Player_SpawnExplosion(globalCtx, this);
+        CVar_SetS32("gSpawnExplosion", 0);
+    };
+
     static u8 adjustLight = false;
     static f32 lightIntensity = -1;
 
@@ -10885,6 +10894,22 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
     else {
         this->actor.draw = Player_Draw;
+    }
+
+    if (CVar_GetS32("gChaosSpin", 0)) {
+        this->actor.shape.rot.x += DEGF_TO_BINANG(5.0f);
+        this->actor.shape.rot.y += DEGF_TO_BINANG(9.0f);
+        this->actor.shape.rot.z += DEGF_TO_BINANG(15.0f);
+        if (this->actor.shape.rot.x > DEGF_TO_BINANG(90.0f)) {
+            this->actor.shape.rot.x = DEGF_TO_BINANG(270.0f);
+        }
+        if (this->actor.shape.rot.z > DEGF_TO_BINANG(90.0f)) {
+            this->actor.shape.rot.z = DEGF_TO_BINANG(270.0f);
+        }
+    }
+    else {
+        this->actor.shape.rot.x = 0;
+        this->actor.shape.rot.z = 0;
     }
 
     #define SCREEN_COLOR_RATE 15
@@ -10966,6 +10991,11 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         D_801614B0.b = 0;
         D_801614B0.a = 0;
         colorMode = 0;
+    }
+
+    if (CVar_GetS32("gRestrainLink", 0)) {
+        Player_SetupRestrainedByEnemy(globalCtx, this);
+        CVar_SetS32("gRestrainLink", 0);
     }
 
     Math_Vec3f_Copy(&this->actor.prevPos, &this->actor.home.pos);
