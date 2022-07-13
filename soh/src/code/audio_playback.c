@@ -288,8 +288,7 @@ void Audio_ProcessNotes(void) {
 
             f32 resampRate = gAudioContext.audioBufferParameters.resampleRate;
 
-            // CUSTOM SAMPLE CHECK
-            if (!noteSubEu2->bitField1.isSyntheticWave && noteSubEu2->sound.soundFontSound != NULL &&
+            if (!gUseLegacySD && !noteSubEu2->bitField1.isSyntheticWave && noteSubEu2->sound.soundFontSound != NULL &&
                 noteSubEu2->sound.soundFontSound->sample != NULL &&
                 noteSubEu2->sound.soundFontSound->sample->sampleRateMagicValue == 'RIFF') {
                 resampRate = CALC_RESAMPLE_FREQ(noteSubEu2->sound.soundFontSound->sample->sampleRate);
@@ -331,12 +330,24 @@ Instrument* Audio_GetInstrumentInner(s32 fontId, s32 instId) {
     }
 
     int instCnt = 0;
-    SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
 
-    if (instId >= sf->numInstruments)
-        return NULL;
+    if (gUseLegacySD) {
+        instCnt = gAudioContext.soundFonts[fontId].numInstruments;
+        inst = gAudioContext.soundFonts[fontId].instruments[instId];
 
-    inst = sf->instruments[instId];
+        if (instId >= gAudioContext.soundFonts[fontId].numInstruments)
+            if (instId >= instCnt) {
+                gAudioContext.audioErrorFlags = ((fontId << 8) + instId) + 0x3000000;
+                return NULL;
+            }
+    } else {
+        SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
+
+        if (instId >= sf->numInstruments)
+            return NULL;
+
+        inst = sf->instruments[instId];
+    }
 
     if (inst == NULL) {
         gAudioContext.audioErrorFlags = ((fontId << 8) + instId) + 0x1000000;
@@ -358,10 +369,18 @@ Drum* Audio_GetDrum(s32 fontId, s32 drumId) {
         return NULL;
     }
 
-    
-    SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
-    drum = sf->drums[drumId];
-    
+    if (gUseLegacySD) {
+         if (drumId >= gAudioContext.soundFonts[fontId].numDrums) {
+         gAudioContext.audioErrorFlags = ((fontId << 8) + drumId) + 0x4000000;
+         return NULL;
+        }
+
+         drum = gAudioContext.soundFonts[fontId].drums[drumId];
+    } else {
+        SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
+        drum = sf->drums[drumId];
+    }
+
     if (drum == NULL) {
         gAudioContext.audioErrorFlags = ((fontId << 8) + drumId) + 0x5000000;
     }
@@ -381,8 +400,17 @@ SoundFontSound* Audio_GetSfx(s32 fontId, s32 sfxId) {
         return NULL;
     }
 
-    SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
-    sfx = &sf->soundEffects[sfxId];
+    if (gUseLegacySD) {
+         if (sfxId >= gAudioContext.soundFonts[fontId].numSfx) {
+         gAudioContext.audioErrorFlags = ((fontId << 8) + sfxId) + 0x4000000;
+         return NULL;
+        }
+
+         sfx = &gAudioContext.soundFonts[fontId].soundEffects[sfxId];
+    } else {
+        SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
+        sfx = &sf->soundEffects[sfxId];
+    }
 
     if (sfx == NULL) {
         gAudioContext.audioErrorFlags = ((fontId << 8) + sfxId) + 0x5000000;

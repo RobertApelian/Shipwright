@@ -10,6 +10,8 @@ void AudioHeap_DiscardSampleCaches(void);
 void AudioHeap_DiscardSampleBank(s32 sampleBankId);
 void AudioHeap_DiscardSampleBanks(void);
 
+extern bool gUseLegacySD;
+
 f32 func_800DDE20(f32 arg0) {
     return 256.0f * gAudioContext.audioBufferParameters.unkUpdatesPerFrameScaled / arg0;
 }
@@ -1203,6 +1205,15 @@ void AudioHeap_DiscardSampleCacheEntry(SampleCacheEntry* entry) {
 
 void AudioHeap_UnapplySampleCache(SampleCacheEntry* entry, SoundFontSample* sample)
 {
+    if (!gUseLegacySD)
+        return;
+
+    if (sample != NULL) {
+        if (sample->sampleAddr == entry->allocatedAddr) {
+            sample->sampleAddr = entry->sampleAddr;
+            sample->medium = entry->origMedium;
+        }
+    }
 }
 
 SampleCacheEntry* AudioHeap_AllocPersistentSampleCacheEntry(size_t size) {
@@ -1236,8 +1247,6 @@ void AudioHeap_DiscardSampleCaches(void) {
     s32 sampleBankId2;
     s32 fontId;
     s32 j;
-
-    return;
 
     numFonts = gAudioContext.soundFontTable->numEntries;
     for (fontId = 0; fontId < numFonts; fontId++) {
@@ -1307,8 +1316,6 @@ void AudioHeap_ApplySampleBankCacheInternal(s32 apply, s32 sampleBankId) {
     SoundFontSound* sfx;
     u32* fakematch;
     s32 pad[4];
-
-    return;
 
     sampleBankTable = gAudioContext.sampleBankTable;
     numFonts = gAudioContext.soundFontTable->numEntries;
