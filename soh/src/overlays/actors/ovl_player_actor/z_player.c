@@ -22,7 +22,7 @@
 #include "textures/icon_item_24_static/icon_item_24_static.h"
 
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
-#include "overlays/actors/ovl_Bg_Hidan_Curtain/z_bg_hidan_curtain.h"
+#include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
 
 typedef struct {
     /* 0x00 */ u8 itemId;
@@ -5593,20 +5593,25 @@ s32 Player_SetupCUpBehavior(Player* this, GlobalContext* globalCtx) {
 }
 
 void Player_SetupJumpSlash(GlobalContext* globalCtx, Player* this, s32 arg2, f32 xzVelocity, f32 yVelocity) {
-    Player_StartMeleeWeaponAttack(globalCtx, this, arg2);
-    Player_SetActionFunc(globalCtx, this, Player_JumpSlash, 0);
+    if (!CVar_GetS32("gDisableMeleeAttacks", 0)) {
+        Player_StartMeleeWeaponAttack(globalCtx, this, arg2);
+        Player_SetActionFunc(globalCtx, this, Player_JumpSlash, 0);
 
-    this->stateFlags3 |= PLAYER_STATE3_MIDAIR;
+        this->stateFlags3 |= PLAYER_STATE3_MIDAIR;
 
-    this->currentYaw = this->actor.shape.rot.y;
-    this->linearVelocity = xzVelocity;
-    this->actor.velocity.y = yVelocity;
+        this->currentYaw = this->actor.shape.rot.y;
+        this->linearVelocity = xzVelocity;
+        this->actor.velocity.y = yVelocity;
 
-    this->actor.bgCheckFlags &= ~1;
-    this->hoverBootsTimer = 0;
+        this->actor.bgCheckFlags &= ~1;
+        this->hoverBootsTimer = 0;
 
-    Player_PlayJumpSfx(this);
-    Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_SWORD_L);
+        Player_PlayJumpSfx(this);
+        Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_SWORD_L);
+    }
+    else {
+        Player_SetupReturnToStandStill(this, globalCtx);
+    }
 }
 
 s32 Player_CanJumpSlash(Player* this) {
@@ -10827,31 +10832,32 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
 
     static u8 inJail = false;
-    static EnAObj* jail1 = NULL;
-    static EnAObj* jail2 = NULL;
-    static EnAObj* jail3 = NULL;
-    static EnAObj* jail4 = NULL;
+    static BgSpot15Saku* jail1 = NULL;
+    static BgSpot15Saku* jail2 = NULL;
+    static BgSpot15Saku* jail3 = NULL;
+    static BgSpot15Saku* jail4 = NULL;
     static EnAObj* jail5 = NULL;
 
-    #define PLAYER_JAIL_DIST 150
+    #define PLAYER_JAIL_DIST 75
+    #define PLAYER_JAIL_FLOOR_DIST 150
 
     if (CVar_GetS32("gJailTime", 0)) {
         if (!inJail) {
-            jail1 = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ,
-                                         this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y,
-                                         this->actor.world.pos.z, 0, 0, 0, 5);
-            jail2 = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ,
-                                         this->actor.world.pos.x - PLAYER_JAIL_DIST, this->actor.world.pos.y,
-                                         this->actor.world.pos.z, 0, 0, 0, 5);
-            jail3 =
-                (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
-                                     this->actor.world.pos.y, this->actor.world.pos.z + PLAYER_JAIL_DIST, 0, 0, 0, 5);
-            jail4 =
-                (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
-                                     this->actor.world.pos.y, this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 5);
-            jail5 =
-                (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
-                                     this->actor.world.pos.y - PLAYER_JAIL_DIST, this->actor.world.pos.z, 0, 0, 0, 5);
+            jail1 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+                                               this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
+                                               this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1);
+            jail2 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+                                               this->actor.world.pos.x - PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
+                                               this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1);
+            jail3 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+                                               this->actor.world.pos.x, this->actor.world.pos.y - 1,
+                                               this->actor.world.pos.z + PLAYER_JAIL_DIST, 0, 0, 0, 1);
+            jail4 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+                                               this->actor.world.pos.x, this->actor.world.pos.y - 1,
+                                               this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 1);
+            jail5 = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
+                                         this->actor.world.pos.y - PLAYER_JAIL_FLOOR_DIST - 1, this->actor.world.pos.z,
+                                         0, 0, 0, 5);
             inJail = true;
         }
     } else {
@@ -10878,6 +10884,13 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         Player_SpawnExplosion(globalCtx, this);
         CVar_SetS32("gSpawnExplosion", 0);
     };
+
+    if (CVar_GetS32("gDisableEnemyDraw", 0) && this->targetActor != NULL) {
+        if (this->targetActor->category == ACTORCAT_ENEMY) {
+            globalCtx->actorCtx.targetCtx.arrowPointedActor = NULL;
+            this->targetActor = NULL;
+        }
+    }
 
     static u8 adjustLight = false;
     static f32 lightIntensity = -1;
