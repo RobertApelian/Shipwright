@@ -3155,67 +3155,65 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_parameter.c", 2650);
 
-    // If target actor exists and is an enemy
-    if (targetActor->category == ACTORCAT_ENEMY) {
-        // Get actor projected position
-        func_8002BE04(globalCtx, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
+    // Get actor projected position
+    func_8002BE04(globalCtx, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
 
-        projTarget.x = (SCREEN_WIDTH / 2) * ((projTarget.x * projTargetCappedInvW) + 1);
-        healthBarX = projTarget.x - (R_HEALTH_BAR_WIDTH / 2);
+    projTarget.x = (SCREEN_WIDTH / 2) * ((projTarget.x * projTargetCappedInvW) + 1);
+    healthBarX = projTarget.x - (R_HEALTH_BAR_WIDTH / 2);
 
-        projTarget.y = -(SCREEN_HEIGHT / 2) * ((projTarget.y * projTargetCappedInvW) - 1);
-        healthBarY = projTarget.y - 32;
+    projTarget.y = -(SCREEN_HEIGHT / 2) * ((projTarget.y * projTargetCappedInvW) - 1);
+    healthBarY = projTarget.y - 32;
 
-        healthBarFill = (curHealth / maxHealth) * R_HEALTH_BAR_WIDTH;
+    healthBarFill = (curHealth / maxHealth) * R_HEALTH_BAR_WIDTH;
 
-        CVar_SetS32("healthBarX", healthBarX);
-        CVar_SetS32("healthBarY", healthBarY);
+    CVar_SetS32("healthBarX", healthBarX);
+    CVar_SetS32("healthBarY", healthBarY);
 
-        if (healthBarX > -8 && healthBarY > 0) {
-            // Setup DL for overlay disp
-            func_80094520(globalCtx->state.gfxCtx);
+    if (healthBarX > -8 && healthBarY > 0) {
+        // Setup DL for overlay disp
+        func_80094520(globalCtx->state.gfxCtx);
 
-            gDPSetPrimColor(OVERLAY_DISP++, 0, 0, sMagicBorderR, sMagicBorderG, sMagicBorderB, interfaceCtx->minimapAlpha);
-            gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
+        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, sMagicBorderR, sMagicBorderG, sMagicBorderB,
+                        CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
+        gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
 
-            OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gMagicBarEndTex, 8, 16, healthBarX, healthBarY, 8, 16,
-                                          1 << 10, 2 << 10);
+        OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gMagicBarEndTex, 8, 16, healthBarX, healthBarY, 8, 16,
+                                        1 << 10, 2 << 10);
 
-            OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gMagicBarMidTex, 24, 16, healthBarX + 8, healthBarY,
-                                          R_HEALTH_BAR_WIDTH, 16, 1 << 10, 2 << 10);
+        OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gMagicBarMidTex, 24, 16, healthBarX + 8, healthBarY,
+                                        R_HEALTH_BAR_WIDTH, 16, 1 << 10, 2 << 10);
 
-            gDPLoadTextureBlock(OVERLAY_DISP++, gMagicBarEndTex, G_IM_FMT_IA, G_IM_SIZ_8b, 8, 16, 0,
-                                G_TX_MIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 3, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
+        gDPLoadTextureBlock(OVERLAY_DISP++, gMagicBarEndTex, G_IM_FMT_IA, G_IM_SIZ_8b, 8, 16, 0,
+                            G_TX_MIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 3, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
 
-            gSPTextureRectangle(OVERLAY_DISP++,
-                                ((healthBarX + R_HEALTH_BAR_WIDTH) + 8) << 2,  // upper X
-                                healthBarY << 2,                               // upper Y
-                                ((healthBarX + R_HEALTH_BAR_WIDTH) + 16) << 2, // lower X
-                                (healthBarY + 16) << 2,                        // lower Y
-                                G_TX_RENDERTILE, 256, 0, 1 << 10, 2 << 10);
+        gSPTextureRectangle(OVERLAY_DISP++,
+                            ((healthBarX + R_HEALTH_BAR_WIDTH) + 8) << 2,  // upper X
+                            healthBarY << 2,                               // upper Y
+                            ((healthBarX + R_HEALTH_BAR_WIDTH) + 16) << 2, // lower X
+                            (healthBarY + 16) << 2,                        // lower Y
+                            G_TX_RENDERTILE, 256, 0, 1 << 10, 2 << 10);
 
-            gDPPipeSync(OVERLAY_DISP++);
-            gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE, PRIMITIVE,
-                              ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE);
-            gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 0, 255);
+        gDPPipeSync(OVERLAY_DISP++);
+        gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE, PRIMITIVE,
+                            ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE);
+        gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 0, 255);
 
-            // Fill the health bar with red
-            gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 0, 0, interfaceCtx->minimapAlpha);
+        // Fill the health bar with red
+        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 0, 0, CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
 
-            gDPLoadMultiBlock_4b(OVERLAY_DISP++, gMagicBarFillTex, 0, G_TX_RENDERTILE, G_IM_FMT_I, 16, 16, 0,
-                                    G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
-                                    G_TX_NOLOD, G_TX_NOLOD);
+        gDPLoadMultiBlock_4b(OVERLAY_DISP++, gMagicBarFillTex, 0, G_TX_RENDERTILE, G_IM_FMT_I, 16, 16, 0,
+                                G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
+                                G_TX_NOLOD, G_TX_NOLOD);
 
-            gSPTextureRectangle(OVERLAY_DISP++,
-                                (healthBarX + 8) << 2,                   // upper X
-                                (healthBarY + 2) << 2,                   // upper Y
-                                ((healthBarX + 8) + healthBarFill) << 2, // lower X
-                                (healthBarY + 5) << 2,                  // lower Y
-                                G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
-        }
+        gSPTextureRectangle(OVERLAY_DISP++,
+                            (healthBarX + 8) << 2,                   // upper X
+                            (healthBarY + 2) << 2,                   // upper Y
+                            ((healthBarX + 8) + healthBarFill) << 2, // lower X
+                            (healthBarY + 5) << 2,                  // lower Y
+                            G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
     }
 
-    CLOSE_DISPS(play->state.gfxCtx, "../z_parameter.c", 2731);
+    CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_parameter.c", 2731);
 }
 
 void func_80088AA0(s16 arg0) {
@@ -4622,8 +4620,10 @@ void Interface_Draw(GlobalContext* globalCtx) {
         }
         
         // Check if target actor exists
-        if (player->targetActor != NULL) {
-            Interface_DrawEnemyHealthBar(globalCtx);
+        if (player->targetActor != NULL && CVar_GetS32("gEnemyHealthBar", 0)) {
+            if (player->targetActor->category == ACTORCAT_ENEMY && globalCtx->pauseCtx.state < 4) {
+                Interface_DrawEnemyHealthBar(globalCtx);
+            }
         }
 
         Minimap_Draw(globalCtx);

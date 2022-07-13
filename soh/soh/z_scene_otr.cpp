@@ -773,7 +773,7 @@ bool func_800991A0(GlobalContext* globalCtx, Ship::SceneCommand* cmd)
         else
         {
             // "Coughh! There is no specified dataaaaa!"
-            osSyncPrintf("\nげぼはっ！ 指定されたデータがないでええっす！");
+            //osSyncPrintf("\nげぼはっ！ 指定されたデータがないでええっす！");
 
             if (gSaveContext.sceneSetupIndex == 3)
             {
@@ -786,7 +786,7 @@ bool func_800991A0(GlobalContext* globalCtx, Ship::SceneCommand* cmd)
                 }
 
                 // "Using adult day data there!"
-                osSyncPrintf("\nそこで、大人の昼データを使用するでええっす！！");
+                //osSyncPrintf("\nそこで、大人の昼データを使用するでええっす！！");
 
                 if (headerData != nullptr)
                 {
@@ -868,9 +868,9 @@ s32 OTRScene_ExecuteCommands(GlobalContext* globalCtx, Ship::Scene* scene)
                 break;
         }
         else {
-            osSyncPrintf(VT_FGCOL(RED));
-            osSyncPrintf("code の値が異常です\n"); // "code variable is abnormal"
-            osSyncPrintf(VT_RST);
+            //osSyncPrintf(VT_FGCOL(RED));
+            //osSyncPrintf("code の値が異常です\n"); // "code variable is abnormal"
+            //osSyncPrintf(VT_RST);
         }
 
         //sceneCmd++;
