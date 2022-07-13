@@ -514,21 +514,23 @@ void func_8002C124(TargetContext* targetCtx, GlobalContext* globalCtx) {
 
     actor = targetCtx->unk_94;
     if ((actor != NULL) && !(actor->flags & ACTOR_FLAG_27)) {
-        FrameInterpolation_RecordOpenChild(actor, 1);
-        NaviColor* naviColor = &sNaviColorList[actor->category];
+        if (!(CVar_GetS32("gDisableEnemyDraw", 0) && actor->category == ACTORCAT_ENEMY)) {
+            FrameInterpolation_RecordOpenChild(actor, 1);
+            NaviColor* naviColor = &sNaviColorList[actor->category];
 
-        POLY_XLU_DISP = Gfx_CallSetupDL(POLY_XLU_DISP, 0x7);
+            POLY_XLU_DISP = Gfx_CallSetupDL(POLY_XLU_DISP, 0x7);
 
-        Matrix_Translate(actor->focus.pos.x, actor->focus.pos.y + (actor->targetArrowOffset * actor->scale.y) + 17.0f,
-                         actor->focus.pos.z, MTXMODE_NEW);
-        Matrix_RotateY((f32)((u16)(globalCtx->gameplayFrames * 3000)) * (M_PI / 0x8000), MTXMODE_APPLY);
-        Matrix_Scale((iREG(27) + 35) / 1000.0f, (iREG(28) + 60) / 1000.0f, (iREG(29) + 50) / 1000.0f, MTXMODE_APPLY);
+            Matrix_Translate(actor->focus.pos.x, actor->focus.pos.y + (actor->targetArrowOffset * actor->scale.y) + 17.0f,
+                             actor->focus.pos.z, MTXMODE_NEW);
+            Matrix_RotateY((f32)((u16)(globalCtx->gameplayFrames * 3000)) * (M_PI / 0x8000), MTXMODE_APPLY);
+            Matrix_Scale((iREG(27) + 35) / 1000.0f, (iREG(28) + 60) / 1000.0f, (iREG(29) + 50) / 1000.0f, MTXMODE_APPLY);
 
-        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, naviColor->inner.r, naviColor->inner.g, naviColor->inner.b, 255);
-        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(globalCtx->state.gfxCtx),
-                  G_MTX_MODELVIEW | G_MTX_LOAD);
-        gSPDisplayList(POLY_XLU_DISP++, gZTargetArrowDL);
-        FrameInterpolation_RecordCloseChild();
+            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, naviColor->inner.r, naviColor->inner.g, naviColor->inner.b, 255);
+            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(globalCtx->state.gfxCtx),
+                      G_MTX_MODELVIEW | G_MTX_LOAD);
+            gSPDisplayList(POLY_XLU_DISP++, gZTargetArrowDL);
+            FrameInterpolation_RecordCloseChild();
+        }
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx);
@@ -570,7 +572,8 @@ void func_8002C7BC(TargetContext* targetCtx, Player* player, Actor* actorArg, Gl
         actorCategory = player->actor.category;
     }
 
-    if ((unkActor != targetCtx->arrowPointedActor) || (actorCategory != targetCtx->activeCategory)) {
+    if (((unkActor != targetCtx->arrowPointedActor) || (actorCategory != targetCtx->activeCategory)) &&
+        !(CVar_GetS32("gDisableEnemyDraw", 0) && actorCategory == ACTORCAT_ENEMY)) {
         targetCtx->arrowPointedActor = unkActor;
         targetCtx->activeCategory = actorCategory;
         targetCtx->unk_40 = 1.0f;
@@ -2834,7 +2837,9 @@ void func_800315AC(GlobalContext* globalCtx, ActorContext* actorCtx) {
                         invisibleActors[invisibleActorCounter] = actor;
                         invisibleActorCounter++;
                     } else {
-                        if ((HREG(64) != 1) || ((HREG(65) != -1) && (HREG(65) != HREG(66))) || (HREG(72) == 0)) {
+                        if (((HREG(64) != 1) || ((HREG(65) != -1) && (HREG(65) != HREG(66))) || (HREG(72) == 0)) &&
+                            !(CVar_GetS32("gDisableEnemyDraw", 0) &&
+                              (actor->category == ACTORCAT_ENEMY || actor->category == ACTORCAT_BOSS))) {
                             Actor_Draw(globalCtx, actor);
                             actor->isDrawn = true;
                         }

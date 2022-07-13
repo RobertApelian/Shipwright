@@ -885,6 +885,7 @@ namespace SohImGui {
                         EnhancementCheckbox("Spawn explosion on Link", "gSpawnExplosion");
                         EnhancementCheckbox("Restrain Link", "gRestrainLink");
                         EnhancementCheckbox("Disable melee attacks", "gDisableMeleeAttacks");
+                        EnhancementCheckbox("Disable enemy drawing", "gDisableEnemyDraw");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");
