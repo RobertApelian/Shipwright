@@ -188,6 +188,7 @@ typedef struct Actor {
     /* 0x134 */ ActorFunc draw; // Draw Routine. Called by `Actor_Draw`
     /* 0x138 */ ActorResetFunc reset;
     /* 0x138 */ ActorOverlay* overlayEntry; // Pointer to the overlay table entry for this actor
+    /*       */ u8 maxHealth; // Health value for an actor immediately after actor init is finished
     /* 0x13C */ char dbgPad[0x10]; // Padding that only exists in the debug rom
 } Actor; // size = 0x14C
 

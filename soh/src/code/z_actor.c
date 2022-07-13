@@ -1224,6 +1224,10 @@ void Actor_Init(Actor* actor, GlobalContext* globalCtx) {
         //Actor_SetObjectDependency(globalCtx, actor);
         actor->init(actor, globalCtx);
         actor->init = NULL;
+        // Set actor's max health for enemy health bar
+        if (CVar_GetS32("gEnemyHealthBar", 0)) {
+            actor->maxHealth = actor->colChkInfo.health;
+        }
     }
 }
 

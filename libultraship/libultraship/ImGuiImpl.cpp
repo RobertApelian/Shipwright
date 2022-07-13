@@ -854,6 +854,8 @@ namespace SohImGui {
                 {
                     if (ImGui::BeginMenu("Chaos"))
                     {
+                        EnhancementCheckbox("Enables chat integration", "gChatIntegration");
+                        EnhancementCheckbox("Enables enemy health bar", "gEnemyHealthBar");
                         EnhancementCheckbox("Disable first person view", "gDisableFPSView");
                         EnhancementCheckbox("All arrows are normal arrows", "gForceNormalArrows");
                         EnhancementCheckbox("Disable climbing ledges", "gDisableLedgeClimb");
@@ -882,6 +884,7 @@ namespace SohImGui {
                         EnhancementCheckbox("Chaos spin", "gChaosSpin");
                         EnhancementCheckbox("Spawn explosion on Link", "gSpawnExplosion");
                         EnhancementCheckbox("Restrain Link", "gRestrainLink");
+                        EnhancementCheckbox("Disable melee attacks", "gDisableMeleeAttacks");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");
@@ -1282,6 +1285,26 @@ namespace SohImGui {
             ImGui::Text("Status: %.3f ms/frame (%.1f FPS)", 1000.0f / framerate, framerate);
             ImGui::End();
             ImGui::PopStyleColor();
+        }
+
+        //// DEBUGGING HEALTH BAR
+        //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
+        //ImGui::Begin("Health Bar Debugging", nullptr, ImGuiWindowFlags_NoFocusOnAppearing);
+        //ImGui::Text("X: %d", CVar_GetS32("healthBarX", 0));
+        //ImGui::Text("Y: %d", CVar_GetS32("healthBarY", 0));
+        //ImGui::End();
+        //ImGui::PopStyleColor();
+
+        if (CVar_GetS32("gChatIntegration", 0)) {
+            std::string userName = "testName";
+            std::string chaosCommand = "testCmd";
+            std::string chaosMsg = userName + "activated:" + chaosCommand;
+            s32 chaosVal = 1;
+
+            if (CVar_GetS32(chaosCommand.c_str(), 0)) {
+                CVar_SetS32(chaosCommand.c_str(), chaosVal);
+                SohImGui::overlay->TextDrawNotification(30.0f, true, chaosMsg.c_str());
+            }
         }
 
         console->Draw();

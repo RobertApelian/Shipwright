@@ -133,6 +133,7 @@ typedef struct {
 void Player_Draw(Actor* thisx, GlobalContext* globalCtx2);
 
 void Player_SpawnExplosion(GlobalContext* globalCtx, Player* this);
+void Player_SetupReturnToStandStill(Player* this, GlobalContext* globalCtx);
 
 void Player_DoNothing(GlobalContext* globalCtx, Player* this);
 void Player_DoNothing2(GlobalContext* globalCtx, Player* this);
@@ -3810,6 +3811,10 @@ s32 Player_CanQuickspin(Player* this) {
         }
     }
 
+    if (CVar_GetS32("gDisableMeleeAttacks", 0)) {
+        return 0;
+    }
+
     return 1;
 }
 
@@ -3897,44 +3902,49 @@ void Player_StartMeleeWeaponAttack(GlobalContext* globalCtx, Player* this, s32 a
     u32 flags;
     s32 temp;
 
-    Player_SetActionFunc(globalCtx, this, Player_MeleeWeaponAttack, 0);
-    this->comboTimer = 8;
-    if ((arg2 < 18) || (arg2 >= 20)) {
-        Player_InactivateMeleeWeapon(this);
+    if (!CVar_GetS32("gDisableMeleeAttacks", 0)) {
+        Player_SetActionFunc(globalCtx, this, Player_MeleeWeaponAttack, 0);
+        this->comboTimer = 8;
+        if ((arg2 < 18) || (arg2 >= 20)) {
+            Player_InactivateMeleeWeapon(this);
+        }
+
+        if ((arg2 != this->swordAnimation) || !(this->slashCounter < 3)) {
+            this->slashCounter = 0;
+        }
+
+        this->slashCounter++;
+        if (this->slashCounter >= 3) {
+            arg2 += 2;
+        }
+
+        this->swordAnimation = arg2;
+
+        Player_PlayAnimOnceSlowed(globalCtx, this, sMeleeAttackAnims[arg2].unk_00);
+        if ((arg2 != 16) && (arg2 != 17)) {
+            Player_SetupAnimMovement(globalCtx, this, 0x209);
+        }
+
+        this->currentYaw = this->actor.shape.rot.y;
+
+        if (Player_HoldsBrokenKnife(this)) {
+            temp = 1;
+        } else {
+            temp = Player_GetSwordHeld(this) - 1;
+        }
+
+        if ((arg2 >= 16) && (arg2 < 20)) {
+            flags = sMeleeWeaponDmgFlags[temp][1];
+        } else {
+            flags = sMeleeWeaponDmgFlags[temp][0];
+        }
+
+        Player_SetupMeleeWeaponToucherFlags(this, 0, flags);
+        Player_SetupMeleeWeaponToucherFlags(this, 1, flags);
     }
-
-    if ((arg2 != this->swordAnimation) || !(this->slashCounter < 3)) {
-        this->slashCounter = 0;
+    else {
+        Player_SetupReturnToStandStill(this, globalCtx);
     }
-
-    this->slashCounter++;
-    if (this->slashCounter >= 3) {
-        arg2 += 2;
-    }
-
-    this->swordAnimation = arg2;
-
-    Player_PlayAnimOnceSlowed(globalCtx, this, sMeleeAttackAnims[arg2].unk_00);
-    if ((arg2 != 16) && (arg2 != 17)) {
-        Player_SetupAnimMovement(globalCtx, this, 0x209);
-    }
-
-    this->currentYaw = this->actor.shape.rot.y;
-
-    if (Player_HoldsBrokenKnife(this)) {
-        temp = 1;
-    } else {
-        temp = Player_GetSwordHeld(this) - 1;
-    }
-
-    if ((arg2 >= 16) && (arg2 < 20)) {
-        flags = sMeleeWeaponDmgFlags[temp][1];
-    } else {
-        flags = sMeleeWeaponDmgFlags[temp][0];
-    }
-
-    Player_SetupMeleeWeaponToucherFlags(this, 0, flags);
-    Player_SetupMeleeWeaponToucherFlags(this, 1, flags);
 }
 
 void Player_SetupInvincibility(Player* this, s32 timer) {
