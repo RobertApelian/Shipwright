@@ -25,6 +25,7 @@
 #include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
 #include "overlays/actors/ovl_En_Cow/z_en_cow.h"
 #include "overlays/actors/ovl_En_Light/z_en_light.h"
+#include "overlays/actors/ovl_En_Encount2/z_en_encount2.h"
 
 typedef struct {
     /* 0x00 */ u8 itemId;
@@ -10840,41 +10841,44 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
 
     static u8 inJail = false;
-    static BgSpot15Saku* jail1 = NULL;
-    static BgSpot15Saku* jail2 = NULL;
-    static BgSpot15Saku* jail3 = NULL;
-    static BgSpot15Saku* jail4 = NULL;
-    static EnAObj* jail5 = NULL;
+    static BgSpot15Saku* jail[4] = { NULL, NULL, NULL, NULL };
+    static EnAObj* jailFloor = NULL;
+    s16 i;
 
     #define PLAYER_JAIL_DIST 75
     #define PLAYER_JAIL_FLOOR_DIST 150
 
     if (CVar_GetS32("gJailTime", 0)) {
         if (!inJail) {
-            jail1 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+            jail[0] = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
                                                this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1);
-            jail2 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+            jail[1] = (BgSpot15Saku*)Actor_Spawn(
+                &globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x - PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
                                                this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1);
-            jail3 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+            jail[2] = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x, this->actor.world.pos.y - 1,
                                                this->actor.world.pos.z + PLAYER_JAIL_DIST, 0, 0, 0, 1);
-            jail4 = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
+            jail[3] = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x, this->actor.world.pos.y - 1,
                                                this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 1);
-            jail5 = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
+            jailFloor = (EnAObj*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
                                          this->actor.world.pos.y - PLAYER_JAIL_FLOOR_DIST - 1, this->actor.world.pos.z,
                                          0, 0, 0, 5);
+            for (i = 0; i < 4; i++) {
+                jail[i]->dyna.actor.room = -1;
+            }
+            jailFloor->dyna.actor.room = -1;
+
             inJail = true;
         }
     } else {
         if (inJail) {
-            Actor_Kill(jail1);
-            Actor_Kill(jail2);
-            Actor_Kill(jail3);
-            Actor_Kill(jail4);
-            Actor_Kill(jail5);
+            for (i = 0; i < 4; i++) {
+                Actor_Kill(jail[i]);
+            }
+            Actor_Kill(jailFloor);
             inJail = false;
         }
     }
@@ -10882,7 +10886,6 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     static u8 cowRitual = false;
     static EnCow* cow[5] = { NULL, NULL, NULL, NULL, NULL };
     static EnLight* ritualFlame = NULL;
-    s16 i;
 
     if (CVar_GetS32("gCowRitual", 0)) {
         if (!cowRitual) {
@@ -10928,6 +10931,28 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             }
             Actor_Kill(ritualFlame);
             cowRitual = false;
+        }
+    }
+
+    static EnEncount2* fireRockSpawner = NULL;
+    static u8 fireRocksFalling = false;
+    
+    if (CVar_GetS32("gFireRockRain", 0)) {
+        if (!fireRocksFalling) {
+            fireRockSpawner =
+                (EnEncount2*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_ENCOUNT2, this->actor.world.pos.x,
+                                         this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0);
+            fireRockSpawner->actor.room = -1;
+            fireRocksFalling = true;
+        }
+        else {
+            fireRockSpawner->actor.world.pos = this->actor.world.pos;
+        }
+    }
+    else {
+        if (fireRocksFalling != false) {
+            Actor_Kill(fireRockSpawner);
+            fireRocksFalling = false;
         }
     }
 
