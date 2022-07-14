@@ -23,6 +23,8 @@
 
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
 #include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
+#include "overlays/actors/ovl_En_Cow/z_en_cow.h"
+#include "overlays/actors/ovl_En_Light/z_en_light.h"
 
 typedef struct {
     /* 0x00 */ u8 itemId;
@@ -6263,48 +6265,53 @@ void func_8083D53C(GlobalContext* globalCtx, Player* this) {
 
 void func_8083D6EC(GlobalContext* globalCtx, Player* this) {
     Vec3f ripplePos;
-    f32 temp1;
-    f32 temp2;
-    f32 temp3;
-    f32 temp4;
+    f32 unsinkSpeed;
+    f32 maxSinkSpeed;
+    f32 sinkSpeed;
+    f32 posDiffMag;
 
     this->actor.minVelocityY = -20.0f;
     this->actor.gravity = REG(68) / 100.0f;
 
-    if (Player_IsFloorSinkingSand(sFloorSpecialProperty)) {
-        temp1 = fabsf(this->linearVelocity) * 20.0f;
-        temp3 = 0.0f;
+    if (Player_IsFloorSinkingSand(sFloorSpecialProperty) || CVar_GetS32("gSinkingFloor", 0)) {
+        unsinkSpeed = fabsf(this->linearVelocity) * 20.0f;
+        sinkSpeed = 0.0f;
 
-        if (sFloorSpecialProperty == 4) {
-            if (this->shapeOffsetY > 1300.0f) {
-                temp2 = this->shapeOffsetY;
+        if (sFloorSpecialProperty == 4 || CVar_GetS32("gSinkingFloor", 0)) {
+            if (this->shapeOffsetY > 1300.0f && !(CVar_GetS32("gSinkingFloor", 0) && sFloorSpecialProperty != 4)) {
+                maxSinkSpeed = this->shapeOffsetY;
             } else {
-                temp2 = 1300.0f;
+                if (CVar_GetS32("gSinkingFloor", 0)) {
+                    maxSinkSpeed = 4250.0f;
+                }
+                else {
+                    maxSinkSpeed = 1300.0f;
+                }
             }
             if (this->currentBoots == PLAYER_BOOTS_HOVER) {
-                temp1 += temp1;
+                unsinkSpeed += unsinkSpeed;
             } else if (this->currentBoots == PLAYER_BOOTS_IRON) {
-                temp1 *= 0.3f;
+                unsinkSpeed *= 0.3f;
             }
         } else {
-            temp2 = 20000.0f;
+            maxSinkSpeed = 20000.0f;
             if (this->currentBoots != PLAYER_BOOTS_HOVER) {
-                temp1 += temp1;
+                unsinkSpeed += unsinkSpeed;
             } else if ((sFloorSpecialProperty == 7) || (this->currentBoots == PLAYER_BOOTS_IRON)) {
-                temp1 = 0;
+                unsinkSpeed = 0;
             }
         }
 
         if (this->currentBoots != PLAYER_BOOTS_HOVER) {
-            temp3 = (temp2 - this->shapeOffsetY) * 0.02f;
-            temp3 = CLAMP(temp3, 0.0f, 300.0f);
+            sinkSpeed = (maxSinkSpeed - this->shapeOffsetY) * 0.02f;
+            sinkSpeed = CLAMP(sinkSpeed, 0.0f, 300.0f);
             if (this->currentBoots == PLAYER_BOOTS_IRON) {
-                temp3 += temp3;
+                sinkSpeed += sinkSpeed;
             }
         }
 
-        this->shapeOffsetY += temp3 - temp1;
-        this->shapeOffsetY = CLAMP(this->shapeOffsetY, 0.0f, temp2);
+        this->shapeOffsetY += sinkSpeed - unsinkSpeed;
+        this->shapeOffsetY = CLAMP(this->shapeOffsetY, 0.0f, maxSinkSpeed);
 
         this->actor.gravity -= this->shapeOffsetY * 0.004f;
     } else {
@@ -6313,13 +6320,13 @@ void func_8083D6EC(GlobalContext* globalCtx, Player* this) {
 
     if (this->actor.bgCheckFlags & 0x20) {
         if (this->actor.yDistToWater < 50.0f) {
-            temp4 = fabsf(this->bodyPartsPos[PLAYER_BODYPART_WAIST].x - this->prevWaistPos.x) +
+            posDiffMag = fabsf(this->bodyPartsPos[PLAYER_BODYPART_WAIST].x - this->prevWaistPos.x) +
                     fabsf(this->bodyPartsPos[PLAYER_BODYPART_WAIST].y - this->prevWaistPos.y) +
                     fabsf(this->bodyPartsPos[PLAYER_BODYPART_WAIST].z - this->prevWaistPos.z);
-            if (temp4 > 4.0f) {
-                temp4 = 4.0f;
+            if (posDiffMag > 4.0f) {
+                posDiffMag = 4.0f;
             }
-            this->rippleTimer += temp4;
+            this->rippleTimer += posDiffMag;
 
             if (this->rippleTimer > 15.0f) {
                 this->rippleTimer = 0.0f;
@@ -10870,6 +10877,142 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             Actor_Kill(jail5);
             inJail = false;
         }
+    }
+
+    static u8 cowRitual = false;
+    static EnCow* cow[5] = { NULL, NULL, NULL, NULL, NULL };
+    static EnLight* ritualFlame = NULL;
+    s16 i;
+
+    if (CVar_GetS32("gCowRitual", 0)) {
+        if (!cowRitual) {
+            Vec3f origin = this->actor.world.pos;
+            Vec3f vtx[5];
+            s16 cowYaw[5];
+
+            vtx[0].x = origin.x + 100.0f;
+            vtx[0].z = origin.z;
+            cowYaw[0] = DEGF_TO_BINANG(0.0f);
+
+            for (i = 1; i < 5; i++) {
+                vtx[i].x = origin.x + (vtx[i - 1].x - origin.x) * Math_CosS(DEGF_TO_BINANG(72.0f)) -
+                           (vtx[i - 1].z - origin.z) * Math_SinS(DEGF_TO_BINANG(72.0f));
+                vtx[i].z = origin.z + (vtx[i - 1].x - origin.x) * Math_SinS(DEGF_TO_BINANG(72.0f)) +
+                           (vtx[i - 1].z - origin.z) * Math_CosS(DEGF_TO_BINANG(72.0f));
+
+                cowYaw[i] = cowYaw[i - 1] - DEGF_TO_BINANG(72.0f);
+            }
+
+            ritualFlame =
+                (EnLight*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_LIGHT, this->actor.world.pos.x,
+                                      this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0);
+            cow[0] = (EnCow*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_COW, vtx[0].x, this->actor.world.pos.y,
+                                       vtx[0].z, 0, cowYaw[0], 0, 0);
+            cow[1] = (EnCow*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_COW, vtx[1].x, this->actor.world.pos.y,
+                                       vtx[1].z, 0, cowYaw[1], 0, 0);
+            cow[2] = (EnCow*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_COW, vtx[2].x, this->actor.world.pos.y,
+                                       vtx[2].z, 0, cowYaw[2], 0, 0);
+            cow[3] = (EnCow*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_COW, vtx[3].x, this->actor.world.pos.y,
+                                       vtx[3].z, 0, cowYaw[3], 0, 0);
+            cow[4] = (EnCow*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_COW, vtx[4].x, this->actor.world.pos.y,
+                                       vtx[4].z, 0, cowYaw[4], 0, 0);
+            cowRitual = true;
+        }
+    } else {
+        if (cowRitual) {
+            for (i = 0; i < 5; i++) {
+                if (cow[i]->actor.child != NULL) {
+                    Actor_Kill(cow[i]->actor.child);
+                }
+                Actor_Kill(cow[i]);
+            }
+            Actor_Kill(ritualFlame);
+            cowRitual = false;
+        }
+    }
+
+    #define SPACE_ROT_ACCEL_TARGET 90.0f
+
+    static u8 onSpaceTrip = false;
+    static s16 spaceTimer = 0;
+    static f32 rotAccel = 0.0f;
+    static Vec3f spaceFlameVelocity = { 0.0f, 0.5f, 0.0f };
+    static Vec3f spaceFlameAccel = { 0.0f, 0.5f, 0.0f };
+    static Color_RGBA8 spaceFlamePrimColor = { 255, 255, 100, 255 };
+    static Color_RGBA8 spaceFlameEnvColor = { 255, 50, 0, 0 };
+    static Vec3f dustAccel = { 0.0f, -0.3f, 0.0f };
+    static Color_RGBA8 dustPrim = { 200, 200, 200, 128 };
+    static Color_RGBA8 dustEnv = { 100, 100, 100, 0 };
+
+    if (CVar_GetS32("gTripToSpace", 0) || onSpaceTrip) {
+        Vec3f dustVelocity;
+        Vec3f dustPos;
+
+        if (onSpaceTrip == false) {
+            CVar_SetS32("gTripToSpace", 0);
+            onSpaceTrip = true;
+        }
+
+        // If spent more than 15 seconds going to space, void out
+        if (spaceTimer > 15 * 20) {
+            spaceTimer = 0;
+            rotAccel = 0;
+            onSpaceTrip = false;
+            this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            this->actor.gravity = 1.0f;
+            Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_TAKEN_AWAY);
+            globalCtx->unk_11DE9 = 1;
+            func_80078884(NA_SE_OC_ABYSS);
+            Gameplay_TriggerVoidOut(globalCtx);
+        }
+        // If player hits a ceiling, go back to normal gameplay
+        else if (this->actor.bgCheckFlags & (1 << 4)) {
+            spaceTimer = 0;
+            rotAccel = 0;
+            onSpaceTrip = false;
+            this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            this->actor.gravity = 1.0f;
+            Player_SetupReturnToStandStill(this, globalCtx);
+            Player_SpawnExplosion(globalCtx, this);
+        } else {
+            this->stateFlags2 |= PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            this->actor.shape.rot.y += DEGF_TO_BINANG(rotAccel);
+
+            if (rotAccel == SPACE_ROT_ACCEL_TARGET) {
+                this->actor.gravity = 0.0f;
+                this->actor.world.pos.y += 20.0f;
+                func_8002836C(globalCtx, &this->actor.world.pos, &spaceFlameVelocity, &spaceFlameAccel,
+                              &spaceFlamePrimColor, &spaceFlameEnvColor, 200.0f, 0, 8);
+                func_8002F974(&this->actor, NA_SE_EV_STONE_LAUNCH - SFX_FLAG);
+            }
+            else {
+                for (s16 i = 0; i < 3; i++) {
+                    dustVelocity.x = Rand_CenteredFloat(15.0f);
+                    dustVelocity.y = Rand_ZeroFloat(-1.0f);
+                    dustVelocity.z = Rand_CenteredFloat(15.0f);
+                    dustPos.x = this->actor.world.pos.x + (dustVelocity.x + dustVelocity.x);
+                    dustPos.y = this->actor.world.pos.y + 7.0f;
+                    dustPos.z = this->actor.world.pos.z + (dustVelocity.z + dustVelocity.z);
+                    func_8002836C(globalCtx, &dustPos, &dustVelocity, &dustAccel, &dustPrim, &dustEnv,
+                                  (s16)Rand_ZeroFloat(50.0f) + 200, 40, 15);
+                }
+                func_8002F974(&this->actor, NA_SE_EV_FIRE_PILLAR - SFX_FLAG);
+                Math_SmoothStepToF(&rotAccel, SPACE_ROT_ACCEL_TARGET, 0.1f, 1.0f, 0.01f);
+            }
+
+            spaceTimer++;
+        }
+    }
+
+    static u8 forcedSandstormOn = false;
+
+    if (CVar_GetS32("gSandstorm", 0)) {
+        globalCtx->envCtx.sandstormState = 3;
+        forcedSandstormOn = true;
+    }
+    else if (forcedSandstormOn) {
+        globalCtx->envCtx.sandstormState = 0;
+        forcedSandstormOn = false;
     }
 
     if (CVar_GetS32("gNaviSpam", 0)) {

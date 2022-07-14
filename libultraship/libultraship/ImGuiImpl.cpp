@@ -903,6 +903,10 @@ namespace SohImGui {
                         EnhancementCheckbox("Restrain Link", "gRestrainLink");
                         EnhancementCheckbox("Disable melee attacks", "gDisableMeleeAttacks");
                         EnhancementCheckbox("Disable enemy drawing", "gDisableEnemyDraw");
+                        EnhancementCheckbox("Covers the screen with a sandstorm", "gSandstorm");
+                        EnhancementCheckbox("Link sinks into any floor", "gSinkingFloor");
+                        EnhancementCheckbox("Send Link on a trip to space", "gTripToSpace");
+                        EnhancementCheckbox("Summon the cow ritual", "gCowRitual");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");
