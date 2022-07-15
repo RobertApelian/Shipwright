@@ -885,6 +885,7 @@ namespace SohImGui {
                         EnhancementCheckbox("Send Link on a trip to space", "gTripToSpace");
                         EnhancementCheckbox("Summon the cow ritual", "gCowRitual");
                         EnhancementCheckbox("Rain flaming rocks from the sky", "gFireRockRain");
+                        EnhancementCheckbox("Start a cucco attack", "gCuccoAttack");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");

@@ -356,10 +356,14 @@ void EnAttackNiw_Update(Actor* thisx, GlobalContext* globalCtx) {
     tmpf1 = 20.0f;
     if (this->actor.xyzDistToPlayerSq < SQ(tmpf1)) {
         cucco = (EnNiw*)this->actor.parent;
-        if ((this->actor.parent->update != NULL) && (this->actor.parent != NULL) && (cucco != NULL) &&
-            (cucco->timer9 == 0) && (player->invincibilityTimer == 0)) {
+        if (this->actor.parent != NULL) {
+            if ((this->actor.parent->update != NULL) && (cucco != NULL) &&
+                (cucco->timer9 == 0) && (player->invincibilityTimer == 0)) {
+                func_8002F6D4(globalCtx, &this->actor, 2.0f, this->actor.world.rot.y, 0.0f, 0x10);
+                cucco->timer9 = 0x46;
+            }
+        } else if (CVar_GetS32("gCuccoAttack", 0) && (player->invincibilityTimer == 0)) {
             func_8002F6D4(globalCtx, &this->actor, 2.0f, this->actor.world.rot.y, 0.0f, 0x10);
-            cucco->timer9 = 0x46;
         }
     }
     if (this->unk_25E == 0) {

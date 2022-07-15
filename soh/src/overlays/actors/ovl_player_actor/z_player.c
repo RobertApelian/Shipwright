@@ -26,6 +26,7 @@
 #include "overlays/actors/ovl_En_Cow/z_en_cow.h"
 #include "overlays/actors/ovl_En_Light/z_en_light.h"
 #include "overlays/actors/ovl_En_Encount2/z_en_encount2.h"
+#include "overlays/actors/ovl_En_Attack_Niw/z_en_attack_niw.h"
 
 typedef struct {
     /* 0x00 */ u8 itemId;
@@ -10841,6 +10842,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
 
     static u8 inJail = false;
+    static u8 respawnJail = false;
     static BgSpot15Saku* jail[4] = { NULL, NULL, NULL, NULL };
     static EnAObj* jailFloor = NULL;
     s16 i;
@@ -10848,7 +10850,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     #define PLAYER_JAIL_DIST 75
     #define PLAYER_JAIL_FLOOR_DIST 150
 
-    if (CVar_GetS32("gJailTime", 0)) {
+    if (CVar_GetS32("gJailTime", 0) && !respawnJail) {
         if (!inJail) {
             jail[0] = (BgSpot15Saku*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
@@ -10873,12 +10875,23 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
 
             inJail = true;
         }
+        else {
+            if (jailFloor->dyna.actor.xzDistToPlayer > PLAYER_JAIL_DIST) {
+                // Forces jail to despawn, it will respawn at Link's new position to prevent cheesing the jail
+                respawnJail = true;
+            }
+        }
     } else {
         if (inJail) {
             for (i = 0; i < 4; i++) {
-                Actor_Kill(jail[i]);
+                if (jail[i] != NULL) {
+                    Actor_Kill(jail[i]);
+                }
             }
-            Actor_Kill(jailFloor);
+            if (jailFloor != NULL) {
+                Actor_Kill(jailFloor);
+            }
+            respawnJail = false;
             inJail = false;
         }
     }
@@ -10924,12 +10937,16 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     } else {
         if (cowRitual) {
             for (i = 0; i < 5; i++) {
-                if (cow[i]->actor.child != NULL) {
-                    Actor_Kill(cow[i]->actor.child);
+                if (cow[i] != NULL) {
+                    if (cow[i]->actor.child != NULL) {
+                        Actor_Kill(cow[i]->actor.child);
+                    }
+                    Actor_Kill(cow[i]);
                 }
-                Actor_Kill(cow[i]);
             }
-            Actor_Kill(ritualFlame);
+            if (ritualFlame != NULL) {
+                Actor_Kill(ritualFlame);
+            }
             cowRitual = false;
         }
     }
@@ -10951,9 +10968,59 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
     else {
         if (fireRocksFalling != false) {
-            Actor_Kill(fireRockSpawner);
+            if (fireRockSpawner != NULL) {
+                Actor_Kill(fireRockSpawner);
+            }
             fireRocksFalling = false;
         }
+    }
+
+    #define CUCCO_ATK_NUM_MAX 32
+
+    static s16 cuccoAtkTimer = 0;
+    static s16 cuccoAtkNum = 0;
+    EnAttackNiw* attackCucco[CUCCO_ATK_NUM_MAX] = { NULL };
+
+    if (CVar_GetS32("gCuccoAttack", 0)) {
+        f32 viewX;
+        f32 viewY;
+        f32 viewZ;
+        Vec3f attackCuccoPos;
+
+        if ((cuccoAtkTimer == 0) && (cuccoAtkNum < CUCCO_ATK_NUM_MAX)) {
+            viewX = globalCtx->view.lookAt.x - globalCtx->view.eye.x;
+            viewY = globalCtx->view.lookAt.y - globalCtx->view.eye.y;
+            viewZ = globalCtx->view.lookAt.z - globalCtx->view.eye.z;
+            attackCuccoPos.x = ((Rand_ZeroOne() - 0.5f) * viewX) + globalCtx->view.eye.x;
+            attackCuccoPos.y = Rand_CenteredFloat(0.3f) + ((globalCtx->view.eye.y + 50.0f) + (viewY * 0.5f));
+            attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + globalCtx->view.eye.z;
+            attackCucco[cuccoAtkNum] =
+                (EnAttackNiw*)Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_ATTACK_NIW, attackCuccoPos.x,
+                                          attackCuccoPos.y, attackCuccoPos.z, 0, 0, 0, 0);
+
+            attackCucco[cuccoAtkNum]->actor.room = -1;
+
+            if (attackCucco != NULL) {
+                cuccoAtkNum++;
+                cuccoAtkTimer = 10;
+            }
+        }
+        else if (cuccoAtkNum == CUCCO_ATK_NUM_MAX) {
+            for (i = 0; i < CUCCO_ATK_NUM_MAX; i++) {
+                if (attackCucco[i] != NULL) {
+                    Actor_Kill(attackCucco[i]);
+                }
+            }
+            cuccoAtkNum = 0;
+        }
+        DECR(cuccoAtkTimer);
+    } else {
+        for (i = 0; i < CUCCO_ATK_NUM_MAX; i++) {
+            if (attackCucco[i] != NULL) {
+                Actor_Kill(attackCucco[i]);
+            }
+        }
+        cuccoAtkNum = 0;
     }
 
     #define SPACE_ROT_ACCEL_TARGET 90.0f
