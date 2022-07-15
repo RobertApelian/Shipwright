@@ -11023,6 +11023,41 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         cuccoAtkNum = 0;
     }
 
+    static Actor* explodeRupee = NULL;
+    static f32 j = 0;
+    static Vec3f rupeeOrigin = { 0 };
+
+    if (CVar_GetS32("gExplodingRupeeChallenge", 0)) {
+        if (explodeRupee == NULL) {
+            explodeRupee =
+                Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_EX_RUPPY, this->actor.world.pos.x + 150.0f,
+                            this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 1);
+            explodeRupee->room = -1;
+            rupeeOrigin = this->actor.world.pos;
+        } else {
+            if (this->damageEffect == PLAYER_DMGEFFECT_KNOCKBACK) {
+                func_80078884(NA_SE_SY_ERROR);
+                CVar_SetS32("gExplodingRupeeChallenge", 0);
+            } else if (Math_Vec3f_DistXZ(&rupeeOrigin, &this->actor.world.pos) >= 160.0f) {
+                Audio_PlayFanfare(NA_BGM_SMALL_ITEM_GET | 0x900);
+                CVar_SetS32("gExplodingRupeeChallenge", 0);
+            }
+            explodeRupee->world.pos.x = 150.0f * Math_CosF(j) + rupeeOrigin.x;
+            explodeRupee->world.pos.z = 150.0f * Math_SinF(j) + rupeeOrigin.z;
+            if (j < DEGF_TO_RADF(360.0f)) {
+                j += DEGF_TO_RADF(36.0f);
+            } else if (j >= DEGF_TO_RADF(360.0f)) {
+                j = DEGF_TO_RADF(0.0f);
+            }
+        }
+    }
+    else {
+        if (explodeRupee != NULL) {
+            Actor_Kill(explodeRupee);
+            explodeRupee = NULL;
+        }
+    }
+
     #define SPACE_ROT_ACCEL_TARGET 90.0f
 
     static u8 onSpaceTrip = false;

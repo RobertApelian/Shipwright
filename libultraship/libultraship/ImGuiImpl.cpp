@@ -886,6 +886,7 @@ namespace SohImGui {
                         EnhancementCheckbox("Summon the cow ritual", "gCowRitual");
                         EnhancementCheckbox("Rain flaming rocks from the sky", "gFireRockRain");
                         EnhancementCheckbox("Start a cucco attack", "gCuccoAttack");
+                        EnhancementCheckbox("Begin the Exploding Rupee Challenge", "gExplodingRupeeChallenge");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");
@@ -1320,11 +1321,10 @@ namespace SohImGui {
             ImGui::PopStyleColor();
         }
 
-        //// DEBUGGING HEALTH BAR
+        //// DEBUGGING
         //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
         //ImGui::Begin("Health Bar Debugging", nullptr, ImGuiWindowFlags_NoFocusOnAppearing);
-        //ImGui::Text("X: %d", CVar_GetS32("healthBarX", 0));
-        //ImGui::Text("Y: %d", CVar_GetS32("healthBarY", 0));
+        //ImGui::Text("X: %f", CVar_GetFloat("rupeeX", 0));
         //ImGui::End();
         //ImGui::PopStyleColor();
 
