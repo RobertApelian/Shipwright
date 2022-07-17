@@ -3155,7 +3155,7 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
     s16 healthBarX;
     s16 healthBarY;
 
-    OPEN_DISPS(globalCtx->state.gfxCtx, "../z_parameter.c", 2650);
+    OPEN_DISPS(globalCtx->state.gfxCtx);
 
     // Get actor projected position
     func_8002BE04(globalCtx, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
@@ -3215,7 +3215,7 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
                             G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
     }
 
-    CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_parameter.c", 2731);
+    CLOSE_DISPS(globalCtx->state.gfxCtx);
 }
 
 void func_80088AA0(s16 arg0) {
