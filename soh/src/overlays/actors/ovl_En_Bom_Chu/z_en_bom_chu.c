@@ -257,7 +257,11 @@ void EnBomChu_Move(EnBomChu* this, GlobalContext* globalCtx) {
     Vec3f posSide;
     Vec3f posUpDown;
 
-    this->actor.speedXZ = 8.0f;
+    if (CVar_GetS32("gBrokenBombchus", 0)) {
+        this->actor.speedXZ = Rand_CenteredFloat(16 * 2) + 2.0f;
+    } else {
+        this->actor.speedXZ = 8.0f;
+    }
     lineLength = this->actor.speedXZ * 2.0f;
 
     if (this->timer != 0) {

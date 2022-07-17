@@ -1193,7 +1193,9 @@ void Player_DrawGetItem(GlobalContext* globalCtx, Player* this) {
     //if (!this->giObjectLoading || !osRecvMesg(&this->giObjectLoadQueue, NULL, OS_MESG_NOBLOCK)) // OTRTODO: Do something about osRecvMesg here...
     {
         this->giObjectLoading = false;
-        Player_DrawGetItemImpl(globalCtx, this, &sGetItemRefPos, ABS(this->giDrawIdPlusOne));
+        if (!CVar_GetS32("gAnnoyingGetItems", 0)) {
+            Player_DrawGetItemImpl(globalCtx, this, &sGetItemRefPos, ABS(this->giDrawIdPlusOne));
+        }
     }
 }
 

@@ -887,6 +887,9 @@ namespace SohImGui {
                         EnhancementCheckbox("Rain flaming rocks from the sky", "gFireRockRain");
                         EnhancementCheckbox("Start a cucco attack", "gCuccoAttack");
                         EnhancementCheckbox("Begin the Exploding Rupee Challenge", "gExplodingRupeeChallenge");
+                        EnhancementCheckbox("Ban picking up item drops", "gBanItemDropPickup");
+                        EnhancementCheckbox("Break Bombchus", "gBrokenBombchus");
+                        EnhancementCheckbox("Makes getting items very annoying", "gAnnoyingGetItems");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");

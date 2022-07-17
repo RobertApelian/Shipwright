@@ -799,6 +799,14 @@ void EnItem00_Update(Actor* thisx, GlobalContext* globalCtx) {
         return;
     }
 
+    if (CVar_GetS32("gBanItemDropPickup", 0) &&
+        !(this->actor.params == ITEM00_HEART_PIECE || this->actor.params == ITEM00_SMALL_KEY ||
+          this->actor.params >= ITEM00_SHIELD_DEKU)) {
+        func_80078884(NA_SE_SY_ERROR);
+        Actor_Kill(&this->actor);
+        return;
+    }
+
     switch (this->actor.params) {
         case ITEM00_RUPEE_GREEN:
             Item_Give(globalCtx, ITEM_RUPEE_GREEN);

@@ -6569,20 +6569,22 @@ static s32 D_80854598[] = {
     0xFFDB0871, 0xF8310000, 0x00940470, 0xF3980000, 0xFFB504A9, 0x0C9F0000, 0x08010402,
 };
 
-void func_8083E4C4(GlobalContext* globalCtx, Player* this, GetItemEntry* giEntry) {
-    s32 sp1C = giEntry->field & 0x1F;
+void Player_PickupItemDrop(GlobalContext* globalCtx, Player* this, GetItemEntry* giEntry) {
+    s32 dropType = giEntry->field & 0x1F;
 
-    if (!(giEntry->field & 0x80)) {
-        Item_DropCollectible(globalCtx, &this->actor.world.pos, sp1C | 0x8000);
-        if ((sp1C != 4) && (sp1C != 8) && (sp1C != 9) && (sp1C != 0xA) && (sp1C != 0) && (sp1C != 1) && (sp1C != 2) &&
-            (sp1C != 0x14) && (sp1C != 0x13)) {
+    if (!CVar_GetS32("gBanItemDropPickup", 0)) {
+        if (!(giEntry->field & 0x80)) {
+            Item_DropCollectible(globalCtx, &this->actor.world.pos, dropType | 0x8000);
+            if ((dropType != 4) && (dropType != 8) && (dropType != 9) && (dropType != 0xA) && (dropType != 0) && (dropType != 1) && (dropType != 2) &&
+                (dropType != 0x14) && (dropType != 0x13)) {
+                Item_Give(globalCtx, giEntry->itemId);
+            }
+        } else {
             Item_Give(globalCtx, giEntry->itemId);
         }
-    } else {
-        Item_Give(globalCtx, giEntry->itemId);
-    }
 
-    func_80078884((this->getItemId < 0) ? NA_SE_SY_GET_BOXITEM : NA_SE_SY_GET_ITEM);
+        func_80078884((this->getItemId < 0) ? NA_SE_SY_GET_BOXITEM : NA_SE_SY_GET_ITEM);
+    }
 }
 
 s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
@@ -6622,7 +6624,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                         ((interactedActor->id == ACTOR_EN_ITEM00 &&
                           (interactedActor->params != 6 && interactedActor->params != 17)) ||
                          (interactedActor->id == ACTOR_EN_KAREBABA || interactedActor->id == ACTOR_EN_DEKUBABA))) {
-                        func_8083E4C4(globalCtx, this, giEntry);
+                        Player_PickupItemDrop(globalCtx, this, giEntry);
                         this->getItemId = GI_NONE;
                         return 0;
                     }                    
@@ -6642,7 +6644,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                     return 1;
                 }
 
-                func_8083E4C4(globalCtx, this, giEntry);
+                Player_PickupItemDrop(globalCtx, this, giEntry);
                 this->getItemId = GI_NONE;
             }
         } else if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) &&
@@ -13290,7 +13292,7 @@ void func_8084DFAC(GlobalContext* globalCtx, Player* this) {
     this->currentYaw = this->actor.shape.rot.y;
 }
 
-s32 func_8084DFF4(GlobalContext* globalCtx, Player* this) {
+s32 Player_SetupGetItemText(GlobalContext* globalCtx, Player* this) {
     GetItemEntry* giEntry;
     s32 temp1;
     s32 temp2;
@@ -13309,7 +13311,12 @@ s32 func_8084DFF4(GlobalContext* globalCtx, Player* this) {
             gSaveContext.swordHealth = 8;       
         }
 
-        Message_StartTextbox(globalCtx, giEntry->textId, &this->actor);
+        if (CVar_GetS32("gAnnoyingGetItems", 0)) {
+            Message_StartTextbox(globalCtx, 0x5012, &this->actor);
+        }
+        else {
+            Message_StartTextbox(globalCtx, giEntry->textId, &this->actor);
+        }
         Item_Give(globalCtx, giEntry->itemId);
 
         if (((this->getItemId >= GI_RUPEE_GREEN) && (this->getItemId <= GI_RUPEE_RED)) ||
@@ -13348,7 +13355,7 @@ void Player_GetItemInWater(Player* this, GlobalContext* globalCtx) {
     this->stateFlags2 |= PLAYER_STATE2_DISABLE_MOVE_ROTATION_WHILE_Z_TARGETING;
 
     if (LinkAnimation_Update(globalCtx, &this->skelAnime)) {
-        if (!(this->stateFlags1 & PLAYER_STATE1_GETTING_ITEM) || func_8084DFF4(globalCtx, this)) {
+        if (!(this->stateFlags1 & PLAYER_STATE1_GETTING_ITEM) || Player_SetupGetItemText(globalCtx, this)) {
             func_8084DF6C(globalCtx, this);
             Player_SetupSwimIdle(globalCtx, this);
             Player_ResetSubCam(globalCtx, this);
@@ -13474,7 +13481,7 @@ void Player_GetItem(Player* this, GlobalContext* globalCtx) {
                 this->genericTimer--;
             }
 
-            if (func_8084DFF4(globalCtx, this) && (this->genericTimer == 1)) {
+            if (Player_SetupGetItemText(globalCtx, this) && (this->genericTimer == 1)) {
                 cond = ((this->talkActor != NULL) && (this->exchangeItemId < 0)) ||
                        (this->stateFlags3 & PLAYER_STATE3_FORCE_PULL_OCARINA);
 
