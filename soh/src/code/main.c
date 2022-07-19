@@ -1,6 +1,7 @@
 #include "global.h"
 #include "vt.h"
 #include <soh/Enhancements/bootcommands.h>
+#include <soh/Enhancements/chaos.h>
 #include "soh/OTRGlobals.h"
 
 
@@ -41,6 +42,7 @@ void main(int argc, char** argv)
     GameConsole_Init();
     InitOTR();
     BootCommands_Init();
+    Chaos_Init();
 
     BootCommands_ParseBootArgs(argc - 1, (char**)&argv[1]);
     Main(0);

@@ -848,6 +848,8 @@ namespace SohImGui {
                 {
                     if (ImGui::BeginMenu("Chaos"))
                     {
+                        EnhancementCheckbox("Enable Chaos", "gChaosEnabled");
+
                         EnhancementCheckbox("Enables chat integration", "gChatIntegration");
                         EnhancementCheckbox("Enables enemy health bar", "gEnemyHealthBar");
                         EnhancementCheckbox("Disable first person view", "gDisableFPSView");

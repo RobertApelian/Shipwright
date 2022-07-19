@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "soh/Enhancements/gameconsole.h"
+#include "soh/Enhancements/chaos.h"
 
 #include "soh/frame_interpolation.h"
 
@@ -504,6 +505,8 @@ void Gameplay_Update(GlobalContext* globalCtx) {
     Input* input;
     u32 i;
     s32 pad2;
+
+    Chaos_EachFrame();
 
     input = globalCtx->state.input;
 

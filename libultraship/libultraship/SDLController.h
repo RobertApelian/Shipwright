@@ -17,9 +17,6 @@ namespace Ship {
 			bool Connected() const override { return Cont != nullptr; }
 			bool CanGyro() const override { return supportsGyro; }
 			bool CanRumble() const override {
-#if SDL_COMPILEDVERSION >= SDL_VERSIONNUM(2,0,18)
-				return SDL_GameControllerHasRumble(Cont);
-#endif
 				return true;
 			}
 
