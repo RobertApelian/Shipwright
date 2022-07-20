@@ -849,8 +849,8 @@ namespace SohImGui {
                     if (ImGui::BeginMenu("Chaos"))
                     {
                         EnhancementCheckbox("Enable Chaos", "gChaosEnabled");
-
-                        EnhancementCheckbox("Enables chat integration", "gChatIntegration");
+                        //EnhancementCheckbox("Enables chat integration", "gChatIntegration");
+/*
                         EnhancementCheckbox("Enables enemy health bar", "gEnemyHealthBar");
                         EnhancementCheckbox("Disable first person view", "gDisableFPSView");
                         EnhancementCheckbox("All arrows are normal arrows", "gForceNormalArrows");
@@ -878,13 +878,10 @@ namespace SohImGui {
                         EnhancementCheckbox("Tiny-headed Link", "gTinyHead");
                         EnhancementCheckbox("Darken area around Link", "gDarkenArea");
                         EnhancementCheckbox("Chaos spin", "gChaosSpin");
-                        EnhancementCheckbox("Spawn explosion on Link", "gSpawnExplosion");
-                        EnhancementCheckbox("Restrain Link", "gRestrainLink");
                         EnhancementCheckbox("Disable melee attacks", "gDisableMeleeAttacks");
                         EnhancementCheckbox("Disable enemy drawing", "gDisableEnemyDraw");
                         EnhancementCheckbox("Covers the screen with a sandstorm", "gSandstorm");
                         EnhancementCheckbox("Link sinks into any floor", "gSinkingFloor");
-                        EnhancementCheckbox("Send Link on a trip to space", "gTripToSpace");
                         EnhancementCheckbox("Summon the cow ritual", "gCowRitual");
                         EnhancementCheckbox("Rain flaming rocks from the sky", "gFireRockRain");
                         EnhancementCheckbox("Start a cucco attack", "gCuccoAttack");
@@ -892,6 +889,10 @@ namespace SohImGui {
                         EnhancementCheckbox("Ban picking up item drops", "gBanItemDropPickup");
                         EnhancementCheckbox("Break Bombchus", "gBrokenBombchus");
                         EnhancementCheckbox("Makes getting items very annoying", "gAnnoyingGetItems");
+*/
+                        EnhancementCheckbox("Spawn explosion on Link", "gSpawnExplosion");
+                        EnhancementCheckbox("Restrain Link", "gRestrainLink");
+                        EnhancementCheckbox("Send Link on a trip to space", "gTripToSpace");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");

@@ -2,6 +2,7 @@
 #include "Cvar.h"
 
 #include "chaos_commands.h"
+#include "chaos_commands_macros.h"
 
 #include <z64.h>
 #include <variables.h>
@@ -27,24 +28,47 @@ struct CommandCreator {
 	std::function<std::unique_ptr<ChaosCommand>(const std::vector<uint8_t>&)> create_;
 };
 
+uint8_t TIMED_CVAR_ID = 0x11;
 static std::map<uint8_t, CommandCreator> kCommands {
-	{ 0x03, {
-				[](const std::vector<uint8_t>&) { return std::vector<uint8_t>({}); },
-				[](const std::vector<uint8_t>&) { 
-					return std::make_unique<OneShotCommand>([]() { gSaveContext.health = 0; }); 
-				}
-			}
-	},
-	{ 0x11, {
-				[](const std::vector<uint8_t>& bytes) { 
-					return std::vector<uint8_t>(bytes.begin() + 1, bytes.begin() + 1 + sizeof(uint32_t)); 
-				},
-				[](const std::vector<uint8_t>& payload) {
-					return std::make_unique<TimedBooleanCVarCommand>(
-						"gInvisPlayer", Read<uint32_t>(payload, 0));
-				}
-			}
-	}
+	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gEnemyHealthBar"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableFPSView"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gForceNormalArrows"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableLedgeClimb"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFloorIsLava"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gExplodingRolls"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFreezingRolls"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableTargeting"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gMegaLetterbox"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableTurning"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gJailTime"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gOnHold"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSonicRoll"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gNaviSpam"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gScuffedLink"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gRaveMode"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gInvisPlayer"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSlipperyFloor"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gIceDamage"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gElectricDamage"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gKnockbackDamage"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFireDamage"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gForwardJump"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gBigHead"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gTinyHead"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDarkenArea"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gChaosSpin"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableMeleeAttacks"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableEnemyDraw"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSandstorm"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSinkingFloor"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gCowRitual"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFireRockRain"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gCuccoAttack"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gExplodingRupeeChallenge"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gBanItemDropPickup"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gBrokenBombchus"),
+	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gAnnoyingGetItems"),
 };
 
 static bool g_is_enabled = false;
