@@ -17,6 +17,11 @@
 		cvar, Read<uint32_t>(payload, 0));				\
 }
 
+#define CR_ONE_SHOT_CVAR(cvar)									\
+[](const std::vector<uint8_t>& payload) {						\
+	return std::make_unique<OneShotBooleanCVarCommand>(cvar);	\
+}
+
 #define CR_ONE_SHOT(body) 									\
 [](const std::vector<uint8_t>& payload) { 					\
 	return std::make_unique<OneShotCommand>([=]() { body });\
@@ -25,8 +30,10 @@
 // Commands
 #define CMD(id, payload, creator) { id, { payload, creator }}
 
-#define CMD_TIMED_CVAR(id, cvar) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_TIMED_CVAR(cvar))												\
+#define CMD_TIMED_CVAR(id, cvar) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_TIMED_CVAR(cvar))
 
 #define CMD_ONE_SHOT(id, payload, body) CMD(id, payload, CR_ONE_SHOT(body))
+
+#define CMD_ONE_SHOT_CVAR(id, cvar) CMD(id, PL_NONE(), CR_ONE_SHOT_CVAR(cvar))
 
 #endif

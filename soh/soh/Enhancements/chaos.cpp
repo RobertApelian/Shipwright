@@ -3,6 +3,7 @@
 
 #include "chaos_commands.h"
 #include "chaos_commands_macros.h"
+#include "chaos_utils.h"
 
 #include <z64.h>
 #include <variables.h>
@@ -18,6 +19,11 @@
 #include "chaos_linux.h"
 #endif
 
+bool g_link_is_ready_this_frame = true;
+
+#define s_add(a, b, max) (max - a < b ? max : a + b)
+#define s_sub(a, b, min) (a - min < b ? min : a - b)
+
 template<typename T>
 T Read(const std::vector<uint8_t>& bytes, size_t start_index) {
 	return *((T*)(bytes.data() + start_index));
@@ -28,47 +34,56 @@ struct CommandCreator {
 	std::function<std::unique_ptr<ChaosCommand>(const std::vector<uint8_t>&)> create_;
 };
 
-uint8_t TIMED_CVAR_ID = 0x11;
+uint8_t CMD_ID = 0x11;
 static std::map<uint8_t, CommandCreator> kCommands {
+	CMD_ONE_SHOT(0x00, PL_NONE(), { push_pending_ice_trap(); }),
+	// TODO: Check if ready
+	CMD_ONE_SHOT(0x01, PL_NONE(), { void_out(); }),
+	// TODO: Check if ready
+	CMD_ONE_SHOT(0x02, PL_NONE(), { toggle_age(); }),
 	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gEnemyHealthBar"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableFPSView"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gForceNormalArrows"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableLedgeClimb"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFloorIsLava"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gExplodingRolls"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFreezingRolls"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableTargeting"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gMegaLetterbox"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableTurning"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gJailTime"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gOnHold"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSonicRoll"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gNaviSpam"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gScuffedLink"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gRaveMode"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gInvisPlayer"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSlipperyFloor"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gIceDamage"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gElectricDamage"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gKnockbackDamage"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFireDamage"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gForwardJump"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gBigHead"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gTinyHead"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDarkenArea"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gChaosSpin"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableMeleeAttacks"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gDisableEnemyDraw"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSandstorm"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gSinkingFloor"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gCowRitual"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gFireRockRain"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gCuccoAttack"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gExplodingRupeeChallenge"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gBanItemDropPickup"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gBrokenBombchus"),
-	CMD_TIMED_CVAR(TIMED_CVAR_ID++, "gAnnoyingGetItems"),
+	CMD_TIMED_CVAR(CMD_ID++, "gEnemyHealthBar"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDisableFPSView"),
+	CMD_TIMED_CVAR(CMD_ID++, "gForceNormalArrows"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDisableLedgeClimb"),
+	CMD_TIMED_CVAR(CMD_ID++, "gFloorIsLava"),
+	CMD_TIMED_CVAR(CMD_ID++, "gExplodingRolls"),
+	CMD_TIMED_CVAR(CMD_ID++, "gFreezingRolls"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDisableTargeting"),
+	CMD_TIMED_CVAR(CMD_ID++, "gMegaLetterbox"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDisableTurning"),
+	CMD_TIMED_CVAR(CMD_ID++, "gJailTime"),
+	CMD_TIMED_CVAR(CMD_ID++, "gOnHold"),
+	CMD_TIMED_CVAR(CMD_ID++, "gSonicRoll"),
+	CMD_TIMED_CVAR(CMD_ID++, "gNaviSpam"),
+	CMD_TIMED_CVAR(CMD_ID++, "gScuffedLink"),
+	CMD_TIMED_CVAR(CMD_ID++, "gRaveMode"),
+	CMD_TIMED_CVAR(CMD_ID++, "gInvisPlayer"),
+	CMD_TIMED_CVAR(CMD_ID++, "gSlipperyFloor"),
+	CMD_TIMED_CVAR(CMD_ID++, "gIceDamage"),
+	CMD_TIMED_CVAR(CMD_ID++, "gElectricDamage"),
+	CMD_TIMED_CVAR(CMD_ID++, "gKnockbackDamage"),
+	CMD_TIMED_CVAR(CMD_ID++, "gFireDamage"),
+	CMD_TIMED_CVAR(CMD_ID++, "gForwardJump"),
+	CMD_TIMED_CVAR(CMD_ID++, "gBigHead"),
+	CMD_TIMED_CVAR(CMD_ID++, "gTinyHead"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDarkenArea"),
+	CMD_TIMED_CVAR(CMD_ID++, "gChaosSpin"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDisableMeleeAttacks"),
+	CMD_TIMED_CVAR(CMD_ID++, "gDisableEnemyDraw"),
+	CMD_TIMED_CVAR(CMD_ID++, "gSandstorm"),
+	CMD_TIMED_CVAR(CMD_ID++, "gSinkingFloor"),
+	CMD_TIMED_CVAR(CMD_ID++, "gCowRitual"),
+	CMD_TIMED_CVAR(CMD_ID++, "gFireRockRain"),
+	CMD_TIMED_CVAR(CMD_ID++, "gCuccoAttack"),
+	CMD_TIMED_CVAR(CMD_ID++, "gExplodingRupeeChallenge"),
+	CMD_TIMED_CVAR(CMD_ID++, "gBanItemDropPickup"),
+	CMD_TIMED_CVAR(CMD_ID++, "gBrokenBombchus"),
+	CMD_TIMED_CVAR(CMD_ID++, "gAnnoyingGetItems"),
+
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSpawnExplosion"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRestrainLink"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gTripToSpace"),
 };
 
 static bool g_is_enabled = false;
@@ -135,6 +150,12 @@ void EachFrameCallback() {
 		}
 
 		EnqueueCommand(current_command_buffer);
+	}
+
+	g_link_is_ready_this_frame = link_is_ready();
+	if (g_link_is_ready_this_frame && ice_trap_is_pending()) {
+		give_ice_trap();
+		g_link_is_ready_this_frame = false;
 	}
 
 	g_command_storage.Tick();
