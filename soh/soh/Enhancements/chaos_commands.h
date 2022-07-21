@@ -18,15 +18,28 @@ class ChaosCommand {
 	public:
 		// Called every frame, returns true if the command is still active after the tick, false otherwise
 		bool Tick() {
-			if (CanTick()) {
-				return DoTick();
-			}
-			return true;
+			return DoTick();
 		}
 
 		virtual bool DoTick() = 0;
-		virtual bool CanTick() { return true; }
 		virtual bool CanStart() { return true; }
+};
+
+class PredicatedCommand : public ChaosCommand {
+	public:
+		PredicatedCommand(std::unique_ptr<ChaosCommand> command, std::function<bool()> pred)
+			: command_(std::move(command)), predicate_(pred) {}
+
+		bool DoTick() {
+			return command_->DoTick();
+		}
+
+		bool CanStart() {
+			return predicate_() && command_->CanStart();
+		}
+
+		std::unique_ptr<ChaosCommand> command_;
+		std::function<bool()> predicate_;
 };
 
 class CommandStorage {
@@ -51,6 +64,7 @@ class OneShotCommand : public ChaosCommand {
 		OneShotCommand(std::function<void()> f) : f_(f) {}
 
 		bool DoTick() override {
+			if (!CanStart()) return true;
 			f_();
 			return false;
 		}
@@ -86,20 +100,30 @@ class TimedCommand : public ChaosCommand {
 		time_t start_time_ = 0;
 };
 
-class TimedBooleanCVarCommand : public TimedCommand {
+class TimedCVarCommand : public TimedCommand {
 	public:
-		TimedBooleanCVarCommand(const std::string& cvar, uint32_t seconds)
+		TimedCVarCommand(const std::string& cvar, uint32_t seconds, int32_t initial, int32_t applied)
 			: cvar_(cvar), 
+			  initial_(initial),
+			  applied_(applied),
 			  TimedCommand(
-				[=]() { CVar_SetS32(cvar_.c_str(), 1); },
-				[=]() { CVar_SetS32(cvar_.c_str(), 0); },
+				[=]() { CVar_SetS32(cvar_.c_str(), applied_); },
+				[=]() { CVar_SetS32(cvar_.c_str(), initial_); },
 				seconds) {}
 
 		bool CanStart() override {
-			return !CVar_GetS32(cvar_.c_str(), 0);
+			return !CVar_GetS32(cvar_.c_str(), initial_);
 		}
 
 		std::string cvar_;
+		int32_t initial_;
+		int32_t applied_;
+};
+
+class TimedBooleanCVarCommand : public TimedCVarCommand {
+	public:
+		TimedBooleanCVarCommand(const std::string& cvar, uint32_t seconds)
+			: TimedCVarCommand(cvar, seconds, 0, 1) {}
 };
 
 class OneShotBooleanCVarCommand : public OneShotCommand {

@@ -11,6 +11,26 @@ extern void Player_SetupInvincibility(Player*, s32);
 extern void Player_SetupDamage(GlobalContext*, Player*, s32, f32, f32, s16, s32);
 }
 
+#define MAX_TURBO_SPEED 16.0f
+
+void scale(Actor* actor, float x, float y, float z) {
+    actor->scale.x *= x;
+    actor->scale.y *= y;
+    actor->scale.z *= z;
+}
+
+void spawn_on_link(int16_t id, int16_t params) {
+    Player* player = GET_PLAYER(gGlobalCtx);
+    Actor_Spawn(&(gGlobalCtx->actorCtx), gGlobalCtx, id,
+                player->actor.world.pos.x,
+                player->actor.world.pos.y,
+                player->actor.world.pos.z,
+                player->actor.shape.rot.x,
+                player->actor.shape.rot.y,
+                player->actor.shape.rot.z,
+                params);
+}
+
 uint32_t g_satisified_pending_frames = 0;
 bool link_is_ready() {
     Player* player = GET_PLAYER(gGlobalCtx);
@@ -92,6 +112,70 @@ void toggle_age() {
 
   Player_SetEquipmentData(gGlobalCtx, player);
   execute_game(gSaveContext.entranceIndex, 0x0);
+}
+
+// hack during porting, command should be doing cleanup
+bool previous_frame_had_forced_boots = false;
+bool previous_frame_had_ohko = false;
+void apply_ongoing_effects() {
+    Player* player = GET_PLAYER(gGlobalCtx);
+
+    // TODO: replace |timers| with just a CVar
+    int16_t forced_boots = CVar_GetS32("gChaosForcedBoots", 0);
+    bool ohko = CVar_GetS32("gChaosOHKO", 0);
+    bool no_hud = CVar_GetS32("gChaosNoHud", 0);
+    bool no_z = CVar_GetS32("gChaosNoZ", 0);
+    bool turbo = CVar_GetS32("gChaosTurbo", 0);
+    bool invert_controls = CVar_GetS32("gChaosInvertControls", 0);
+
+    if (forced_boots > 0) {
+        // Boots are the first nibble of the |equipement| u16
+        gSaveContext.equips.equipment = ((gSaveContext.equips.equipment & 0x0FFF) | (forced_boots << 12));
+        Player_SetEquipmentData(gGlobalCtx, player);
+    } else if (previous_frame_had_forced_boots) {
+        // Restore to kokiri boots when the time elapses
+        gSaveContext.equips.equipment = ((gSaveContext.equips.equipment & 0x0FFF) | (1 << 12));
+        Player_SetEquipmentData(gGlobalCtx, player);
+    }
+
+    previous_frame_had_forced_boots = forced_boots;
+
+    if (ohko) {
+        if (gSaveContext.health == 0) {
+            // Actually let us die if life is already at 0
+            CVar_SetS32("gChaosOHKO", 0);
+        } else {
+            gSaveContext.health = 1;
+        }
+    } else if (previous_frame_had_ohko) {
+        // If this was the last frame of the OHKO mode, 
+        // give the player 1 heart because we're nice like that.
+        gSaveContext.health = 16;
+    }
+
+    previous_frame_had_ohko = ohko;
+
+    if (no_hud) {
+        // gz's |hud_flag|
+        gSaveContext.unk_13E8 = 0x001;
+    }
+
+    if (no_z) {
+        gGlobalCtx->state.input[0].press.button &= (~BTN_Z);
+    }
+
+    if (turbo) {
+        float vel = player->linearVelocity * 2.0f;
+        // 27 is HESS speed I think?
+        player->linearVelocity = vel > MAX_TURBO_SPEED ? MAX_TURBO_SPEED : vel;
+    }
+
+    if (invert_controls) {
+        gGlobalCtx->state.input[0].cur.stick_x = -gGlobalCtx->state.input[0].cur.stick_x;
+        gGlobalCtx->state.input[0].cur.stick_y = -gGlobalCtx->state.input[0].cur.stick_y;
+        gGlobalCtx->state.input[0].rel.stick_x = -gGlobalCtx->state.input[0].rel.stick_x;
+        gGlobalCtx->state.input[0].rel.stick_y = -gGlobalCtx->state.input[0].rel.stick_y;
+    }
 }
 
 #endif
