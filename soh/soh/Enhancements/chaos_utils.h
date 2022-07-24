@@ -86,7 +86,7 @@ void execute_game(int16_t entrance_index, uint16_t cutscene_index)
     gSaveContext.minigameState = 3;
   gGlobalCtx->nextEntranceIndex = entrance_index;
   gGlobalCtx->state.running = 0;
-  gGlobalCtx->state.init = gGameStateOverlayTable[3].init;
+  gGlobalCtx->state.init = (GameStateFunc)(gGameStateOverlayTable[3].init);
   gGlobalCtx->state.size = gGameStateOverlayTable[3].instanceSize;
 }
 

@@ -7,6 +7,7 @@
 
 #include <z64.h>
 #include <variables.h>
+#undef Polygon
 
 #include <functional>
 #include <map>
@@ -17,6 +18,8 @@
 
 #if defined(__linux__)
 #include "chaos_linux.h"
+#elif !defined(__APPLE__)
+#include "chaos_win.h"
 #endif
 
 bool g_link_is_ready_this_frame = true;
@@ -186,7 +189,7 @@ static bool g_is_enabled = false;
 static CommandStorage g_command_storage;
 
 void Start() {
-	StartLinux();
+    PlatformStart();
 	SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Enabled");
 }
 
@@ -211,7 +214,12 @@ void EnqueueCommand(const std::vector<uint8_t>& bytes) {
 }
 
 bool ReadBytes(size_t num, std::vector<uint8_t>* buf) {
-	return ReadBytesLinux(num, buf);
+    return PlatformReadBytes(num, buf);
+}
+
+void Stop() {
+    PlatformStop();
+    SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Disabled");
 }
 
 void EachFrameCallback() {
@@ -239,7 +247,7 @@ void EachFrameCallback() {
 		if (!ReadBytes(bytes_to_read, &current_command_buffer)) {
 			std::string msg = "Error reading command, turning off Chaos Mode";
 			SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
-			close(fd);
+            Stop();
 			CVar_SetS32("gChaosEnabled", 0);
 			g_is_enabled = false;
 			return;
