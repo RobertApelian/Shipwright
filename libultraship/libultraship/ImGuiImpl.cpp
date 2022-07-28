@@ -952,6 +952,7 @@ namespace SohImGui {
                 {
                     if (ImGui::BeginMenu("Chaos"))
                     {
+                        EnhancementCheckbox("Redo rando", "gRedoRando");
                         EnhancementCheckbox("Enables chat integration", "gChatIntegration");
                         EnhancementCheckbox("Enables enemy health bar", "gEnemyHealthBar");
                         EnhancementCheckbox("Disable first person view", "gDisableFPSView");

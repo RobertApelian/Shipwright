@@ -9866,6 +9866,18 @@ static void (*D_80854738[])(GlobalContext* globalCtx, Player* this) = {
 
 static Vec3f D_80854778 = { 0.0f, 50.0f, 0.0f };
 
+
+// Chaos rando actor related
+#define CUCCO_ATK_NUM_MAX 32
+
+EnAttackNiw* attackCucco[CUCCO_ATK_NUM_MAX] = { NULL };
+static Actor* explodeRupee = NULL;
+static EnCow* cow[5] = { NULL, NULL, NULL, NULL, NULL };
+static EnLight* ritualFlame = NULL;
+static EnEncount2* fireRockSpawner = NULL;
+static BgSpot15Saku* jail[4] = { NULL, NULL, NULL, NULL };
+static EnAObj* jailFloor = NULL;
+
 void Player_Init(Actor* thisx, GlobalContext* globalCtx2) {
     Player* this = (Player*)thisx;
     GlobalContext* globalCtx = globalCtx2;
@@ -9874,6 +9886,7 @@ void Player_Init(Actor* thisx, GlobalContext* globalCtx2) {
     s32 initMode;
     s32 sp50;
     s32 sp4C;
+    s16 i;
 
     globalCtx->shootingGalleryStatus = globalCtx->bombchuBowlingStatus = 0;
 
@@ -9891,6 +9904,17 @@ void Player_Init(Actor* thisx, GlobalContext* globalCtx2) {
     this->ageProperties = &sAgeProperties[gSaveContext.linkAge];
     this->itemActionParam = this->heldItemActionParam = -1;
     this->heldItemId = ITEM_NONE;
+
+    // Make chaos rando actor ptrs null to try to prevent use-after-free issues
+    for (i = 0; i++; i < 5) {
+        cow[i] = NULL;
+    }
+    for (i = 0; i++; i < CUCCO_ATK_NUM_MAX) {
+        attackCucco[i] = NULL;
+    }
+    ritualFlame = NULL;
+    fireRockSpawner = NULL;
+    explodeRupee = NULL;
 
     Player_UseItem(globalCtx, this, ITEM_NONE);
     Player_SetEquipmentData(globalCtx, this);
@@ -10830,8 +10854,54 @@ void Player_SpawnExplosion(GlobalContext* globalCtx, Player* this) {
     Player_SetupDamage(globalCtx, this, PLAYER_DMGREACTION_KNOCKBACK, 0.0f, 0.0f, 0, 20);
 }
 
+#define SET_NEXT_GAMESTATE(curState, newInit, newStruct) \
+    do {                                                 \
+        (curState)->init = newInit;                      \
+        (curState)->size = sizeof(newStruct);            \
+    } while (0)
+
 void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     s32 pad;
+
+    static s16 redoTimer = 0;
+
+    if (CVar_GetS32("gRedoRando", 0)) {
+        if (redoTimer == 0) {
+            // Play ReDead scream SFX
+            Audio_PlaySoundGeneral(NA_SE_EN_REDEAD_AIM, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+            // Freeze player in place and disable inputs
+            this->stateFlags2 |= PLAYER_STATE2_PAUSE_MOST_UPDATING;
+        } else if (redoTimer == 25) {
+            // Erase all three save files
+            Save_DeleteFile(0);
+            Save_DeleteFile(1);
+            Save_DeleteFile(2);
+            // Reset screen color
+            D_801614B0.r = 0;
+            D_801614B0.g = 0;
+            D_801614B0.b = 0;
+            D_801614B0.a = 0;
+            // Reset the game
+            redoTimer = 0;
+            globalCtx->state.running = false;
+            CVar_SetS32("gRedoRando", 0);
+            this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            SET_NEXT_GAMESTATE(&globalCtx->state, FileChoose_Init, FileChooseContext);
+            return;
+        } else if (redoTimer < 25) {
+            // Turn screen red
+            if (D_801614B0.r < 255) {
+                D_801614B0.r += 15;
+            }
+            D_801614B0.g = 0;
+            D_801614B0.b = 0;
+            D_801614B0.a = 255;
+        }
+        redoTimer++;
+    }
+    else {
+        redoTimer = 0;
+    }
 
     sControlInput = input;
 
@@ -10845,8 +10915,6 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
 
     static u8 inJail = false;
     static u8 respawnJail = false;
-    static BgSpot15Saku* jail[4] = { NULL, NULL, NULL, NULL };
-    static EnAObj* jailFloor = NULL;
     s16 i;
 
     #define PLAYER_JAIL_DIST 75
@@ -10899,8 +10967,6 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
     }
 
     static u8 cowRitual = false;
-    static EnCow* cow[5] = { NULL, NULL, NULL, NULL, NULL };
-    static EnLight* ritualFlame = NULL;
 
     if (CVar_GetS32("gCowRitual", 0)) {
         if (!cowRitual) {
@@ -10953,7 +11019,6 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
     }
 
-    static EnEncount2* fireRockSpawner = NULL;
     static u8 fireRocksFalling = false;
     
     if (CVar_GetS32("gFireRockRain", 0)) {
@@ -10977,11 +11042,9 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         }
     }
 
-    #define CUCCO_ATK_NUM_MAX 32
 
     static s16 cuccoAtkTimer = 0;
     static s16 cuccoAtkNum = 0;
-    EnAttackNiw* attackCucco[CUCCO_ATK_NUM_MAX] = { NULL };
 
     if (CVar_GetS32("gCuccoAttack", 0)) {
         f32 viewX;
@@ -11025,7 +11088,6 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         cuccoAtkNum = 0;
     }
 
-    static Actor* explodeRupee = NULL;
     static f32 j = 0;
     static Vec3f rupeeOrigin = { 0 };
 
@@ -11046,6 +11108,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             }
             explodeRupee->world.pos.x = 150.0f * Math_CosF(j) + rupeeOrigin.x;
             explodeRupee->world.pos.z = 150.0f * Math_SinF(j) + rupeeOrigin.z;
+            explodeRupee->world.pos.y = this->actor.world.pos.y;
             if (j < DEGF_TO_RADF(360.0f)) {
                 j += DEGF_TO_RADF(36.0f);
             } else if (j >= DEGF_TO_RADF(360.0f)) {
@@ -11082,17 +11145,15 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             onSpaceTrip = true;
         }
 
-        // If spent more than 15 seconds going to space, void out
+        // If spent more than 15 seconds going to space, spawn explosion and fall
         if (spaceTimer > 15 * 20) {
             spaceTimer = 0;
             rotAccel = 0;
             onSpaceTrip = false;
             this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
             this->actor.gravity = 1.0f;
-            Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_TAKEN_AWAY);
-            globalCtx->unk_11DE9 = 1;
-            func_80078884(NA_SE_OC_ABYSS);
-            Gameplay_TriggerVoidOut(globalCtx);
+            Player_SetupReturnToStandStill(this, globalCtx);
+            Player_SpawnExplosion(globalCtx, this);
         }
         // If player hits a ceiling, go back to normal gameplay
         else if (this->actor.bgCheckFlags & (1 << 4)) {
@@ -11280,8 +11341,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
                 }
                 break;
         }
-    }
-    else {
+    } else if (!CVar_GetS32("gRedoRando", 0)) {
         D_801614B0.r = 0;
         D_801614B0.g = 0;
         D_801614B0.b = 0;
