@@ -72,6 +72,34 @@ class OneShotCommand : public ChaosCommand {
 		std::function<void()> f_;
 };
 
+class OneShotWithCleanupCommand : public ChaosCommand {
+public:
+	OneShotWithCleanupCommand(std::function<void()> tick_f, std::function<void()> cleanup_f, uint32_t frames_before_cleanup)
+		: tick_f_(tick_f), cleanup_f_(cleanup_f), frames_(frames_before_cleanup) {}
+
+	bool DoTick() override {
+		if (!CanStart()) return true;
+
+		if (!started_) {
+			started_ = true;
+			tick_f_();
+		} else {
+			if (--frames_ == 0) {
+				cleanup_f_();
+				return false;
+			}
+		}
+
+			return true;
+	}
+
+	std::function<void()> tick_f_;
+	std::function<void()> cleanup_f_;
+
+	uint32_t frames_;
+	bool started_ = false;
+};
+
 class TimedCommand : public ChaosCommand {
 	public:
 		TimedCommand(std::function<void()> tick_f, std::function<void()> cleanup_f, uint32_t seconds) 
@@ -98,6 +126,38 @@ class TimedCommand : public ChaosCommand {
 
 		uint32_t seconds_;
 		time_t start_time_ = 0;
+};
+
+class OneShotTimedCommand : public ChaosCommand {
+	public:
+		OneShotTimedCommand(std::function<void()> tick_f, std::function<void()> cleanup_f, uint32_t seconds) 
+			: tick_f_(tick_f), cleanup_f_(cleanup_f), seconds_(seconds) {}
+
+		bool DoTick() override {
+			if (!start_time_) {
+				if (!CanStart()) return true;
+
+				start_time_ = time(nullptr);
+			}
+
+			if ((time(nullptr) - start_time_) >= seconds_) {
+				cleanup_f_();
+				return false;
+			}
+
+			if (new_) {
+				tick_f_();
+				new_ = false;
+			}
+			return true;
+		}
+
+		std::function<void()> tick_f_;
+		std::function<void()> cleanup_f_;
+
+		uint32_t seconds_;
+		time_t start_time_ = 0;
+		bool new_ = true;
 };
 
 class TimedCVarCommand : public TimedCommand {
