@@ -954,6 +954,7 @@ namespace SohImGui {
                     {
                         EnhancementCheckbox("Enable Chaos", "gChaosEnabled");
 /*
+                        EnhancementCheckbox("Redo rando", "gRedoRando");
                         EnhancementCheckbox("Enables enemy health bar", "gEnemyHealthBar");
                         EnhancementCheckbox("Disable first person view", "gDisableFPSView");
                         EnhancementCheckbox("All arrows are normal arrows", "gForceNormalArrows");
