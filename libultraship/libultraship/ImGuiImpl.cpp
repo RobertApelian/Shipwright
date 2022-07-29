@@ -995,6 +995,7 @@ namespace SohImGui {
                         EnhancementCheckbox("Ban picking up item drops", "gBanItemDropPickup");
                         EnhancementCheckbox("Break Bombchus", "gBrokenBombchus");
                         EnhancementCheckbox("Makes getting items very annoying", "gAnnoyingGetItems");
+                        EnhancementCheckbox("Makes all text very annoying", "gAnnoyingText");
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");
