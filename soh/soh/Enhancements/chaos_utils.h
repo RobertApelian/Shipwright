@@ -52,6 +52,9 @@ void spawn_n(int16_t id, int16_t params, int32_t n) {
                 params);
         }
     }
+	if (id == 0x113) {
+		CVar_SetS32("gActivateNextIK", 1);
+	}
 }
 
 uint32_t g_satisified_pending_frames = 0;

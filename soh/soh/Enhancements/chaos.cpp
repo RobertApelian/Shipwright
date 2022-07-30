@@ -161,6 +161,8 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSpawnExplosion"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRestrainLink"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gTripToSpace"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRedoRando"),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
 	CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
 	CMD_TAKE_AMMO(0x81, ITEM_STICK),

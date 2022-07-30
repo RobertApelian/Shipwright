@@ -2373,6 +2373,9 @@
     <ClCompile Include="soh\Enhancements\randomizer\randomizer_item_tracker.cpp">
       <Filter>Source Files\src</Filter>
     </ClCompile>
+    <ClCompile Include="soh\Enhancements\chaos.cpp">
+      <Filter>Source Files\soh\Enhancements</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\overlays\actors\ovl_kaleido_scope\z_kaleido_scope.h">
@@ -4060,6 +4063,27 @@
     </ClInclude>
     <ClInclude Include="soh\Enhancements\randomizer\randomizer_item_tracker.h">
       <Filter>Source Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\overlays\actors\ovl_player_actor\z_player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="soh\Enhancements\chaos.h">
+      <Filter>Source Files\soh\Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="soh\Enhancements\chaos_commands.h">
+      <Filter>Source Files\soh\Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="soh\Enhancements\chaos_commands_macros.h">
+      <Filter>Source Files\soh\Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="soh\Enhancements\chaos_linux.h">
+      <Filter>Source Files\soh\Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="soh\Enhancements\chaos_utils.h">
+      <Filter>Source Files\soh\Enhancements</Filter>
+    </ClInclude>
+    <ClInclude Include="soh\Enhancements\chaos_win.h">
+      <Filter>Source Files\soh\Enhancements</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
