@@ -996,7 +996,8 @@ namespace SohImGui {
                         EnhancementCheckbox("Spawn explosion on Link", "gSpawnExplosion");
                         EnhancementCheckbox("Restrain Link", "gRestrainLink");
                         EnhancementCheckbox("Send Link on a trip to space", "gTripToSpace");
-                        */
+                        EnhancementCheckbox("Makes all text very annoying", "gAnnoyingText");
+*/
                         EnhancementSliderInt("Gravity: %d", "##PLAYERGRAVITY", "gPlayerGravity", -12, 9, "");
                         EnhancementSliderInt("Vine/Ladder Climb speed %d", "##CHAOSCLIMBSPEED", "gChaosClimbSpeed", 0, 9, "");
                         EnhancementSliderInt("Hookshot length removal %d", "##HOOKSHOTLENGTHREMOVE", "gHookshotLengthRemove", 0, 9, "");

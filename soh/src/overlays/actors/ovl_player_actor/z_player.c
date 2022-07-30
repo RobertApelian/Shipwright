@@ -9878,6 +9878,12 @@ static EnEncount2* fireRockSpawner = NULL;
 static BgSpot15Saku* jail[4] = { NULL, NULL, NULL, NULL };
 static EnAObj* jailFloor = NULL;
 
+static u8 cowRitual = false;
+static u8 fireRocksFalling = false;
+
+static s16 cuccoAtkTimer = 0;
+static s16 cuccoAtkNum = 0;
+
 void Player_Init(Actor* thisx, GlobalContext* globalCtx2) {
     Player* this = (Player*)thisx;
     GlobalContext* globalCtx = globalCtx2;
@@ -9915,6 +9921,13 @@ void Player_Init(Actor* thisx, GlobalContext* globalCtx2) {
     ritualFlame = NULL;
     fireRockSpawner = NULL;
     explodeRupee = NULL;
+
+    // Set chaos event vars to false or zero to prevent crashing on scene change
+    cowRitual = false;
+    fireRocksFalling = false;
+
+    cuccoAtkTimer = 0;
+    cuccoAtkNum = 0;
 
     Player_UseItem(globalCtx, this, ITEM_NONE);
     Player_SetEquipmentData(globalCtx, this);
@@ -10956,17 +10969,17 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
             for (i = 0; i < 4; i++) {
                 if (jail[i] != NULL) {
                     Actor_Kill(jail[i]);
+                    jail[i] = NULL;
                 }
             }
             if (jailFloor != NULL) {
                 Actor_Kill(jailFloor);
+                jailFloor = NULL;
             }
             respawnJail = false;
             inJail = false;
         }
     }
-
-    static u8 cowRitual = false;
 
     if (CVar_GetS32("gCowRitual", 0)) {
         if (!cowRitual) {
@@ -11010,16 +11023,16 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
                         Actor_Kill(cow[i]->actor.child);
                     }
                     Actor_Kill(cow[i]);
+                    cow[i] = NULL;
                 }
             }
             if (ritualFlame != NULL) {
                 Actor_Kill(ritualFlame);
+                ritualFlame = NULL;
             }
             cowRitual = false;
         }
     }
-
-    static u8 fireRocksFalling = false;
     
     if (CVar_GetS32("gFireRockRain", 0)) {
         if (!fireRocksFalling) {
@@ -11028,8 +11041,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
                                          this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0);
             fireRockSpawner->actor.room = -1;
             fireRocksFalling = true;
-        }
-        else {
+        } else if (fireRockSpawner != NULL) {
             fireRockSpawner->actor.world.pos = this->actor.world.pos;
         }
     }
@@ -11037,14 +11049,11 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         if (fireRocksFalling != false) {
             if (fireRockSpawner != NULL) {
                 Actor_Kill(fireRockSpawner);
+                fireRockSpawner = NULL;
             }
             fireRocksFalling = false;
         }
     }
-
-
-    static s16 cuccoAtkTimer = 0;
-    static s16 cuccoAtkNum = 0;
 
     if (CVar_GetS32("gCuccoAttack", 0)) {
         f32 viewX;
@@ -11083,6 +11092,7 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
         for (i = 0; i < CUCCO_ATK_NUM_MAX; i++) {
             if (attackCucco[i] != NULL) {
                 Actor_Kill(attackCucco[i]);
+                attackCucco[i] = NULL;
             }
         }
         cuccoAtkNum = 0;
