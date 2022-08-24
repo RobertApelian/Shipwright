@@ -3,15 +3,14 @@
 #include <stdint.h>
 #include "Utils/BinaryReader.h"
 #include "Utils/BinaryWriter.h"
-#include "GlobalCtx2.h"
-#include "StrHash.h"
 #include "File.h"
 #include "Lib/tinyxml2/tinyxml2.h"
+#include "spdlog/spdlog.h"
 
-namespace Ship
-{
-    enum class ResourceType
-    {
+namespace Ship {
+    class ResourceMgr;
+
+    enum class ResourceType {
         Archive          =   0x4F415243,     // OARC (UNUSED)
         Model            =   0x4F4D444C,     // OMDL (WIP)
         Texture          =   0x4F544558,     // OTEX
@@ -36,8 +35,7 @@ namespace Ship
         AudioSequence    =   0x4F534551,     // OSEQ
     };
 
-    enum class DataType
-    {
+    enum class DataType {
         U8 = 0,
         S8 = 1,
         U16 = 2,
@@ -51,14 +49,7 @@ namespace Ship
         F64 = 10
     };
 
-    enum class Endianess
-    {
-        Little = 0,
-        Big = 1,
-    };
-
-    enum class Version
-    {
+    enum class Version {
         // BR
         Deckard     = 0,
         Roy         = 1,
@@ -67,15 +58,13 @@ namespace Ship
         // ...
     };
 
-    struct Patch
-    {
+    struct Patch {
         uint64_t crc;
         uint32_t index;
         uintptr_t origData;
     };
 
-    class Resource
-    {
+    class Resource {
     public:
         ResourceMgr* resMgr;
         uint64_t id; // Unique Resource ID
@@ -87,10 +76,9 @@ namespace Ship
         virtual ~Resource();
     };
 
-    class ResourceFile
-    {
+    class ResourceFile {
     public:
-        Endianess endianess;    // 0x00 - Endianess of the file
+        Endianness endianness;    // 0x00 - Endianness of the file
         uint32_t resourceType;  // 0x01 - 4 byte MAGIC
         Version version;     // 0x05 - Based on Ship release numbers
         uint64_t id;            // 0x09 - Unique Resource ID

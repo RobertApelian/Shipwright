@@ -2,6 +2,7 @@
 #define Z64PLAYER_H
 
 #include "z64actor.h"
+#include "soh/Enhancements/item-tables/ItemTableTypes.h"
 
 struct Player;
 
@@ -641,36 +642,50 @@ typedef struct {
     /* 0x10 */ Vec3f base;
 } WeaponInfo; // size = 0x1C
 
-#define PLAYER_STATE1_EXITING_SCENE (1 << 0)
-#define PLAYER_STATE1_SWINGING_BOTTLE (1 << 1)
-#define PLAYER_STATE1_END_HOOKSHOT_MOVE (1 << 2)
-#define PLAYER_STATE1_AIMING_FPS_ITEM (1 << 3)
-#define PLAYER_STATE1_Z_TARGETING_UNFRIENDLY (1 << 4)
-#define PLAYER_STATE1_INPUT_DISABLED (1 << 5)
-#define PLAYER_STATE1_TALKING (1 << 6)
-#define PLAYER_STATE1_IN_DEATH_CUTSCENE (1 << 7)
-#define PLAYER_STATE1_START_CHANGE_ITEM (1 << 8)
-#define PLAYER_STATE1_READY_TO_SHOOT (1 << 9)
-#define PLAYER_STATE1_GETTING_ITEM (1 << 10)
-#define PLAYER_STATE1_HOLDING_ACTOR (1 << 11)
-#define PLAYER_STATE1_CHARGING_SPIN_ATTACK (1 << 12)
-#define PLAYER_STATE1_HANGING_FROM_LEDGE_SLIP (1 << 13)
-#define PLAYER_STATE1_CLIMBING_ONTO_LEDGE (1 << 14)
-#define PLAYER_STATE1_UNUSED_Z_TARGETING_FLAG (1 << 15)
-#define PLAYER_STATE1_FORCE_STRAFING (1 << 16)
-#define PLAYER_STATE1_Z_TARGETING_FRIENDLY (1 << 17)
-#define PLAYER_STATE1_JUMPING (1 << 18)
-#define PLAYER_STATE1_FREEFALLING (1 << 19)
-#define PLAYER_STATE1_IN_FIRST_PERSON_MODE (1 << 20)
-#define PLAYER_STATE1_CLIMBING (1 << 21)
-#define PLAYER_STATE1_SHIELDING (1 << 22)
-#define PLAYER_STATE1_RIDING_HORSE (1 << 23)
-#define PLAYER_STATE1_AIMING_BOOMERANG (1 << 24)
-#define PLAYER_STATE1_AWAITING_THROWN_BOOMERANG (1 << 25)
-#define PLAYER_STATE1_TAKING_DAMAGE (1 << 26)
-#define PLAYER_STATE1_SWIMMING (1 << 27)
-#define PLAYER_STATE1_SKIP_OTHER_ACTORS_UPDATE (1 << 28)
-#define PLAYER_STATE1_IN_CUTSCENE (1 << 29)
+typedef enum {
+    FLAG_NONE,
+    FLAG_SCENE_SWITCH,
+    FLAG_SCENE_TREASURE,
+    FLAG_SCENE_CLEAR,
+    FLAG_SCENE_COLLECTIBLE,
+    FLAG_EVENT_CHECK_INF,
+} FlagType;
+
+typedef struct {
+    /* 0x00 */ s32 flagID;     // which flag to set when Player_SetPendingFlag is called
+    /* 0x04 */ FlagType flagType;  // type of flag to set when Player_SetPendingFlag is called
+} PendingFlag; // size = 0x06
+
+#define PLAYER_STATE1_0 (1 << 0)
+#define PLAYER_STATE1_1 (1 << 1)
+#define PLAYER_STATE1_2 (1 << 2)
+#define PLAYER_STATE1_3 (1 << 3)
+#define PLAYER_STATE1_4 (1 << 4)
+#define PLAYER_STATE1_5 (1 << 5)
+#define PLAYER_STATE1_6 (1 << 6)
+#define PLAYER_STATE1_7 (1 << 7)
+#define PLAYER_STATE1_8 (1 << 8)
+#define PLAYER_STATE1_9 (1 << 9)
+#define PLAYER_STATE1_10 (1 << 10)
+#define PLAYER_STATE1_11 (1 << 11)
+#define PLAYER_STATE1_12 (1 << 12)
+#define PLAYER_STATE1_13 (1 << 13)
+#define PLAYER_STATE1_14 (1 << 14)
+#define PLAYER_STATE1_15 (1 << 15)
+#define PLAYER_STATE1_16 (1 << 16)
+#define PLAYER_STATE1_17 (1 << 17)
+#define PLAYER_STATE1_18 (1 << 18)
+#define PLAYER_STATE1_19 (1 << 19)
+#define PLAYER_STATE1_20 (1 << 20)
+#define PLAYER_STATE1_21 (1 << 21)
+#define PLAYER_STATE1_22 (1 << 22)
+#define PLAYER_STATE1_23 (1 << 23)
+#define PLAYER_STATE1_24 (1 << 24)
+#define PLAYER_STATE1_25 (1 << 25)
+#define PLAYER_STATE1_26 (1 << 26)
+#define PLAYER_STATE1_27 (1 << 27)
+#define PLAYER_STATE1_28 (1 << 28)
+#define PLAYER_STATE1_29 (1 << 29)
 #define PLAYER_STATE1_30 (1 << 30)
 #define PLAYER_STATE1_FALLING_INTO_GROTTO_OR_VOID (1 << 31)
 
@@ -881,16 +896,19 @@ typedef struct Player {
     /* 0x0A73 */ u8         fpsItemShotTimer;
     /* 0x0A74 */ PlayerMiniCsFunc miniCsFunc;
     /* 0x0A78 */ s8         invincibilityTimer; // prevents damage when nonzero (positive = visible, counts towards zero each frame)
-    /* 0x0A79 */ u8         hurtFloorTimer;
-    /* 0x0A7A */ u8         floorProperty;
-    /* 0x0A7B */ u8         prevFloorSpecialProperty;
-    /* 0x0A7C */ f32        analogStickDistance;
-    /* 0x0A80 */ s16        analogStickAngle;
-    /* 0x0A82 */ u16        prevSurfaceMaterial;
-    /* 0x0A84 */ s16        sceneExitPosY;
-    /* 0x0A86 */ s8         voidRespawnCounter;
-    /* 0x0A87 */ u8         deathTimer;
-    /* 0x0A88 */ Vec3f      prevWaistPos; // previous body part 0 position
-} Player; // size = 0xA94
+    /* 0x0A79 */ u8         unk_A79;
+    /* 0x0A7A */ u8         unk_A7A;
+    /* 0x0A7B */ u8         unk_A7B;
+    /* 0x0A7C */ f32        unk_A7C;
+    /* 0x0A80 */ s16        unk_A80;
+    /* 0x0A82 */ u16        unk_A82;
+    /* 0x0A84 */ s16        unk_A84;
+    /* 0x0A86 */ s8         unk_A86;
+    /* 0x0A87 */ u8         unk_A87;
+    /* 0x0A88 */ Vec3f      unk_A88; // previous body part 0 position
+    /* 0x0A94 */ PendingFlag pendingFlag;
+    /* 0x0AA0 */ u8         boomerangQuickRecall; // Has the player pressed the boomerang button while it's in the air still?
+    /* 0x0AA1 */ GetItemEntry getItemEntry;
+} Player; // size = 0xAA9
 
 #endif

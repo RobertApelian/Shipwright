@@ -15,10 +15,13 @@
 #ifndef _LANGUAGE_C
 #define _LANGUAGE_C
 #endif
+#include <PR/ultra64/types.h>
 #include <PR/ultra64/gbi.h>
 #include <PR/ultra64/gs2dex.h>
 #include <string>
 #include <iostream>
+
+#include "../../Cvar.h"
 
 #include "gfx_pc.h"
 #include "gfx_cc.h"
@@ -30,10 +33,10 @@
 #include "../../luslog.h"
 #include "../StrHash64.h"
 #include "../../ImGuiImpl.h"
-#include "../../Environment.h"
 #include "../../GameVersions.h"
 #include "../../ResourceMgr.h"
 #include "../../Utils.h"
+
 
 // OTRTODO: fix header files for these
 extern "C" {
@@ -46,6 +49,8 @@ extern "C" {
     char* ResourceMgr_LoadTexByName(char* texPath);
     int ResourceMgr_OTRSigCheck(char* imgData);
 }
+
+uintptr_t gfxFramebuffer;
 
 using namespace std;
 
@@ -1063,8 +1068,8 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
                 dotx /= 127.0f;
                 doty /= 127.0f;
 
-                dotx = math::clamp(dotx, -1.0f, 1.0f);
-                doty = math::clamp(doty, -1.0f, 1.0f);
+                dotx = Ship::Math::clamp(dotx, -1.0f, 1.0f);
+                doty = Ship::Math::clamp(doty, -1.0f, 1.0f);
 
                 if (rsp.geometry_mode & G_TEXTURE_GEN_LINEAR) {
                                     // Not sure exactly what formula we should use to get accurate values
@@ -1116,7 +1121,7 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
             if (winv < 0.0f) winv = std::numeric_limits<int16_t>::max();
 
             float fog_z = z * winv * rsp.fog_mul + rsp.fog_offset;
-            fog_z = math::clamp(fog_z, 0.0f, 255.0f);
+            fog_z = Ship::Math::clamp(fog_z, 0.0f, 255.0f);
             d->color.a = fog_z; // Use alpha variable to store fog factor
         } else {
             d->color.a = v->cn[3];
@@ -1204,8 +1209,8 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
         rdp.viewport_or_scissor_changed = false;
     }
 
-    uint64_t cc_id = rdp.combine_mode;
 
+    uint64_t cc_id = rdp.combine_mode;
     bool use_alpha = (rdp.other_mode_l & (3 << 20)) == (G_BL_CLR_MEM << 20) && (rdp.other_mode_l & (3 << 16)) == (G_BL_1MA << 16);
     bool use_fog = (rdp.other_mode_l >> 30) == G_BL_CLR_FOG;
     bool texture_edge = (rdp.other_mode_l & CVG_X_ALPHA) == CVG_X_ALPHA;
@@ -1379,12 +1384,25 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
             buf_vbo[buf_vbo_len++] = u / tex_width[t];
             buf_vbo[buf_vbo_len++] = v / tex_height[t];
 
-            if (tm & (1 << 2 * t)) {
+            bool clampS = tm & (1 << 2 * t);
+            bool clampT = tm & (1 << 2 * t + 1);
+
+            if (clampS) {
                 buf_vbo[buf_vbo_len++] = (tex_width2[t] - 0.5f) / tex_width[t];
             }
-            if (tm & (1 << 2 * t + 1)) {
+#ifdef __WIIU__
+            else {
+                buf_vbo[buf_vbo_len++] = 0.0f;
+            }
+#endif
+            if (clampT) {
                 buf_vbo[buf_vbo_len++] = (tex_height2[t] - 0.5f) / tex_height[t];
             }
+#ifdef __WIIU__
+            else {
+                buf_vbo[buf_vbo_len++] = 0.0f;
+            }
+#endif
         }
 
         if (use_fog) {
@@ -1461,6 +1479,12 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
                     buf_vbo[buf_vbo_len++] = color->r / 255.0f;
                     buf_vbo[buf_vbo_len++] = color->g / 255.0f;
                     buf_vbo[buf_vbo_len++] = color->b / 255.0f;
+#ifdef __WIIU__
+                    // padding
+                    if (!use_alpha) {
+                        buf_vbo[buf_vbo_len++] = 1.0f;
+                    }
+#endif
                 }
                 else {
                     if (use_fog && color == &v_arr[i]->color) {
@@ -2149,7 +2173,7 @@ static void gfx_run_dl(Gfx* cmd) {
                 uintptr_t mtxAddr = cmd->words.w1;
 
                 // OTRTODO: Temp way of dealing with gMtxClear. Need something more elegant in the future...
-                uint32_t gameVersion = Ship::GlobalCtx2::GetInstance()->GetResourceManager()->GetGameVersion();
+                uint32_t gameVersion = Ship::Window::GetInstance()->GetResourceManager()->GetGameVersion();
                 if (gameVersion == OOT_PAL_GC) {
                     if (mtxAddr == SEG_ADDR(0, 0x0FBC20)) {
                         mtxAddr = clearMtx;
@@ -2649,9 +2673,16 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
     gfx_wapi->init(game_name, start_in_fullscreen, width, height);
     gfx_rapi->init();
     gfx_rapi->update_framebuffer_parameters(0, width, height, 1, false, true, true, true);
+#ifdef __APPLE__
     gfx_current_dimensions.internal_mul = 1;
+#else
+    gfx_current_dimensions.internal_mul = CVar_GetFloat("gInternalResolution", 1);
+#endif
+    gfx_msaa_level = CVar_GetS32("gMSAAValue", 1);
+#ifndef __WIIU__ // Wii U overrides dimentions in gfx_wapi->init to match framebuffer size
     gfx_current_dimensions.width = width;
     gfx_current_dimensions.height = height;
+#endif
     game_framebuffer = gfx_rapi->create_framebuffer();
     game_framebuffer_msaa_resolved = gfx_rapi->create_framebuffer();
 
@@ -2691,7 +2722,7 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
         //gfx_lookup_or_create_shader_program(precomp_shaders[i]);
     }
 
-    ModInternal::ExecuteHooks<ModInternal::GfxInit>();
+    Ship::ExecuteHooks<Ship::GfxInit>();
 }
 
 struct GfxRenderingAPI *gfx_get_current_rendering_api(void) {
@@ -2775,7 +2806,7 @@ void gfx_run(Gfx *commands, const std::unordered_map<Mtx *, MtxF>& mtx_replaceme
     rendering_state.scissor = {};
     gfx_run_dl(commands);
     gfx_flush();
-    SohUtils::saveEnvironmentVar("framebuffer", string());
+    gfxFramebuffer = 0;
     if (game_renders_to_framebuffer) {
         gfx_rapi->start_draw_to_framebuffer(0, 1);
         gfx_rapi->clear_framebuffer();
@@ -2785,12 +2816,12 @@ void gfx_run(Gfx *commands, const std::unordered_map<Mtx *, MtxF>& mtx_replaceme
 
             if (different_size) {
                 gfx_rapi->resolve_msaa_color_buffer(game_framebuffer_msaa_resolved, game_framebuffer);
-                SohUtils::saveEnvironmentVar("framebuffer", std::to_string((uintptr_t)gfx_rapi->get_framebuffer_texture_id(game_framebuffer_msaa_resolved)));
+                gfxFramebuffer = (uintptr_t)gfx_rapi->get_framebuffer_texture_id(game_framebuffer_msaa_resolved);
             } else {
                 gfx_rapi->resolve_msaa_color_buffer(0, game_framebuffer);
             }
         } else {
-            SohUtils::saveEnvironmentVar("framebuffer", std::to_string((uintptr_t)gfx_rapi->get_framebuffer_texture_id(game_framebuffer)));
+            gfxFramebuffer = (uintptr_t)gfx_rapi->get_framebuffer_texture_id(game_framebuffer);
         }
     }
     SohImGui::DrawFramebufferAndGameInput();

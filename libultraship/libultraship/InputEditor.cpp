@@ -9,7 +9,6 @@
 
 namespace Ship {
 
-	extern "C" uint8_t __enableGameInput;
 	#define SEPARATION() ImGui::Dummy(ImVec2(0, 5))
 
 	void InputEditor::Init() {
@@ -17,16 +16,16 @@ namespace Ship {
 	}
 
 	std::shared_ptr<Controller> GetControllerPerSlot(int slot) {
-		const std::vector<int> vDevices = Window::ControllerApi->virtualDevices;
-		return Window::ControllerApi->physicalDevices[vDevices[slot]];
+		auto controlDeck = Ship::Window::GetInstance()->GetControlDeck();
+		return controlDeck->GetPhysicalDeviceFromVirtualSlot(slot);
 	}
 
-	void InputEditor::DrawButton(const char* label, int n64Btn) {
+	void InputEditor::DrawButton(const char* label, int32_t n64Btn) {
 		const std::shared_ptr<Controller> backend = GetControllerPerSlot(CurrentPort);
 
 		float size = 40;
 		bool readingMode = BtnReading == n64Btn;
-		bool disabled = BtnReading != -1 && !readingMode || !backend->Connected();
+		bool disabled = (BtnReading != -1 && !readingMode) || !backend->Connected() || backend->GetGuid() == "Auto";
 		ImVec2 len = ImGui::CalcTextSize(label);
 		ImVec2 pos = ImGui::GetCursorPos();
 		ImGui::SetCursorPosY(pos.y + len.y / 4);
@@ -46,12 +45,15 @@ namespace Ship {
 			if(btn != -1) {
 				backend->SetButtonMapping(CurrentPort, n64Btn, btn);
 				BtnReading = -1;
+
+				// avoid immediately triggering another button during gamepad nav
+				ImGui::SetKeyboardFocusHere(0);
 			}
 		}
 
-		const char* BtnName = backend->GetButtonName(CurrentPort, n64Btn);
+		const std::string BtnName = backend->GetButtonName(CurrentPort, n64Btn);
 
-		if (ImGui::Button(StringHelper::Sprintf("%s##HBTNID_%d", readingMode ? "Press a Key..." : BtnName, n64Btn).c_str())) {
+		if (ImGui::Button(StringHelper::Sprintf("%s##HBTNID_%d", readingMode ? "Press a Key..." : BtnName.c_str(), n64Btn).c_str())) {
 			BtnReading = n64Btn;
 			backend->ClearRawPress();
 		}
@@ -83,20 +85,20 @@ namespace Ship {
 	}
 
 	void InputEditor::DrawControllerSchema() {
+		auto controlDeck = Ship::Window::GetInstance()->GetControlDeck();
+		auto Backend = controlDeck->GetPhysicalDeviceFromVirtualSlot(CurrentPort);
+		auto profile = Backend->getProfile(CurrentPort);
+		bool IsKeyboard = Backend->GetGuid() == "Keyboard"  || Backend->GetGuid() == "Auto" || !Backend->Connected();
+		std::string ControllerName = Backend->GetControllerName();
 
-		const std::vector<int> vDevices = Window::ControllerApi->virtualDevices;
-		const std::vector<std::shared_ptr<Controller>> devices = Window::ControllerApi->physicalDevices;
-
-		std::shared_ptr<Controller> Backend = devices[vDevices[CurrentPort]];
-		DeviceProfile& profile =Backend->profiles[CurrentPort];
-		float sensitivity = profile.Thresholds[SENSITIVITY];
-		bool IsKeyboard = Backend->GetGuid() == "Keyboard" || !Backend->Connected();
-		const char* ControllerName = Backend->GetControllerName();
-
-		if (ControllerName != nullptr && ImGui::BeginCombo("##ControllerEntries", ControllerName)) {
-			for (uint8_t i = 0; i < devices.size(); i++) {
-				if (ImGui::Selectable(devices[i]->GetControllerName(), i == vDevices[CurrentPort])) {
-					Window::ControllerApi->SetPhysicalDevice(CurrentPort, i);
+		if (ImGui::BeginCombo("##ControllerEntries", ControllerName.c_str())) {
+			for (uint8_t i = 0; i < controlDeck->GetNumPhysicalDevices(); i++) {
+				std::string DeviceName = controlDeck->GetPhysicalDevice(i)->GetControllerName();
+				if (DeviceName != "Keyboard" && DeviceName != "Auto") {
+					DeviceName += "##"+std::to_string(i);
+				}
+				if (ImGui::Selectable(DeviceName.c_str(), i == controlDeck->GetVirtualDevice(CurrentPort))) {
+					controlDeck->SetPhysicalDevice(CurrentPort, i);
 				}
 			}
 			ImGui::EndCombo();
@@ -105,7 +107,7 @@ namespace Ship {
 		ImGui::SameLine();
 
 		if(ImGui::Button("Refresh")) {
-			Window::ControllerApi->ScanPhysicalDevices();
+			controlDeck->ScanPhysicalDevices();
 		}
 
 		SohImGui::BeginGroupPanel("Buttons", ImVec2(150, 20));
@@ -116,7 +118,11 @@ namespace Ship {
 			DrawButton("Z", BTN_Z);
 			DrawButton("START", BTN_START);
 			SEPARATION();
+	#ifdef __SWITCH__
+		SohImGui::EndGroupPanel(IsKeyboard ? 7.0f : 56.0f);
+	#else
 		SohImGui::EndGroupPanel(IsKeyboard ? 7.0f : 48.0f);
+	#endif
 		ImGui::SameLine();
 		SohImGui::BeginGroupPanel("Digital Pad", ImVec2(150, 20));
 			DrawButton("Up", BTN_DUP);
@@ -124,7 +130,11 @@ namespace Ship {
 			DrawButton("Left", BTN_DLEFT);
 			DrawButton("Right", BTN_DRIGHT);
 			SEPARATION();
+	#ifdef __SWITCH__
+		SohImGui::EndGroupPanel(IsKeyboard ? 53.0f : 122.0f);
+	#else
 		SohImGui::EndGroupPanel(IsKeyboard ? 53.0f : 94.0f);
+	#endif
 		ImGui::SameLine();
 		SohImGui::BeginGroupPanel("Analog Stick", ImVec2(150, 20));
 			DrawButton("Up", BTN_STICKUP);
@@ -134,84 +144,137 @@ namespace Ship {
 
 			if (!IsKeyboard) {
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 8);
-				DrawVirtualStick("##MainVirtualStick", ImVec2(Backend->wStickX, Backend->wStickY));
+				DrawVirtualStick("##MainVirtualStick", ImVec2(Backend->getLeftStickX(CurrentPort), Backend->getLeftStickY(CurrentPort)));
 				ImGui::SameLine();
 
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
 
+#ifdef __WIIU__
+				ImGui::BeginChild("##MSInput", ImVec2(90 * 2, 50 * 2), false);
+#else
 				ImGui::BeginChild("##MSInput", ImVec2(90, 50), false);
+#endif
 				ImGui::Text("Deadzone");
+			#ifdef __WIIU__
+				ImGui::PushItemWidth(80 * 2);
+			#else
 				ImGui::PushItemWidth(80);
-				ImGui::InputFloat("##MDZone", &profile.Thresholds[LEFT_STICK], 1.0f, 0.0f, "%.0f");
+			#endif
+				// The window has deadzone per stick, so we need to
+				// set the deadzone for both left stick axes here
+				// SDL_CONTROLLER_AXIS_LEFTX: 0
+				// SDL_CONTROLLER_AXIS_LEFTY: 1
+				ImGui::InputFloat("##MDZone", &profile->AxisDeadzones[0], 1.0f, 0.0f, "%.0f");
+				profile->AxisDeadzones[1] = profile->AxisDeadzones[0];
 				ImGui::PopItemWidth();
 				ImGui::EndChild();
 			} else {
 				ImGui::Dummy(ImVec2(0, 6));
 			}
-		SohImGui::EndGroupPanel(IsKeyboard ? 52.0f : 24.0f);
+		#ifdef __SWITCH__
+			SohImGui::EndGroupPanel(IsKeyboard ? 52.0f : 52.0f);
+		#else
+			SohImGui::EndGroupPanel(IsKeyboard ? 52.0f : 24.0f);
+		#endif
 		ImGui::SameLine();
 
 		if (!IsKeyboard) {
 			ImGui::SameLine();
-			SohImGui::BeginGroupPanel("Camera Stick", ImVec2(150, 20));
+			SohImGui::BeginGroupPanel("Right Stick", ImVec2(150, 20));
 				DrawButton("Up", BTN_VSTICKUP);
 				DrawButton("Down", BTN_VSTICKDOWN);
 				DrawButton("Left", BTN_VSTICKLEFT);
 				DrawButton("Right", BTN_VSTICKRIGHT);
 
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 8);
-				DrawVirtualStick("##CameraVirtualStick", ImVec2(Backend->wCamX / sensitivity, Backend->wCamY / sensitivity));
+				// 2 is the SDL value for right stick X axis
+				// 3 is the SDL value for right stick Y axis.
+				DrawVirtualStick("##RightVirtualStick", ImVec2(Backend->getRightStickX(CurrentPort), Backend->getRightStickY(CurrentPort)));
 
 				ImGui::SameLine();
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+#ifdef __WIIU__
+				ImGui::BeginChild("##CSInput", ImVec2(90 * 2, 85 * 2), false);
+#else
 				ImGui::BeginChild("##CSInput", ImVec2(90, 85), false);
+#endif
 					ImGui::Text("Deadzone");
+			#ifdef __WIIU__
+					ImGui::PushItemWidth(80 * 2);
+			#else
 					ImGui::PushItemWidth(80);
-					ImGui::InputFloat("##MDZone", &profile.Thresholds[RIGHT_STICK], 1.0f, 0.0f, "%.0f");
-					ImGui::PopItemWidth();
-					ImGui::Text("Sensitivity");
-					ImGui::PushItemWidth(80);
-					ImGui::InputFloat("##MSensitivity", &profile.Thresholds[SENSITIVITY], 1.0f, 0.0f, "%.0f");
+			#endif
+					// The window has deadzone per stick, so we need to
+					// set the deadzone for both right stick axes here
+					// SDL_CONTROLLER_AXIS_RIGHTX: 2
+					// SDL_CONTROLLER_AXIS_RIGHTY: 3
+					ImGui::InputFloat("##MDZone", &profile->AxisDeadzones[2], 1.0f, 0.0f, "%.0f");
+					profile->AxisDeadzones[3] = profile->AxisDeadzones[2];
 					ImGui::PopItemWidth();
 				ImGui::EndChild();
+		#ifdef __SWITCH__
+			SohImGui::EndGroupPanel(43.0f);
+		#else
 			SohImGui::EndGroupPanel(14.0f);
+		#endif
 		}
 
 		if(Backend->CanGyro()) {
+		#ifndef __WIIU__
 			ImGui::SameLine();
-
+		#endif
 			SohImGui::BeginGroupPanel("Gyro Options", ImVec2(175, 20));
-			float cursorX = ImGui::GetCursorPosX() + 5;
-			ImGui::SetCursorPosX(cursorX);
-			ImGui::Checkbox("Enable Gyro", &profile.UseGyro);
-			ImGui::SetCursorPosX(cursorX);
-			ImGui::Text("Gyro Sensitivity: %d%%", static_cast<int>(100.0f * profile.Thresholds[GYRO_SENSITIVITY]));
-			ImGui::PushItemWidth(135.0f);
-			ImGui::SetCursorPosX(cursorX);
-			ImGui::SliderFloat("##GSensitivity", &profile.Thresholds[GYRO_SENSITIVITY], 0.0f, 1.0f, "");
-			ImGui::PopItemWidth();
-			ImGui::Dummy(ImVec2(0, 1));
-			ImGui::SetCursorPosX(cursorX);
-			if (ImGui::Button("Recalibrate Gyro##RGyro")) {
-				profile.Thresholds[DRIFT_X] = 0.0f;
-				profile.Thresholds[DRIFT_Y] = 0.0f;
-			}
-			ImGui::SetCursorPosX(cursorX);
-			DrawVirtualStick("##GyroPreview", ImVec2(-10.0f * Backend->wGyroY, 10.0f * Backend->wGyroX));
+				float cursorX = ImGui::GetCursorPosX() + 5;
+				ImGui::SetCursorPosX(cursorX);
+				ImGui::Checkbox("Enable Gyro", &profile->UseGyro);
+				ImGui::SetCursorPosX(cursorX);
+				ImGui::Text("Gyro Sensitivity: %d%%", static_cast<int>(100.0f * profile->GyroData[GYRO_SENSITIVITY]));
+			#ifdef __WIIU__
+				ImGui::PushItemWidth(135.0f * 2);
+			#else
+				ImGui::PushItemWidth(135.0f);
+			#endif
+				ImGui::SetCursorPosX(cursorX);
+				ImGui::SliderFloat("##GSensitivity", &profile->GyroData[GYRO_SENSITIVITY], 0.0f, 1.0f, "");
+				ImGui::PopItemWidth();
+				ImGui::Dummy(ImVec2(0, 1));
+				ImGui::SetCursorPosX(cursorX);
+				if (ImGui::Button("Recalibrate Gyro##RGyro")) {
+					profile->GyroData[DRIFT_X] = 0.0f;
+					profile->GyroData[DRIFT_Y] = 0.0f;
+				}
+				ImGui::SetCursorPosX(cursorX);
+				DrawVirtualStick("##GyroPreview", ImVec2(-10.0f * Backend->getGyroY(CurrentPort), 10.0f * Backend->getGyroX(CurrentPort)));
 
-			ImGui::SameLine();
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
-			ImGui::BeginChild("##GyInput", ImVec2(90, 85), false);
-			ImGui::Text("Drift X");
-			ImGui::PushItemWidth(80);
-			ImGui::InputFloat("##GDriftX", &profile.Thresholds[DRIFT_X], 1.0f, 0.0f, "%.1f");
-			ImGui::PopItemWidth();
-			ImGui::Text("Drift Y");
-			ImGui::PushItemWidth(80);
-			ImGui::InputFloat("##GDriftY", &profile.Thresholds[DRIFT_Y], 1.0f, 0.0f, "%.1f");
-			ImGui::PopItemWidth();
-			ImGui::EndChild();
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5);
+			#ifdef __WIIU__
+				ImGui::BeginChild("##GyInput", ImVec2(90 * 2, 85 * 2), false);
+			#else
+				ImGui::BeginChild("##GyInput", ImVec2(90, 85), false);
+			#endif
+				ImGui::Text("Drift X");
+			#ifdef __WIIU__
+				ImGui::PushItemWidth(80 * 2);
+			#else
+				ImGui::PushItemWidth(80);
+			#endif
+				ImGui::InputFloat("##GDriftX", &profile->GyroData[DRIFT_X], 1.0f, 0.0f, "%.1f");
+				ImGui::PopItemWidth();
+				ImGui::Text("Drift Y");
+			#ifdef __WIIU__
+				ImGui::PushItemWidth(80 * 2);
+			#else
+				ImGui::PushItemWidth(80);
+			#endif
+				ImGui::InputFloat("##GDriftY", &profile->GyroData[DRIFT_Y], 1.0f, 0.0f, "%.1f");
+				ImGui::PopItemWidth();
+				ImGui::EndChild();
+		#ifdef __SWITCH__
+			SohImGui::EndGroupPanel(46.0f);
+		#else
 			SohImGui::EndGroupPanel(14.0f);
+		#endif
 		}
 
 		ImGui::SameLine();
@@ -227,17 +290,27 @@ namespace Ship {
 		SohImGui::EndGroupPanel();
 
 		ImGui::SetCursorPosX(cursor.x);
+	#ifdef __SWITCH__
+		ImGui::SetCursorPosY(cursor.y + 167);
+	#elif defined(__WIIU__)
+		ImGui::SetCursorPosY(cursor.y + 120 * 2);
+	#else
 		ImGui::SetCursorPosY(cursor.y + 120);
+	#endif
 		SohImGui::BeginGroupPanel("Options", ImVec2(158, 20));
 			float cursorX = ImGui::GetCursorPosX() + 5;
 			ImGui::SetCursorPosX(cursorX);
-			ImGui::Checkbox("Rumble Enabled", &profile.UseRumble);
+			ImGui::Checkbox("Rumble Enabled", &profile->UseRumble);
 			if (Backend->CanRumble()) {
 				ImGui::SetCursorPosX(cursorX);
-				ImGui::Text("Rumble Force: %d%%", static_cast<int>(100.0f * profile.RumbleStrength));
+				ImGui::Text("Rumble Force: %d%%", static_cast<int>(100.0f * profile->RumbleStrength));
 				ImGui::SetCursorPosX(cursorX);
+			#ifdef __WIIU__
+				ImGui::PushItemWidth(135.0f * 2);
+			#else
 				ImGui::PushItemWidth(135.0f);
-				ImGui::SliderFloat("##RStrength", &profile.RumbleStrength, 0.0f, 1.0f, "");
+			#endif
+				ImGui::SliderFloat("##RStrength", &profile->RumbleStrength, 0.0f, 1.0f, "");
 				ImGui::PopItemWidth();
 			}
 			ImGui::Dummy(ImVec2(0, 5));
@@ -245,16 +318,24 @@ namespace Ship {
 	}
 
 	void InputEditor::DrawHud() {
-
-		__enableGameInput = true;
-
 		if (!this->Opened) {
 			BtnReading = -1;
 			CVar_SetS32("gControllerConfigurationEnabled", 0);
 			return;
 		}
 
-		ImGui::SetNextWindowSizeConstraints(ImVec2(641, 250), ImVec2(1200, 290));
+#ifdef __SWITCH__
+		ImVec2 minSize = ImVec2(641, 250);
+		ImVec2 maxSize = ImVec2(2200, 505);
+#elif defined(__WIIU__)
+		ImVec2 minSize = ImVec2(641 * 2, 250 * 2);
+		ImVec2 maxSize = ImVec2(1200 * 2, 290 * 2);
+#else
+		ImVec2 minSize = ImVec2(641, 250);
+		ImVec2 maxSize = ImVec2(1200, 290);
+#endif
+
+		ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
 		//OTRTODO: Disable this stupid workaround ( ReadRawPress() only works when the window is on the main viewport )
 		ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
 		ImGui::Begin("Controller Configuration", &this->Opened, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
@@ -275,5 +356,17 @@ namespace Ship {
 		DrawControllerSchema();
 
 		ImGui::End();
+	}
+
+	bool InputEditor::IsOpened() {
+		return Opened;
+	}
+
+	void InputEditor::Open() {
+		Opened = true;
+	}
+
+	void InputEditor::Close() {
+		Opened = false;
 	}
 }

@@ -6,10 +6,8 @@
 #include "rando_main.hpp"
 // #include <soh/Enhancements/randomizer.h>
 #include <Cvar.h>
-#include <GameSettings.h>
-#define NOGDI
-#define WIN32_LEAN_AND_MEAN
-#include <GlobalCtx2.h>
+#include <Window.h>
+#include <PR/ultra64/types.h>
 
 #define TICKS_PER_SEC 268123480.0
 
@@ -21,10 +19,10 @@ void RandoMain::GenerateRando(std::unordered_map<RandomizerSettingKey, u8> cvarS
     // std::string settingsFileName = "./randomizer/latest_settings.json";
     // CVar_SetString("gLoadedPreset", settingsFileName.c_str());
 
-    std::string fileName = Ship::GlobalCtx2::GetPathRelativeToAppDirectory(GenerateRandomizer(cvarSettings).c_str());
+    std::string fileName = Ship::Window::GetPathRelativeToAppDirectory(GenerateRandomizer(cvarSettings).c_str());
     CVar_SetString("gSpoilerLog", fileName.c_str());
 
-    Game::SaveSettings();
-    Game::LoadSettings();
+    CVar_Save();
+    CVar_Load();
     CVar_SetS32("gNewSeedGenerated", 1);
 }

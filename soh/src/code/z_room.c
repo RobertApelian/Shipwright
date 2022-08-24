@@ -53,7 +53,7 @@ void func_80095AB4(GlobalContext* globalCtx, Room* room, u32 flags) {
         gSPMatrix(POLY_XLU_DISP++, &gMtxClear, G_MTX_MODELVIEW | G_MTX_LOAD);
     }
 
-    polygon0 = &room->mesh->polygon0;
+    polygon0 = &room->meshHeader->polygon0;
     polygonDlist = SEGMENTED_TO_VIRTUAL(polygon0->start);
     for (i = 0; i < polygon0->num; i++) {
         if ((flags & 1) && (polygonDlist->opa != NULL)) {
@@ -113,7 +113,7 @@ void func_80095D04(GlobalContext* globalCtx, Room* room, u32 flags) {
         gSPMatrix(POLY_XLU_DISP++, &gMtxClear, G_MTX_MODELVIEW | G_MTX_LOAD);
     }
 
-    polygon2 = &room->mesh->polygon2;
+    polygon2 = &room->meshHeader->polygon2;
     polygonDlist = SEGMENTED_TO_VIRTUAL(polygon2->start);
     spA4 = spB8;
 
@@ -217,13 +217,12 @@ void func_80095D04(GlobalContext* globalCtx, Room* room, u32 flags) {
     CLOSE_DISPS(globalCtx->state.gfxCtx);
 }
 
-//#define JPEG_MARKER 0xFFD8FFE0
-#define JPEG_MARKER 0xE0FFD8FF
+#define JPEG_MARKER 0xFFD8FFE0
 
 s32 func_80096238(void* data) {
     OSTime time;
 
-    if (*(u32*)data == JPEG_MARKER)
+    if (BE32SWAP(*(u32*)data) == JPEG_MARKER)
     {
         char* decodedJpeg = ResourceMgr_LoadJPEG(data, 320 * 240 * 2);
         //char* decodedJpeg = ResourceMgr_LoadJPEG(data, 480 * 240 * 2);
@@ -347,7 +346,7 @@ void func_80096680(GlobalContext* globalCtx, Room* room, u32 flags) {
 
     camera = GET_ACTIVE_CAM(globalCtx);
     sp9C = (camera->setting == CAM_SET_PREREND_FIXED);
-    polygon1 = &room->mesh->polygon1;
+    polygon1 = &room->meshHeader->polygon1;
     polygonDlist = SEGMENTED_TO_VIRTUAL(polygon1->dlist);
     sp98 = (flags & 1) && sp9C && polygon1->single.source && !(SREG(25) & 1);
     sp94 = (flags & 1) && polygonDlist->opa && !(SREG(25) & 2);
@@ -402,6 +401,12 @@ BgImage* func_80096A74(PolygonType1* polygon1, GlobalContext* globalCtx) {
 
     camera = GET_ACTIVE_CAM(globalCtx);
     camId = camera->camDataIdx;
+    if (camId == -1 && CVar_GetS32("gNoRestrictItems", 0)) {
+        // This prevents a crash when using items that change the
+        // camera (such as din's fire) on scenes with prerendered backgrounds
+        return NULL;
+    }
+    
     // jfifid
     camId2 = func_80041C10(&globalCtx->colCtx, camId, BGCHECK_SCENE)[2].y;
     if (camId2 >= 0) {
@@ -442,7 +447,7 @@ void func_80096B6C(GlobalContext* globalCtx, Room* room, u32 flags) {
 
     camera = GET_ACTIVE_CAM(globalCtx);
     sp98 = (camera->setting == CAM_SET_PREREND_FIXED);
-    polygon1 = &room->mesh->polygon1;
+    polygon1 = &room->meshHeader->polygon1;
     polygonDlist = SEGMENTED_TO_VIRTUAL(polygon1->dlist);
     bgImage = func_80096A74(polygon1, globalCtx);
     sp94 = (flags & 1) && sp98 && bgImage->source && !(SREG(25) & 1);
@@ -489,7 +494,7 @@ void func_80096B6C(GlobalContext* globalCtx, Room* room, u32 flags) {
 
 // Room Draw Polygon Type 1
 void func_80096F6C(GlobalContext* globalCtx, Room* room, u32 flags) {
-    PolygonType1* polygon1 = &room->mesh->polygon1;
+    PolygonType1* polygon1 = &room->meshHeader->polygon1;
 
     if (polygon1->format == 1) {
         func_80096680(globalCtx, room, flags);
@@ -621,8 +626,8 @@ void Room_Draw(GlobalContext* globalCtx, Room* room, u32 flags) {
     if (room->segment != NULL)
     {
         gSegments[3] = VIRTUAL_TO_PHYSICAL(room->segment);
-        ASSERT(room->mesh->polygon.type < ARRAY_COUNTU(sRoomDrawHandlers));
-        sRoomDrawHandlers[room->mesh->polygon.type](globalCtx, room, flags);
+        ASSERT(room->meshHeader->base.type < ARRAY_COUNTU(sRoomDrawHandlers));
+        sRoomDrawHandlers[room->meshHeader->base.type](globalCtx, room, flags);
     }
 }
 

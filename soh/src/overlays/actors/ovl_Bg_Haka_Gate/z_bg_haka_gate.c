@@ -34,6 +34,7 @@ void BgHakaGate_Init(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaGate_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaGate_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaGate_Draw(Actor* this, GlobalContext* globalCtx);
+void BgHakaGate_Reset(void);
 
 void BgHakaGate_DoNothing(BgHakaGate* this, GlobalContext* globalCtx);
 void BgHakaGate_StatueInactive(BgHakaGate* this, GlobalContext* globalCtx);
@@ -62,7 +63,7 @@ const ActorInit Bg_Haka_Gate_InitVars = {
     (ActorFunc)BgHakaGate_Destroy,
     (ActorFunc)BgHakaGate_Update,
     (ActorFunc)BgHakaGate_Draw,
-    NULL,
+    (ActorResetFunc)BgHakaGate_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -192,12 +193,7 @@ void BgHakaGate_StatueTurn(BgHakaGate* this, GlobalContext* globalCtx) {
     s16 turnAngle;
 
     this->vTurnRateDeg10++;
-    if (CVar_GetS32("gFasterBlockPush", 0) != 0) {
-        this->vTurnRateDeg10 = 10;
-        CLAMP_MAX(this->vTurnRateDeg10, 5);
-    } else {
-        this->vTurnRateDeg10 = CLAMP_MAX(this->vTurnRateDeg10, 5);
-    }
+    this->vTurnRateDeg10 = CLAMP_MAX(this->vTurnRateDeg10, 10);
     turnFinished = Math_StepToS(&this->vTurnAngleDeg10, 600, this->vTurnRateDeg10);
     turnAngle = this->vTurnAngleDeg10 * this->vTurnDirection;
     this->dyna.actor.shape.rot.y = (this->vRotYDeg10 + turnAngle) * 0.1f * (0x10000 / 360.0f);
@@ -215,9 +211,9 @@ void BgHakaGate_StatueTurn(BgHakaGate* this, GlobalContext* globalCtx) {
     if (turnFinished) {
         player->stateFlags2 &= ~0x10;
         this->vRotYDeg10 = (this->vRotYDeg10 + turnAngle) % 3600;
-        this->vTurnRateDeg10 = 0;
+        this->vTurnRateDeg10 = CVar_GetS32("gFasterBlockPush", 0) * 2;
         this->vTurnAngleDeg10 = 0;
-        this->vTimer = CVar_GetS32("gFasterBlockPush", 0) != 0 ? 2 : 5;
+        this->vTimer = 5 - ((CVar_GetS32("gFasterBlockPush", 0) * 3) / 5);
         this->actionFunc = BgHakaGate_StatueIdle;
         this->dyna.unk_150 = 0.0f;
     }
@@ -297,7 +293,7 @@ void BgHakaGate_FalseSkull(BgHakaGate* this, GlobalContext* globalCtx) {
     if (Flags_GetSwitch(globalCtx, this->switchFlag)) {
         Math_StepToS(&this->vFlameScale, 350, 20);
     }
-    if (globalCtx->actorCtx.unk_03) {
+    if (globalCtx->actorCtx.lensActive) {
         this->dyna.actor.flags |= ACTOR_FLAG_7;
     } else {
         this->dyna.actor.flags &= ~ACTOR_FLAG_7;
@@ -377,4 +373,8 @@ void BgHakaGate_Draw(Actor* thisx, GlobalContext* globalCtx) {
     if (thisx->params == BGHAKAGATE_SKULL) {
         BgHakaGate_DrawFlame(this, globalCtx);
     }
+}
+
+void BgHakaGate_Reset(void) {
+    sStatueRotY = 0;
 }

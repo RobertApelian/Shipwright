@@ -26,9 +26,7 @@
 #include <filesystem>
 #include <variables.h>
 
-#define NOGDI
-#define WIN32_LEAN_AND_MEAN
-#include "GlobalCtx2.h"
+#include "Window.h"
 
 using json = nlohmann::json;
 
@@ -42,7 +40,7 @@ static RandomizerHash randomizerHash;
 static SpoilerData spoilerData;
 
 void GenerateHash() {
-    for (size_t i = 0; i < Settings::seed.size(); i++) {
+    for (size_t i = 0; i < Settings::hashIconIndexes.size(); i++) {
         int number = Settings::seed[i] - '0';
         Settings::hashIconIndexes[i] = number;
     }
@@ -300,7 +298,7 @@ static void WriteLocation(
   //   node->SetAttribute("price", price);
   // }
   // if (!location->IsAddedToPool()) {
-  //   #ifdef ENABLE_DEBUG  
+  //   #ifdef ENABLE_DEBUG
   //     node->SetAttribute("not-added", true);
   //   #endif
   // }
@@ -371,10 +369,11 @@ static void WriteSettings(const bool printAll = false) {
       //   }
       // }
     }
-
-    // 3drando doesn't have a "skip child zelda" setting, manually add it to the spoilerfile
-    jsonData["settings"]["Skip Child Zelda"] = Settings::skipChildZelda;
   }
+
+  // 3drando doesn't have a "skip child zelda" setting, manually add it to the spoilerfile
+  jsonData["settings"]["Skip Child Zelda"] = Settings::skipChildZelda;
+
   // spoilerLog.RootElement()->InsertEndChild(parentNode);
 
   //     for (const uint32_t key : allLocations) {
@@ -578,7 +577,7 @@ std::string AutoFormatHintTextString(std::string unformattedHintTextString) {
   bool needsAutomaicNewlines = true;
   if (textStr == "Erreur 0x69a504:&Traduction manquante^C'est de la faute à Purple Hato!&J'vous jure!" ||
       textStr == "Mon très cher @:&Viens vite au château, je t'ai préparé&un délicieux gâteau...^À bientôt, Princesse Zelda" ||
-      textStr == "What about Zelda makes you think she'd be a better ruler than I?^I saved Lon Lon Ranch,&fed the hungry,&and my castle floats." ||
+      textStr == "What about Zelda makes you think&she'd be a better ruler than I?^I saved Lon Lon Ranch,&fed the hungry,&and my castle floats." ||
       textStr == "Many tricks are up my sleeve,&to save yourself&you'd better leave!" ||
       textStr == "I've learned this spell,&it's really neat,&I'll keep it later&for your treat!" ||
       textStr == "Sale petit garnement,&tu fais erreur!&C'est maintenant que marque&ta dernière heure!" ||
@@ -672,7 +671,7 @@ static void WriteHints(int language) {
 static void WriteAllLocations(int language) {
     for (const uint32_t key : allLocations) {
         ItemLocation* location = Location(key);
-        
+
         switch (language) {
             case 0:
             default:
@@ -724,13 +723,13 @@ const char* SpoilerLog_Write(int language) {
     WriteHints(language);
     //WriteShuffledEntrances(spoilerLog);
     WriteAllLocations(language);
-    
-    if (!std::filesystem::exists(Ship::GlobalCtx2::GetPathRelativeToAppDirectory("Randomizer"))) {
-        std::filesystem::create_directory(Ship::GlobalCtx2::GetPathRelativeToAppDirectory("Randomizer"));
+
+    if (!std::filesystem::exists(Ship::Window::GetPathRelativeToAppDirectory("Randomizer"))) {
+        std::filesystem::create_directory(Ship::Window::GetPathRelativeToAppDirectory("Randomizer"));
     }
 
     std::string jsonString = jsonData.dump(4);
-    std::ofstream jsonFile(Ship::GlobalCtx2::GetPathRelativeToAppDirectory(
+    std::ofstream jsonFile(Ship::Window::GetPathRelativeToAppDirectory(
         (std::string("Randomizer/") + std::string(Settings::seed) + std::string(".json")).c_str()));
     jsonFile << std::setw(4) << jsonString << std::endl;
     jsonFile.close();
