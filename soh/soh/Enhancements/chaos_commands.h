@@ -8,8 +8,6 @@
 
 #include <ctime>
 
-#include "ImGuiImpl.h"
-
 void Log(const std::string& msg) {
 	SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
 }

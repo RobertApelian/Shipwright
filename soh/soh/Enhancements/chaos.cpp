@@ -1,5 +1,5 @@
-#include "ImGuiImpl.h"
-#include "Cvar.h"
+#include "../../libultraship/ImGuiImpl.h"
+#include "../../libultraship/Cvar.h"
 
 #include "chaos_commands.h"
 #include "chaos_commands_macros.h"
