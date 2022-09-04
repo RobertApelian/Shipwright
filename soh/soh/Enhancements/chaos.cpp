@@ -202,13 +202,13 @@ static CommandStorage g_command_storage;
 
 void Start() {
     PlatformStart();
-	SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Enabled");
+    // SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Enabled");
     CVar_SetS32("gEnemyHealthBar", 1);
 }
 
 void DisplayCommandMessage(const std::vector<uint8_t>& bytes, size_t start_index) {
 	std::string msg(bytes.begin() + start_index, bytes.end());
-	SohImGui::overlay->TextDrawNotification(15.0f, true, msg.c_str());
+    // SohImGui::overlay->TextDrawNotification(15.0f, true, msg.c_str());
 }
 
 void EnqueueCommand(const std::vector<uint8_t>& bytes) {
@@ -216,7 +216,7 @@ void EnqueueCommand(const std::vector<uint8_t>& bytes) {
 
 	auto it = kCommands.find(bytes[0]);
 	if (it == kCommands.end()) {
-		SohImGui::overlay->TextDrawNotification(10.0f, true, "Unrecognized command");
+		// SohImGui::overlay->TextDrawNotification(10.0f, true, "Unrecognized command");
 		return;
 	}
 
@@ -233,7 +233,7 @@ bool ReadBytes(size_t num, std::vector<uint8_t>* buf) {
 void Stop() {
     PlatformStop();
     Chaos_ResetAll();
-    SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Disabled");
+    // SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Disabled");
 }
 
 void EachFrameCallback() {
@@ -260,7 +260,7 @@ void EachFrameCallback() {
 
 		if (!ReadBytes(bytes_to_read, &current_command_buffer)) {
 			std::string msg = "Error reading command, turning off Chaos Mode";
-			SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
+			// SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
             Stop();
 			CVar_SetS32("gChaosEnabled", 0);
 			g_is_enabled = false;

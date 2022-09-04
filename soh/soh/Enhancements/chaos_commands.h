@@ -9,7 +9,7 @@
 #include <ctime>
 
 void Log(const std::string& msg) {
-	SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
+	// SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
 }
 
 class ChaosCommand {
