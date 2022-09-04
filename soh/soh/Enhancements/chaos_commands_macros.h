@@ -41,6 +41,24 @@
 	return std::make_unique<PredicatedCommand>(creator(payload), pred);\
 }
 
+#define CR_TIMED(tick, cleanup)						\
+[](const std::vector<uint8_t>& payload) {			\
+	return std::make_unique<TimedCommand>(			\
+		tick, cleanup, Read<uint32_t>(payload, 0)); \
+}
+
+#define CR_ONE_SHOT_TIMED(tick, cleanup)						\
+[](const std::vector<uint8_t>& payload) {			\
+	return std::make_unique<OneShotTimedCommand>(			\
+		tick, cleanup, Read<uint32_t>(payload, 0)); \
+}
+
+#define CR_ONE_SHOT_CLEANUP(tick, cleanup, frames)						\
+[](const std::vector<uint8_t>& payload) {			\
+	return std::make_unique<OneShotWithCleanupCommand>(			\
+		tick, cleanup, frames); \
+}
+
 // Commands
 #define CMD(id, payload, creator) { id, { payload, creator }}
 

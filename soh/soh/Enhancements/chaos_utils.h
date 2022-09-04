@@ -7,6 +7,7 @@ extern "C" {
 #include "functions.h"
 #include "macros.h"
 extern GlobalContext* gGlobalCtx;
+extern void Player_SpawnExplosion(GlobalContext*, Player*);
 extern void Player_SetupInvincibility(Player*, s32);
 extern void Player_SetupDamage(GlobalContext*, Player*, s32, f32, f32, s16, s32);
 }
@@ -29,6 +30,31 @@ void spawn_on_link(int16_t id, int16_t params) {
                 player->actor.shape.rot.y,
                 player->actor.shape.rot.z,
                 params);
+}
+
+#define DIST_FROM_PLAYER 100.f
+
+void spawn_n(int16_t id, int16_t params, int32_t n) {
+    if (n == 1) {
+        spawn_on_link(id, params);
+    } else {
+        Player* player = GET_PLAYER(gGlobalCtx);
+        float sigma = (float)rand()/(float)(RAND_MAX/(M_PI / 2.f));
+        float angle_step = (2.f * M_PI) / static_cast<float>(n);
+        for (int32_t i = 0; i < n; ++i, sigma += angle_step) {
+            Actor_Spawn(&(gGlobalCtx->actorCtx), gGlobalCtx, id,
+                player->actor.world.pos.x + DIST_FROM_PLAYER * sin(sigma),
+                player->actor.world.pos.y,
+                player->actor.world.pos.z + DIST_FROM_PLAYER * cos(sigma),
+                player->actor.shape.rot.x,
+                player->actor.shape.rot.y,
+                player->actor.shape.rot.z,
+                params);
+        }
+    }
+	if (id == 0x113) {
+		CVar_SetS32("gActivateNextIK", 1);
+	}
 }
 
 uint32_t g_satisified_pending_frames = 0;
@@ -86,7 +112,7 @@ void execute_game(int16_t entrance_index, uint16_t cutscene_index)
     gSaveContext.minigameState = 3;
   gGlobalCtx->nextEntranceIndex = entrance_index;
   gGlobalCtx->state.running = 0;
-  gGlobalCtx->state.init = gGameStateOverlayTable[3].init;
+  gGlobalCtx->state.init = (GameStateFunc)(gGameStateOverlayTable[3].init);
   gGlobalCtx->state.size = gGameStateOverlayTable[3].instanceSize;
 }
 

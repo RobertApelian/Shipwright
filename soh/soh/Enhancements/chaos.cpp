@@ -7,7 +7,9 @@
 
 #include <z64.h>
 #include <variables.h>
+#undef Polygon
 
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <vector>
@@ -17,9 +19,18 @@
 
 #if defined(__linux__)
 #include "chaos_linux.h"
+#elif !defined(__APPLE__)
+#include "chaos_win.h"
 #endif
 
+extern "C" {
+void Chaos_ResetAll();
+}
+
 bool g_link_is_ready_this_frame = true;
+int32_t g_gravity_modifier = 0;
+uint32_t g_climb_speed_modifier = 0;
+uint32_t g_hookshot_length_modifier = 0;
 
 template<typename T>
 T Read(const std::vector<uint8_t>& bytes, size_t start_index) {
@@ -60,14 +71,17 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD(0x0B, PL_NONE(), 
 		CR_PRED(
 			[&]() { return g_link_is_ready_this_frame; },
-			CR_ONE_SHOT({ spawn_on_link(0x013B, 0x0000); }))),
+			CR_ONE_SHOT({ spawn_on_link(0x013B, 0x0001); }))),
 
-	CMD(0x0C, PL_BYTES(2 * sizeof(int16_t)), 
+	CMD(0x0C, PL_BYTES(2 * sizeof(int16_t) + sizeof(int32_t)), 
 		CR_PRED(
 			[&]() { return g_link_is_ready_this_frame; },
-			CR_ONE_SHOT({ spawn_on_link(
-				Read<int16_t>(payload, 0),
-				Read<int16_t>(payload, sizeof(int16_t))); 
+			CR_ONE_SHOT({
+				int32_t count = Read<int32_t>(payload, 0);
+				spawn_n(
+					Read<int16_t>(payload, sizeof(int32_t)),
+					Read<int16_t>(payload, sizeof(int16_t) + sizeof(int32_t)),
+					count); 
 	}))),
 
 	CMD_ONE_SHOT(0x0D, PL_BYTES(sizeof(uint32_t)), { 
@@ -84,7 +98,6 @@ static std::map<uint8_t, CommandCreator> kCommands {
 		gSaveContext.rupees = s_sub(gSaveContext.rupees, Read<uint32_t>(payload, 0), 16); 
 	}),
 
-	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gEnemyHealthBar"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableFPSView"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gForceNormalArrows"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableLedgeClimb"),
@@ -118,36 +131,38 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gCowRitual"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFireRockRain"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gCuccoAttack"),
-	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gExplodingRupeeChallenge"),
+    CMD_ONE_SHOT_CVAR(CMD_ID++, "gExplodingRupeeChallenge"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gBanItemDropPickup"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gBrokenBombchus"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingGetItems"),
 
 	// Gravity (- down, + up)
-	CMD(CMD_ID++, PL_NONE(), 
-		CR_PRED(
-			[]() { return !CVar_GetS32("gPlayerGravity", 0); },
-			CR_TIMED_CVAR("gPlayerGravity", 0, 9))),
-	CMD(CMD_ID++, PL_NONE(), 
-		CR_PRED(
-			[]() { return !CVar_GetS32("gPlayerGravity", 0); },
-			CR_TIMED_CVAR("gPlayerGravity", 0, -12))),
+    CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+			CR_ONE_SHOT_TIMED(
+                [&]() { g_gravity_modifier++; },
+                [&]() { g_gravity_modifier--; })),
+    CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+			CR_ONE_SHOT_TIMED(
+                [&]() { g_gravity_modifier--; },
+                [&]() { g_gravity_modifier++; })),
 
-	// Climb speed (slow)
-	CMD(CMD_ID++, PL_NONE(), 
-		CR_PRED(
-			[]() { return !CVar_GetS32("gChaosClimbSpeed", 0); },
-			CR_TIMED_CVAR("gChaosClimbSpeed", 0, 1))),
+	// Climb speed
+    CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+			CR_ONE_SHOT_TIMED(
+                [&]() { g_climb_speed_modifier++; },
+                [&]() { g_climb_speed_modifier--; })),
 
-	// HS Length (short)
-	CMD(CMD_ID++, PL_NONE(), 
-		CR_PRED(
-			[]() { return !CVar_GetS32("gHookshotLengthRemove", 0); },
-			CR_TIMED_CVAR("gHookshotLengthRemove", 0, 3))),
+	// HS Length 
+    CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+			CR_ONE_SHOT_TIMED(
+                [&]() { g_hookshot_length_modifier++; },
+                [&]() { g_hookshot_length_modifier--; })),
 
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSpawnExplosion"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRestrainLink"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gTripToSpace"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRedoRando"),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
 	CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
 	CMD_TAKE_AMMO(0x81, ITEM_STICK),
@@ -186,13 +201,14 @@ static bool g_is_enabled = false;
 static CommandStorage g_command_storage;
 
 void Start() {
-	StartLinux();
+    PlatformStart();
 	SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Enabled");
+    CVar_SetS32("gEnemyHealthBar", 1);
 }
 
 void DisplayCommandMessage(const std::vector<uint8_t>& bytes, size_t start_index) {
 	std::string msg(bytes.begin() + start_index, bytes.end());
-	SohImGui::overlay->TextDrawNotification(5.0f, true, msg.c_str());
+	SohImGui::overlay->TextDrawNotification(15.0f, true, msg.c_str());
 }
 
 void EnqueueCommand(const std::vector<uint8_t>& bytes) {
@@ -211,7 +227,13 @@ void EnqueueCommand(const std::vector<uint8_t>& bytes) {
 }
 
 bool ReadBytes(size_t num, std::vector<uint8_t>* buf) {
-	return ReadBytesLinux(num, buf);
+    return PlatformReadBytes(num, buf);
+}
+
+void Stop() {
+    PlatformStop();
+    Chaos_ResetAll();
+    SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Disabled");
 }
 
 void EachFrameCallback() {
@@ -239,7 +261,7 @@ void EachFrameCallback() {
 		if (!ReadBytes(bytes_to_read, &current_command_buffer)) {
 			std::string msg = "Error reading command, turning off Chaos Mode";
 			SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
-			close(fd);
+            Stop();
 			CVar_SetS32("gChaosEnabled", 0);
 			g_is_enabled = false;
 			return;
@@ -257,18 +279,77 @@ void EachFrameCallback() {
 	g_command_storage.Tick();
 
 	apply_ongoing_effects();
+	uint32_t grav = std::clamp<int32_t>(g_gravity_modifier, -12, 9);
+	CVar_SetS32("gPlayerGravity", grav);
+	CVar_SetS32("gChaosClimbSpeed", std::clamp<uint32_t>(g_climb_speed_modifier, 0, 9));
+	CVar_SetS32("gHookshotLengthRemove", std::clamp<uint32_t>(g_hookshot_length_modifier, 0, 9));
 }
 
 extern "C" {
-	void Chaos_Init() {
-    	CVar_RegisterS32("gChaosEnabled", 0);
+	void Chaos_ResetAll() {
+		CVar_SetS32("gChaosForcedBoots", 0);
+		CVar_SetS32("gChaosOHKO", 0);
+		CVar_SetS32("gChaosNoHud", 0);
+		CVar_SetS32("gChaosNoZ", 0);
+		CVar_SetS32("gChaosTurbo", 0);
+		CVar_SetS32("gChaosInvertControls", 0);
+		CVar_SetS32("gEnemyHealthBar", 0);
+		CVar_SetS32("gDisableFPSView", 0);
+		CVar_SetS32("gForceNormalArrows", 0);
+		CVar_SetS32("gDisableLedgeClimb", 0);
+		CVar_SetS32("gFloorIsLava", 0);
+		CVar_SetS32("gExplodingRolls", 0);
+		CVar_SetS32("gFreezingRolls", 0);
+		CVar_SetS32("gDisableTargeting", 0);
+		CVar_SetS32("gMegaLetterbox", 0);
+		CVar_SetS32("gDisableTurning", 0);
+		CVar_SetS32("gJailTime", 0);
+		CVar_SetS32("gOnHold", 0);
+		CVar_SetS32("gSonicRoll", 0);
+		CVar_SetS32("gNaviSpam", 0);
+		CVar_SetS32("gScuffedLink", 0);
+		CVar_SetS32("gRaveMode", 0);
+		CVar_SetS32("gInvisPlayer", 0);
+		CVar_SetS32("gSlipperyFloor", 0);
+		CVar_SetS32("gIceDamage", 0);
+		CVar_SetS32("gElectricDamage", 0);
+		CVar_SetS32("gKnockbackDamage", 0);
+		CVar_SetS32("gFireDamage", 0);
+		CVar_SetS32("gForwardJump", 0);
+		CVar_SetS32("gBigHead", 0);
+		CVar_SetS32("gTinyHead", 0);
+		CVar_SetS32("gDarkenArea", 0);
+		CVar_SetS32("gChaosSpin", 0);
+		CVar_SetS32("gDisableMeleeAttacks", 0);
+		CVar_SetS32("gDisableEnemyDraw", 0);
+		CVar_SetS32("gSandstorm", 0);
+		CVar_SetS32("gSinkingFloor", 0);
+		CVar_SetS32("gCowRitual", 0);
+		CVar_SetS32("gFireRockRain", 0);
+		CVar_SetS32("gCuccoAttack", 0);
+		CVar_SetS32("gExplodingRupeeChallenge", 0);
+		CVar_SetS32("gBanItemDropPickup", 0);
+		CVar_SetS32("gBrokenBombchus", 0);
+		CVar_SetS32("gAnnoyingGetItems", 0);
+		CVar_SetS32("gPlayerGravity", 0);
+		CVar_SetS32("gChaosClimbSpeed", 0);
+		CVar_SetS32("gHookshotLengthRemove", 0);
+		CVar_SetS32("gSpawnExplosion", 0);
+		CVar_SetS32("gRestrainLink", 0);
+		CVar_SetS32("gTripToSpace", 0);
+	}
 
-    	CVar_RegisterS32("gChaosForcedBoots", 0);
-    	CVar_RegisterS32("gChaosOHKO", 0);
-    	CVar_RegisterS32("gChaosNoHud", 0);
-    	CVar_RegisterS32("gChaosNoZ", 0);
-    	CVar_RegisterS32("gChaosTurbo", 0);
-    	CVar_RegisterS32("gChaosInvertControls", 0);
+	void Chaos_Init() {
+  		CVar_RegisterS32("gChaosEnabled", 0);
+
+  		CVar_RegisterS32("gChaosForcedBoots", 0);
+  		CVar_RegisterS32("gChaosOHKO", 0);
+  		CVar_RegisterS32("gChaosNoHud", 0);
+  		CVar_RegisterS32("gChaosNoZ", 0);
+  		CVar_RegisterS32("gChaosTurbo", 0);
+  		CVar_RegisterS32("gChaosInvertControls", 0);
+		
+		Chaos_ResetAll();
 	}
 
 	void Chaos_EachFrame() {
