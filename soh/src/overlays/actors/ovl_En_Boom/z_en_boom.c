@@ -120,6 +120,7 @@ void EnBoom_Fly(EnBoom* this, GlobalContext* globalCtx) {
     s32 hitDynaID;
     Vec3f hitPoint;
     s32 pad2;
+    s16 randAngle = Rand_ZeroOne() * 65536.0f;
 
     player = GET_PLAYER(globalCtx);
     target = this->moveTo;
@@ -127,10 +128,18 @@ void EnBoom_Fly(EnBoom* this, GlobalContext* globalCtx) {
     // If the boomerang is moving toward a targeted actor, handle setting the proper x and y angle to fly toward it.
     if (target != NULL) {
         yawTarget = Actor_WorldYawTowardPoint(&this->actor, &target->focus.pos);
-        yawDiff = this->actor.world.rot.y - yawTarget;
+        if (CVar_GetS32("gZoomerang", 0)) {
+            yawDiff = randAngle;
+        } else {
+            yawDiff = this->actor.world.rot.y - yawTarget;
+        }
 
         pitchTarget = Actor_WorldPitchTowardPoint(&this->actor, &target->focus.pos);
-        pitchDiff = this->actor.world.rot.x - pitchTarget;
+        if (CVar_GetS32("gZoomerang", 0)) {
+            pitchDiff = randAngle * Math_CosS(randAngle);
+        } else {
+            pitchDiff = this->actor.world.rot.x - pitchTarget;
+        }
 
         distXYZScale = (200.0f - Math_Vec3f_DistXYZ(&this->actor.world.pos, &target->focus.pos)) * 0.005f;
         if (distXYZScale < 0.12f) {
@@ -149,7 +158,15 @@ void EnBoom_Fly(EnBoom* this, GlobalContext* globalCtx) {
     }
 
     // Set xyz speed, move forward, and play the boomerang sound
-    func_8002D9A4(&this->actor, 12.0f);
+    
+    if (CVar_GetS32("gZoomerang", 0) && this->returnTimer != 0) {
+        f32 speed;
+        speed = Rand_ZeroFloat(32.0f);
+        this->actor.speedXZ = Math_CosS(randAngle) * speed;
+        this->actor.velocity.y = -Math_SinS(randAngle) * speed;
+    } else {
+        func_8002D9A4(&this->actor, 12.0f);
+    }
     Actor_MoveForward(&this->actor);
     func_8002F974(&this->actor, NA_SE_IT_BOOMERANG_FLY - SFX_FLAG);
 
