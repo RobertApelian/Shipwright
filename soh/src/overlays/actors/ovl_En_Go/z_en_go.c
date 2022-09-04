@@ -2,6 +2,8 @@
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include "objects/object_oF1d_map/object_oF1d_map.h"
+#include "soh/frame_interpolation.h"
+#include "soh/Enhancements/randomizer/adult_trade_shuffle.h"
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
@@ -93,7 +95,7 @@ u16 EnGo_GetTextID(GlobalContext* globalCtx, Actor* thisx) {
 
     switch (thisx->params & 0xF0) {
         case 0x90:
-            if (gSaveContext.bgsFlag) {
+            if (!gSaveContext.n64ddFlag && gSaveContext.bgsFlag) {
                 return 0x305E;
             } else if (INV_CONTENT(ITEM_TRADE_ADULT) >= ITEM_CLAIM_CHECK) {
                 if (Environment_GetBgsDayCount() >= CVar_GetS32("gForgeTime", 3)) {
@@ -112,7 +114,7 @@ u16 EnGo_GetTextID(GlobalContext* globalCtx, Actor* thisx) {
             }
         case 0x00:
             if ((!gSaveContext.n64ddFlag && CHECK_QUEST_ITEM(QUEST_MEDALLION_FIRE)) ||
-                (gSaveContext.n64ddFlag && gSaveContext.dungeonsDone[4])) {
+                (gSaveContext.n64ddFlag && Flags_GetRandomizerInf(RAND_INF_DUNGEONS_DONE_FIRE_TEMPLE))) {
                 if (gSaveContext.infTable[16] & 0x8000) {
                     return 0x3042;
                 } else {
@@ -857,7 +859,7 @@ void func_80A405CC(EnGo* this, GlobalContext* globalCtx) {
 
 void EnGo_BiggoronActionFunc(EnGo* this, GlobalContext* globalCtx) {
     if (((this->actor.params & 0xF0) == 0x90) && (this->unk_1E0.unk_00 == 2)) {
-        if (gSaveContext.bgsFlag) {
+        if (!gSaveContext.n64ddFlag && gSaveContext.bgsFlag) {
             this->unk_1E0.unk_00 = 0;
         } else {
             if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_EYEDROPS) {
@@ -945,6 +947,7 @@ void func_80A40B1C(EnGo* this, GlobalContext* globalCtx) {
 void EnGo_GetItem(EnGo* this, GlobalContext* globalCtx) {
     f32 xzDist;
     f32 yDist;
+    GetItemEntry getItemEntry = (GetItemEntry)GET_ITEM_NONE;
     s32 getItemId;
 
     if (Actor_HasParent(&this->actor, globalCtx)) {
@@ -955,14 +958,31 @@ void EnGo_GetItem(EnGo* this, GlobalContext* globalCtx) {
         this->unk_20C = 0;
         if ((this->actor.params & 0xF0) == 0x90) {
             if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_CLAIM_CHECK) {
-                getItemId = gSaveContext.n64ddFlag ? Randomizer_GetItemIdFromKnownCheck(RC_DMT_TRADE_CLAIM_CHECK, GI_SWORD_BGS) : GI_SWORD_BGS;
+                if (!gSaveContext.n64ddFlag) {
+                    getItemId = GI_SWORD_BGS;
+                } else {
+                    getItemEntry = Randomizer_GetItemFromKnownCheck(RC_DMT_TRADE_CLAIM_CHECK, GI_SWORD_BGS);
+                    getItemId = getItemEntry.getItemId;
+                }
                 this->unk_20C = 1;
             }
             if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_EYEDROPS) {
-                getItemId = GI_CLAIM_CHECK;
+                if (gSaveContext.n64ddFlag) {
+                    getItemEntry = Randomizer_GetItemFromKnownCheck(RC_DMT_TRADE_EYEDROPS, GI_CLAIM_CHECK);
+                    getItemId = getItemEntry.getItemId;
+                    Randomizer_ConsumeAdultTradeItem(globalCtx, ITEM_EYEDROPS);
+                } else {
+                    getItemId = GI_CLAIM_CHECK;
+                }
             }
             if (INV_CONTENT(ITEM_TRADE_ADULT) == ITEM_SWORD_BROKEN) {
-                getItemId = GI_PRESCRIPTION;
+                if (gSaveContext.n64ddFlag) {
+                    getItemEntry = Randomizer_GetItemFromKnownCheck(RC_DMT_TRADE_BROKEN_SWORD, GI_PRESCRIPTION);
+                    Randomizer_ConsumeAdultTradeItem(globalCtx, ITEM_SWORD_BROKEN);
+                    getItemId = getItemEntry.getItemId;
+                } else {
+                    getItemId = GI_PRESCRIPTION;
+                }
             }
         }
 
@@ -972,7 +992,11 @@ void EnGo_GetItem(EnGo* this, GlobalContext* globalCtx) {
 
         yDist = fabsf(this->actor.yDistToPlayer) + 1.0f;
         xzDist = this->actor.xzDistToPlayer + 1.0f;
-        func_8002F434(&this->actor, globalCtx, getItemId, xzDist, yDist);
+        if (!gSaveContext.n64ddFlag || getItemEntry.getItemId == GI_NONE) {
+            func_8002F434(&this->actor, globalCtx, getItemId, xzDist, yDist);
+        } else {
+            GiveItemEntryFromActor(&this->actor, globalCtx, getItemEntry, xzDist, yDist);
+        }
     }
 }
 
@@ -1133,11 +1157,9 @@ void EnGo_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
     if (this->actionFunc == EnGo_CurledUp) {
         EnGo_DrawCurledUp(this, globalCtx);
-        return; // needed for match?
     } else if (this->actionFunc == EnGo_GoronLinkRolling || this->actionFunc == func_80A3FEB4 ||
                this->actionFunc == EnGo_StopRolling || this->actionFunc == func_80A3FEB4) {
         EnGo_DrawRolling(this, globalCtx);
-        return; // needed for match?
     } else {
         func_800943C8(globalCtx->state.gfxCtx);
 
@@ -1146,9 +1168,9 @@ void EnGo_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
         SkelAnime_DrawFlexOpa(globalCtx, this->skelAnime.skeleton, this->skelAnime.jointTable,
                               this->skelAnime.dListCount, EnGo_OverrideLimbDraw, EnGo_PostLimbDraw, &this->actor);
-        CLOSE_DISPS(globalCtx->state.gfxCtx);
         EnGo_DrawDust(this, globalCtx);
     }
+    CLOSE_DISPS(globalCtx->state.gfxCtx);
 }
 
 void EnGo_AddDust(EnGo* this, Vec3f* pos, Vec3f* velocity, Vec3f* accel, u8 initialTimer, f32 scale, f32 scaleStep) {
@@ -1158,6 +1180,7 @@ void EnGo_AddDust(EnGo* this, Vec3f* pos, Vec3f* velocity, Vec3f* accel, u8 init
 
     for (i = 0; i < ARRAY_COUNT(this->dustEffects); i++, dustEffect++) {
         if (dustEffect->type != 1) {
+            dustEffect->epoch++;
             dustEffect->scale = scale;
             dustEffect->scaleStep = scaleStep;
             timer = initialTimer;
@@ -1218,6 +1241,7 @@ void EnGo_DrawDust(EnGo* this, GlobalContext* globalCtx) {
                 firstDone = true;
             }
 
+            FrameInterpolation_RecordOpenChild(dustEffect, dustEffect->epoch);
             alpha = dustEffect->timer * (255.0f / dustEffect->initialTimer);
             gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, 170, 130, 90, alpha);
             gDPPipeSync(POLY_XLU_DISP++);
@@ -1230,6 +1254,7 @@ void EnGo_DrawDust(EnGo* this, GlobalContext* globalCtx) {
             index = dustEffect->timer * (8.0f / dustEffect->initialTimer);
             gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(dustTex[index]));
             gSPDisplayList(POLY_XLU_DISP++, gGoronDL_00FD50);
+            FrameInterpolation_RecordCloseChild();
         }
     }
     CLOSE_DISPS(globalCtx->state.gfxCtx);

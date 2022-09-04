@@ -141,6 +141,9 @@ f32 DemoEffect_InterpolateCsFrames(GlobalContext* globalCtx, s32 csActionId) {
  */
 void DemoEffect_InitJewel(GlobalContext* globalCtx, DemoEffect* this) {
     this->initDrawFunc = DemoEffect_DrawJewel;
+    if (gSaveContext.n64ddFlag && globalCtx->sceneNum == SCENE_BDAN) {
+        this->initDrawFunc = DemoEffect_DrawGetItem;
+    }
     if (!LINK_IS_ADULT) {
         this->initUpdateFunc = DemoEffect_UpdateJewelChild;
     } else {
@@ -152,7 +155,7 @@ void DemoEffect_InitJewel(GlobalContext* globalCtx, DemoEffect* this) {
         Actor_SetScale(&this->actor, 0.10f);
     }
     this->csActionId = 1;
-    this->actor.shape.rot.x = 16384;
+    this->actor.shape.rot.x = (gSaveContext.n64ddFlag && globalCtx->sceneNum == SCENE_BDAN) ? 0 : 16384;
     DemoEffect_InitJewelColor(this);
     this->jewel.alpha = 0;
     this->jewelCsRotation.x = this->jewelCsRotation.y = this->jewelCsRotation.z = 0;
@@ -1540,7 +1543,34 @@ void DemoEffect_UpdateJewelAdult(DemoEffect* this, GlobalContext* globalCtx) {
     this->jewel.timer++;
     this->actor.shape.rot.y += 0x0400;
     DemoEffect_PlayJewelSfx(this, globalCtx);
+
+    if (gSaveContext.n64ddFlag) {
+        switch (this->jewel.type) {
+            case DEMO_EFFECT_JEWEL_KOKIRI:
+                if (CHECK_QUEST_ITEM(QUEST_KOKIRI_EMERALD)) {
+                    DemoEffect_SetJewelColor(this, 1.0f);
+                } else {
+                    DemoEffect_SetJewelColor(this, 0.0f);
+                }
+            break;
+            case DEMO_EFFECT_JEWEL_GORON:
+                if (CHECK_QUEST_ITEM(QUEST_GORON_RUBY)) {
+                    DemoEffect_SetJewelColor(this, 1.0f);
+                } else {
+                    DemoEffect_SetJewelColor(this, 0.0f);
+                }
+            break;
+            case DEMO_EFFECT_JEWEL_ZORA:
+                if (CHECK_QUEST_ITEM(QUEST_ZORA_SAPPHIRE)) {
+                    DemoEffect_SetJewelColor(this, 1.0f);
+                } else {
+                    DemoEffect_SetJewelColor(this, 0.0f);
+                }
+            break;
+        }
+    } else {
     DemoEffect_SetJewelColor(this, 1.0f);
+    }
 }
 
 /**
@@ -1604,6 +1634,34 @@ void DemoEffect_UpdateJewelChild(DemoEffect* this, GlobalContext* globalCtx) {
     thisx->shape.rot.y += 0x0400;
     DemoEffect_PlayJewelSfx(this, globalCtx);
     this->effectFlags &= ~1;
+
+    if (gSaveContext.n64ddFlag) {
+        switch (this->jewel.type) {
+            case DEMO_EFFECT_JEWEL_KOKIRI:
+                if (CHECK_QUEST_ITEM(QUEST_KOKIRI_EMERALD)) {
+                    DemoEffect_SetJewelColor(this, 1.0f);
+                } else {
+                    DemoEffect_SetJewelColor(this, 0.0f);
+                }
+                break;
+            case DEMO_EFFECT_JEWEL_GORON:
+                if (CHECK_QUEST_ITEM(QUEST_GORON_RUBY)) {
+                    DemoEffect_SetJewelColor(this, 1.0f);
+                } else {
+                    DemoEffect_SetJewelColor(this, 0.0f);
+                }
+                break;
+            case DEMO_EFFECT_JEWEL_ZORA:
+                if (CHECK_QUEST_ITEM(QUEST_ZORA_SAPPHIRE)) {
+                    DemoEffect_SetJewelColor(this, 1.0f);
+                } else {
+                    DemoEffect_SetJewelColor(this, 0.0f);
+                }
+                break;
+        }
+    } else {
+        // Contrary to it's adult conterpart Authenthic doesn't use DemoEffect_SetJewelColor(this, 1.0f); here
+    }
 }
 
 /**
@@ -2026,6 +2084,14 @@ void DemoEffect_DrawGetItem(Actor* thisx, GlobalContext* globalCtx) {
     if (!DemoEffect_CheckCsAction(this, globalCtx, 1) && !DemoEffect_CheckCsAction(this, globalCtx, 4)) {
         if (!this->getItem.isLoaded) {
             this->getItem.isLoaded = 1;
+            return;
+        }
+        if (gSaveContext.n64ddFlag && globalCtx->sceneNum == SCENE_BDAN) {
+            GetItemEntry getItemEntry = Randomizer_GetItemFromKnownCheck(RC_BARINADE, RG_ZORA_SAPPHIRE);
+            this->getItem.drawId = getItemEntry.gid;
+            func_8002EBCC(thisx, globalCtx, 0);
+            func_8002ED80(thisx, globalCtx, 0);
+            GetItemEntry_Draw(globalCtx, getItemEntry);
             return;
         }
         func_8002EBCC(thisx, globalCtx, 0);

@@ -3,7 +3,9 @@
 
 #include "ultra64.h"
 #include "z64math.h"
+#include "z64audio.h"
 #include "soh/Enhancements/randomizer/randomizerTypes.h"
+#include "soh/Enhancements/randomizer/randomizer_inf.h"
 
 typedef struct {
     /* 0x00 */ u8 buttonItems[8];
@@ -114,9 +116,9 @@ typedef struct {
     /* 0x0EF8 */ u16 infTable[30]; // "inf_table"
     /* 0x0F38 */ u32 worldMapAreaData; // "area_arrival"
     /* 0x0F40 */ u8 scarecrowCustomSongSet;
-    /* 0x0F41 */ u8 scarecrowCustomSong[0x360];
+    /* 0x0F41 */ OcarinaNote scarecrowCustomSong[108];
     /* 0x12C5 */ u8 scarecrowSpawnSongSet;
-    /* 0x12C6 */ u8 scarecrowSpawnSong[0x80];
+    /* 0x12C6 */ OcarinaNote scarecrowSpawnSong[16];
     /* 0x1346 */ char unk_1346[0x02];
     /* 0x1348 */ HorseData horseData;
     /* 0x1354 */ s32 fileNum; // "file_no"
@@ -174,16 +176,16 @@ typedef struct {
     /* 0x1422 */ s16 sunsSongState; // controls the effects of suns song
     /* 0x1424 */ s16 healthAccumulator;
     RandoSetting randoSettings[300];
-    ItemLocationRando itemLocations[500];
+    ItemLocationRando itemLocations[RC_MAX];
     HintLocationRando hintLocations[50];
     char childAltarText[250];
     char adultAltarText[750];
     char ganonHintText[150];
     char ganonText[250];
     u8 seedIcons[5];
-    u8 dungeonsDone[8];
-    u8 trialsDone[6];
+    u16 randomizerInf[4];
     u8 temporaryWeapon;
+    u16 adultTradeItems;
 } SaveContext; // size = 0x1428
 
 typedef enum {

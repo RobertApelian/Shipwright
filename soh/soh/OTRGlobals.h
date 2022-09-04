@@ -3,19 +3,22 @@
 
 #pragma once
 
-#include "GlobalCtx2.h"
 #include "SaveManager.h"
+#include <soh/Enhancements/item-tables/ItemTableTypes.h>
 
 #ifdef __cplusplus
+#include <libultraship/Window.h>
 #include "Enhancements/savestates.h"
 #include "Enhancements/randomizer/randomizer.h"
+
+const std::string customMessageTableID = "BaseGameOverrides";
 
 class OTRGlobals
 {
 public:
     static OTRGlobals* Instance;
 
-    std::shared_ptr<Ship::GlobalCtx2> context;
+    std::shared_ptr<Ship::Window> context;
     std::shared_ptr<SaveStateMgr> gSaveStateMgr;
     std::shared_ptr<Randomizer> gRandomizer;
 
@@ -28,6 +31,9 @@ private:
 #endif
 
 #ifndef __cplusplus
+void InitOTR(void);
+void DeinitOTR(void);
+void VanillaItemTable_Init();
 void OTRAudio_Init();
 void InitAudio();
 void Graph_StartFrame();
@@ -44,6 +50,9 @@ void ResourceMgr_LoadFile(const char* resName);
 char* ResourceMgr_LoadFileFromDisk(const char* filePath);
 char* ResourceMgr_LoadJPEG(char* data, int dataSize);
 char* ResourceMgr_LoadTexByName(const char* texPath);
+uint16_t ResourceMgr_LoadTexWidthByName(char* texPath);
+uint16_t ResourceMgr_LoadTexHeightByName(char* texPath);
+uint32_t ResourceMgr_LoadTexSizeByName(char* texPath);
 char* ResourceMgr_LoadTexOrDListByName(const char* filePath);
 char* ResourceMgr_LoadPlayerAnimByName(const char* animPath);
 AnimationHeaderCommon* ResourceMgr_LoadAnimByName(const char* path);
@@ -82,21 +91,24 @@ int AudioPlayer_GetDesiredBuffered(void);
 void AudioPlayer_Play(const uint8_t* buf, uint32_t len);
 void AudioMgr_CreateNextAudioBuffer(s16* samples, u32 num_samples);
 int Controller_ShouldRumble(size_t i);
+void Hooks_ExecuteAudioInit();
 void* getN64WeirdFrame(s32 i);
 Sprite* GetSeedTexture(uint8_t index);
 void Randomizer_LoadSettings(const char* spoilerFileName);
 u8 Randomizer_GetSettingValue(RandomizerSettingKey randoSettingKey);
-RandomizerCheck Randomizer_GetCheckFromActor(s16 actorId, s16 actorParams, s16 sceneNum);
-int Randomizer_CopyAltarMessage(char* buffer, const int maxBufferSize);
-int Randomizer_CopyHintFromCheck(RandomizerCheck check, char* buffer, const int maxBufferSize);
-int Randomizer_CopyGanonText(char* buffer, const int maxBufferSize);
-int Randomizer_CopyGanonHintText(char* buffer, const int maxBufferSize);
+RandomizerCheck Randomizer_GetCheckFromActor(s16 actorId, s16 sceneNum, s16 actorParams);
+ScrubIdentity Randomizer_IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respawnData);
 void Randomizer_LoadHintLocations(const char* spoilerFileName);
+void Randomizer_LoadRequiredTrials(const char* spoilerFileName);
 void Randomizer_LoadItemLocations(const char* spoilerFileName, bool silent);
-s16 Randomizer_GetItemModelFromId(s16 itemId);
-s32 Randomizer_GetItemIDFromGetItemID(s32 getItemId);
-s32 Randomizer_GetRandomizedItemId(GetItemID ogId, s16 actorId, s16 actorParams, s16 sceneNum);
-s32 Randomizer_GetItemIdFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogId);
+bool Randomizer_IsTrialRequired(RandomizerInf trial);
+GetItemEntry Randomizer_GetItemFromActor(s16 actorId, s16 sceneNum, s16 actorParams, GetItemID ogId);
+GetItemEntry Randomizer_GetItemFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogId);
+bool Randomizer_ObtainedFreestandingIceTrap(RandomizerCheck randomizerCheck, GetItemID ogId, Actor* actor);
+bool Randomizer_ItemIsIceTrap(RandomizerCheck randomizerCheck, GetItemID ogId);
+int CustomMessage_RetrieveIfExists(GlobalContext* globalCtx);
+GetItemEntry ItemTable_Retrieve(int16_t getItemID);
+GetItemEntry ItemTable_RetrieveEntry(s16 modIndex, s16 getItemID);
 #endif
 
 #endif

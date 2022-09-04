@@ -11,7 +11,7 @@
 #include "utils.hpp"
 #include "shops.hpp"
 #include "hints.hpp"
-#include "Lib/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 #include <cstdio>
 #include <cstdlib>
@@ -26,9 +26,7 @@
 #include <filesystem>
 #include <variables.h>
 
-#define NOGDI
-#define WIN32_LEAN_AND_MEAN
-#include "GlobalCtx2.h"
+#include <libultraship/Window.h>
 
 using json = nlohmann::json;
 
@@ -42,7 +40,7 @@ static RandomizerHash randomizerHash;
 static SpoilerData spoilerData;
 
 void GenerateHash() {
-    for (size_t i = 0; i < Settings::seed.size(); i++) {
+    for (size_t i = 0; i < Settings::hashIconIndexes.size(); i++) {
         int number = Settings::seed[i] - '0';
         Settings::hashIconIndexes[i] = number;
     }
@@ -300,7 +298,7 @@ static void WriteLocation(
   //   node->SetAttribute("price", price);
   // }
   // if (!location->IsAddedToPool()) {
-  //   #ifdef ENABLE_DEBUG  
+  //   #ifdef ENABLE_DEBUG
   //     node->SetAttribute("not-added", true);
   //   #endif
   // }
@@ -347,7 +345,10 @@ static void WriteSettings(const bool printAll = false) {
             setting->GetName() == "Cuccos to return" ||
             setting->GetName() == "Skip Epona Race" ||
             setting->GetName() == "Skip Tower Escape" ||
-            setting->GetName() == "Skip Child Stealth") {
+            setting->GetName() == "Skip Child Stealth" ||
+            setting->GetName() == "Complete Mask Quest" ||
+            setting->GetName() == "Skip Scarecrow's Song" ||
+            setting->GetName() == "Enable Glitch-Useful Cutscenes") {
             std::string settingName = menu->name + ":" + setting->GetName();
             jsonData["settings"][settingName] = setting->GetSelectedOptionText();
         }
@@ -371,10 +372,11 @@ static void WriteSettings(const bool printAll = false) {
       //   }
       // }
     }
-
-    // 3drando doesn't have a "skip child zelda" setting, manually add it to the spoilerfile
-    jsonData["settings"]["Skip Child Zelda"] = Settings::skipChildZelda;
   }
+
+  // 3drando doesn't have a "skip child zelda" setting, manually add it to the spoilerfile
+  jsonData["settings"]["Skip Child Zelda"] = Settings::skipChildZelda;
+
   // spoilerLog.RootElement()->InsertEndChild(parentNode);
 
   //     for (const uint32_t key : allLocations) {
@@ -425,11 +427,11 @@ static void WriteStartingInventory() {
       // doesn't work, and because it'd be bad to set every single possible starting
       // inventory item as "false" in the json, we're just going to check
       // to see if the name is one of the 3 we're using rn
-      if(setting->GetName() == "Deku Shield" || setting->GetName() == "Kokiri Sword" || setting->GetName() == "Ocarina") {
-        jsonData["settings"]["Start With " + setting->GetName()] = setting->GetSelectedOptionText();
-      }
-
-      if (setting->GetName() == "Start with Consumables" || setting->GetName() == "Start with Max Rupees") {
+      if (setting->GetName() == "Start with Consumables" ||
+          setting->GetName() == "Start with Max Rupees" ||
+          setting->GetName() == "Start with Fairy Ocarina" ||
+          setting->GetName() == "Start with Kokiri Sword" ||
+          setting->GetName() == "Start with Deku Shield") {
         jsonData["settings"][setting->GetName()] = setting->GetSelectedOptionText();
       }
     }
@@ -500,25 +502,23 @@ static void WriteMasterQuestDungeons(tinyxml2::XMLDocument& spoilerLog) {
   }
 }
 
-// Writes the required trails to the spoiler log, if there are any.
-static void WriteRequiredTrials(tinyxml2::XMLDocument& spoilerLog) {
-  auto parentNode = spoilerLog.NewElement("required-trials");
-
-  for (const auto* trial : Trial::trialList) {
-    if (trial->IsSkipped()) {
-      continue;
+// Writes the required trials to the spoiler log, if there are any.
+static void WriteRequiredTrials() {
+    for (const auto& trial : Trial::trialList) {
+        if (trial->IsRequired()) {
+            std::string trialName;
+            switch (gSaveContext.language) {
+                case LANGUAGE_FRA:
+                    trialName = trial->GetName().GetFrench();
+                    break;
+                case LANGUAGE_ENG:
+                default:
+                    trialName = trial->GetName().GetEnglish();
+                    break;
+            }
+            jsonData["requiredTrials"].push_back(RemoveLineBreaks(trialName));
+        }
     }
-
-    auto node = parentNode->InsertNewChildElement("trial");
-    // PURPLE TODO: LOCALIZATION
-    std::string name = trial->GetName().GetEnglish();
-    name[0] = toupper(name[0]); // Capitalize T in "The"
-    node->SetAttribute("name", name.c_str());
-  }
-
-  if (!parentNode->NoChildren()) {
-    spoilerLog.RootElement()->InsertEndChild(parentNode);
-  }
 }
 
 // Writes the intended playthrough to the spoiler log, separated into spheres.
@@ -578,7 +578,7 @@ std::string AutoFormatHintTextString(std::string unformattedHintTextString) {
   bool needsAutomaicNewlines = true;
   if (textStr == "Erreur 0x69a504:&Traduction manquante^C'est de la faute à Purple Hato!&J'vous jure!" ||
       textStr == "Mon très cher @:&Viens vite au château, je t'ai préparé&un délicieux gâteau...^À bientôt, Princesse Zelda" ||
-      textStr == "What about Zelda makes you think she'd be a better ruler than I?^I saved Lon Lon Ranch,&fed the hungry,&and my castle floats." ||
+      textStr == "What about Zelda makes you think&she'd be a better ruler than I?^I saved Lon Lon Ranch,&fed the hungry,&and my castle floats." ||
       textStr == "Many tricks are up my sleeve,&to save yourself&you'd better leave!" ||
       textStr == "I've learned this spell,&it's really neat,&I'll keep it later&for your treat!" ||
       textStr == "Sale petit garnement,&tu fais erreur!&C'est maintenant que marque&ta dernière heure!" ||
@@ -672,15 +672,24 @@ static void WriteHints(int language) {
 static void WriteAllLocations(int language) {
     for (const uint32_t key : allLocations) {
         ItemLocation* location = Location(key);
-        
+        std::string placedItemName;
+
         switch (language) {
-            case 0:
-            default:
-                jsonData["locations"][location->GetName()] = location->GetPlacedItemName().english;
-                break;
-            case 2:
-                jsonData["locations"][location->GetName()] = location->GetPlacedItemName().french;
-                break;
+          case 0:
+          default:
+            placedItemName = location->GetPlacedItemName().english;
+            break;
+          case 2:
+            placedItemName = location->GetPlacedItemName().french;
+            break;
+        }
+
+        // Eventually check for other things here like fake name
+        if (location->HasScrubsanityPrice() || location->HasShopsanityPrice()) {
+          jsonData["locations"][location->GetName()]["item"] = placedItemName;
+          jsonData["locations"][location->GetName()]["price"] = location->GetPrice();
+        } else {
+          jsonData["locations"][location->GetName()] = placedItemName;
         }
     }
 }
@@ -713,7 +722,7 @@ const char* SpoilerLog_Write(int language) {
     //    WriteEnabledGlitches(spoilerLog);
     //}
     //WriteMasterQuestDungeons(spoilerLog);
-    //WriteRequiredTrials(spoilerLog);
+    WriteRequiredTrials();
     WritePlaythrough();
     //WriteWayOfTheHeroLocation(spoilerLog);
 
@@ -724,13 +733,13 @@ const char* SpoilerLog_Write(int language) {
     WriteHints(language);
     //WriteShuffledEntrances(spoilerLog);
     WriteAllLocations(language);
-    
-    if (!std::filesystem::exists(Ship::GlobalCtx2::GetPathRelativeToAppDirectory("Randomizer"))) {
-        std::filesystem::create_directory(Ship::GlobalCtx2::GetPathRelativeToAppDirectory("Randomizer"));
+
+    if (!std::filesystem::exists(Ship::Window::GetPathRelativeToAppDirectory("Randomizer"))) {
+        std::filesystem::create_directory(Ship::Window::GetPathRelativeToAppDirectory("Randomizer"));
     }
 
     std::string jsonString = jsonData.dump(4);
-    std::ofstream jsonFile(Ship::GlobalCtx2::GetPathRelativeToAppDirectory(
+    std::ofstream jsonFile(Ship::Window::GetPathRelativeToAppDirectory(
         (std::string("Randomizer/") + std::string(Settings::seed) + std::string(".json")).c_str()));
     jsonFile << std::setw(4) << jsonString << std::endl;
     jsonFile.close();
@@ -763,7 +772,7 @@ bool PlacementLog_Write() {
     WriteEnabledTricks(placementLog);
     WriteEnabledGlitches(placementLog);
     WriteMasterQuestDungeons(placementLog);
-    WriteRequiredTrials(placementLog);
+    //WriteRequiredTrials(placementLog);
 
     placementtxt = "\n" + placementtxt;
 

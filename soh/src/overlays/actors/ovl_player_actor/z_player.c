@@ -20,6 +20,8 @@
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include "objects/object_link_child/object_link_child.h"
 #include "textures/icon_item_24_static/icon_item_24_static.h"
+#include <soh/Enhancements/custom-message/CustomMessageTypes.h>
+#include <soh/Enhancements/item-tables/ItemTableTypes.h>
 
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
 #include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
@@ -179,6 +181,7 @@ void Player_SpawnNoMomentum(GlobalContext* globalCtx, Player* this);
 void Player_SpawnWalkingSlow(GlobalContext* globalCtx, Player* this);
 void Player_SpawnWalkingPreserveMomentum(GlobalContext* globalCtx, Player* this);
 s32 Player_SetupMountHorse(Player* this, GlobalContext* globalCtx);
+void Player_SetPendingFlag(Player* this, GlobalContext* globalCtx);
 s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx);
 s32 Player_SetupPutDownOrThrowActor(Player* this, GlobalContext* globalCtx);
 s32 Player_SetupSpecialWallInteraction(Player* this, GlobalContext* globalCtx);
@@ -1998,9 +2001,15 @@ s32 Player_IsAimingBoomerang(Player* this) {
 }
 
 void Player_SetGetItemDrawIdPlusOne(Player* this, GlobalContext* globalCtx) {
-    GetItemEntry* giEntry = &sGetItemTable[this->getItemId - 1];
+    GetItemEntry giEntry;
+    if (this->getItemEntry.objectId == OBJECT_INVALID) {
+        giEntry = ItemTable_Retrieve(this->getItemId);
+    }
+    else {
+        giEntry = this->getItemEntry;
+    }
 
-    this->giDrawIdPlusOne = ABS(giEntry->gi);
+    this->giDrawIdPlusOne = ABS(giEntry.gi);
 }
 
 static LinkAnimationHeader* Player_GetStandingStillAnim(Player* this) {
@@ -2173,6 +2182,7 @@ void Player_SetupExplosive(GlobalContext* globalCtx, Player* this) {
         this->interactRangeActor = spawnedActor;
         this->heldActor = spawnedActor;
         this->getItemId = GI_NONE;
+        this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
         this->leftHandRot.y = spawnedActor->shape.rot.y - this->actor.shape.rot.y;
         this->stateFlags1 |= PLAYER_STATE1_HOLDING_ACTOR;
     }
@@ -3088,6 +3098,10 @@ s32 Player_WaitForThrownBoomerang(Player* this, GlobalContext* globalCtx) {
         return 1;
     }
 
+    if (D_80853614 && CVar_GetS32("gFastBoomerang", 0)) {
+        this->boomerangQuickRecall = true;
+    }
+
     return 0;
 }
 
@@ -3248,12 +3262,12 @@ void Player_UseItem(GlobalContext* globalCtx, Player* this, s32 item) {
 
             if (actionParam == PLAYER_AP_LENS) {
                 if (func_80087708(globalCtx, 0, 3)) {
-                    if (globalCtx->actorCtx.unk_03 != 0) {
-                        func_800304B0(globalCtx);
+                    if (globalCtx->actorCtx.lensActive) {
+                        Actor_DisableLens(globalCtx);
                     } else {
-                        globalCtx->actorCtx.unk_03 = 1;
+                        globalCtx->actorCtx.lensActive = true;
                     }
-                    func_80078884((globalCtx->actorCtx.unk_03 != 0) ? NA_SE_SY_GLASSMODE_ON : NA_SE_SY_GLASSMODE_OFF);
+                    func_80078884((globalCtx->actorCtx.lensActive) ? NA_SE_SY_GLASSMODE_ON : NA_SE_SY_GLASSMODE_OFF);
                 } else {
                     func_80078884(NA_SE_SY_ERROR);
                 }
@@ -4812,7 +4826,7 @@ s32 Player_SetupOpenDoor(Player* this, GlobalContext* globalCtx) {
                                         .sides[(doorDirection > 0) ? 0 : 1]
                                         .effects;
 
-                    func_800304B0(globalCtx);
+                    Actor_DisableLens(globalCtx);
                 }
             } else {
                 // This actor can be either EnDoor or DoorKiller.
@@ -4865,7 +4879,7 @@ s32 Player_SetupOpenDoor(Player* this, GlobalContext* globalCtx) {
 
                 if (this->doorType != PLAYER_DOORTYPE_FAKE) {
                     this->stateFlags1 |= PLAYER_STATE1_IN_CUTSCENE;
-                    func_800304B0(globalCtx);
+                    Actor_DisableLens(globalCtx);
 
                     if (((doorActor->params >> 7) & 7) == 3) {
                         raycastPos.x = doorActor->world.pos.x - (doorOpeningPosOffset * sin);
@@ -5010,10 +5024,15 @@ void Player_SetupHoldActor(GlobalContext* globalCtx, Player* this) {
                 anim = GET_PLAYER_ANIM(PLAYER_ANIMGROUP_HOLDING_OBJECT, this->modelAnimType);
             }
 
-            Player_PlayAnimOnce(globalCtx, this, anim);
+            if (CVar_GetS32("gFasterHeavyBlockLift", 0) && interactActorId == ACTOR_BG_HEAVY_BLOCK) {
+                LinkAnimation_PlayOnceSetSpeed(globalCtx, &this->skelAnime, anim, 3.0f);
+            } else {
+                LinkAnimation_PlayOnce(globalCtx, &this->skelAnime, anim);
+            }
         }
-    } else {
-        Player_SetupStandingStillType(this, globalCtx);
+    }
+    else {
+        func_80839F90(this, globalCtx);
         this->stateFlags1 &= ~PLAYER_STATE1_HOLDING_ACTOR;
     }
 }
@@ -5059,10 +5078,13 @@ void Player_SetupGetItem(GlobalContext* globalCtx, Player* this) {
 
     if (this->getItemId == GI_HEART_CONTAINER_2) {
         this->genericTimer = 20;
-    } else if (this->getItemId >= 0) {
+    }
+    else if (this->getItemId >= 0 || (this->getItemEntry.objectId != OBJECT_INVALID && this->getItemEntry.getItemId >= 0)) {
         this->genericTimer = 1;
-    } else {
+    }
+    else {
         this->getItemId = -this->getItemId;
+        this->getItemEntry.getItemId = -this->getItemEntry.getItemId;
     }
 }
 
@@ -5347,7 +5369,7 @@ static LinkAnimationHeader* sExchangeItemAnims[] = {
 s32 Player_SetupItemCutsceneOrFirstPerson(Player* this, GlobalContext* globalCtx) {
     s32 item;
     s32 sp28;
-    GetItemEntry* giEntry;
+    GetItemEntry giEntry;
     Actor* targetActor;
 
     if ((this->attentionMode != 0) && (Player_IsSwimming(this) || (this->actor.bgCheckFlags & 1) ||
@@ -5383,8 +5405,12 @@ s32 Player_SetupItemCutsceneOrFirstPerson(Player* this, GlobalContext* globalCtx
                         Player_SetActionFuncPreserveItemAP(globalCtx, this, Player_PresentExchangeItem, 0);
 
                         if (item >= 0) {
-                            giEntry = &sGetItemTable[sExchangeGetItemIDs[item] - 1];
-                            Player_LoadGetItemObject(this, giEntry->objectId);
+                            if (this->getItemEntry.objectId == OBJECT_INVALID) {
+                                giEntry = ItemTable_Retrieve(sExchangeGetItemIDs[item]);
+                            } else {
+                                giEntry = this->getItemEntry;
+                            }
+                            Player_LoadGetItemObject(this, giEntry.objectId);
                         }
 
                         this->stateFlags1 |=
@@ -5535,7 +5561,7 @@ s32 Player_SetupSpeakOrCheck(Player* this, GlobalContext* globalCtx) {
                             this->stateFlags2 |= PLAYER_STATE2_NAVI_REQUESTING_TALK;
                         }
 
-                        if (!CHECK_BTN_ALL(sControlInput->press.button, BTN_CUP) && !naviHasText) {
+                        if (!CHECK_BTN_ALL(sControlInput->press.button, CVar_GetS32("gNaviOnL", 0) ? BTN_L : BTN_CUP) && !naviHasText) {
                             return 0;
                         }
 
@@ -5588,7 +5614,7 @@ s32 Player_SetupCUpBehavior(Player* this, GlobalContext* globalCtx) {
     if ((this->targetActor != NULL) && (CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_18) ||
                                         (this->targetActor->naviEnemyId != 0xFF))) {
         this->stateFlags2 |= PLAYER_STATE2_NAVI_REQUESTING_TALK;
-    } else if ((this->naviTextId == 0) && !Player_IsUnfriendlyZTargeting(this) &&
+    } else if ((this->naviTextId == 0 || CVar_GetS32("gNaviOnL", 0)) && !Player_IsUnfriendlyZTargeting(this) &&
                CHECK_BTN_ALL(sControlInput->press.button, BTN_CUP) && (YREG(15) != 0x10) && (YREG(15) != 0x20) &&
                !Player_ForceFirstPerson(this, globalCtx)) {
         func_80078884(NA_SE_SY_ERROR);
@@ -5691,7 +5717,7 @@ s32 Player_CanRoll(Player* this, GlobalContext* globalCtx) {
 s32 Player_SetupJumpSlashOrRoll(Player* this, GlobalContext* globalCtx) {
     s32 relativeStickInput;
 
-    if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) && (globalCtx->roomCtx.curRoom.unk_03 != 2) &&
+    if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) && (globalCtx->roomCtx.curRoom.behaviorType1 != 2) &&
         (sFloorSpecialProperty != 7) &&
         (SurfaceType_GetSlope(&globalCtx->colCtx, this->actor.floorPoly, this->actor.floorBgId) != 1)) {
         relativeStickInput = this->relativeAnalogStickInputs[this->inputFrameCounter];
@@ -5888,7 +5914,7 @@ s32 Player_SetupStartChargeSpinAttack(Player* this, GlobalContext* globalCtx) {
 }
 
 s32 Player_SetupThrowDekuNut(GlobalContext* globalCtx, Player* this) {
-    if ((globalCtx->roomCtx.curRoom.unk_03 != 2) && (this->actor.bgCheckFlags & 1) && (AMMO(ITEM_NUT) != 0)) {
+    if ((globalCtx->roomCtx.curRoom.behaviorType1 != ROOM_BEHAVIOR_TYPE1_2) && (this->actor.bgCheckFlags & 1) && (AMMO(ITEM_NUT) != 0)) {
         Player_SetActionFunc(globalCtx, this, Player_ThrowDekuNut, 0);
         Player_PlayAnimOnce(globalCtx, this, &gPlayerAnim_003048);
         this->attentionMode = 0;
@@ -6505,7 +6531,7 @@ s32 Player_SetupMountHorse(Player* this, GlobalContext* globalCtx) {
         Player_SetupAnimMovement(globalCtx, this, 0x9B);
         this->actor.parent = this->rideActor;
         Player_ClearAttentionModeAndStopMoving(this);
-        func_800304B0(globalCtx);
+        Actor_DisableLens(globalCtx);
         return 1;
     }
 
@@ -6583,8 +6609,37 @@ void Player_PickupItemDrop(GlobalContext* globalCtx, Player* this, GetItemEntry*
             Item_Give(globalCtx, giEntry->itemId);
         }
 
-        func_80078884((this->getItemId < 0) ? NA_SE_SY_GET_BOXITEM : NA_SE_SY_GET_ITEM);
+    func_80078884((this->getItemId < 0 || this->getItemEntry.getItemId < 0) ? NA_SE_SY_GET_BOXITEM : NA_SE_SY_GET_ITEM);
+}
+
+// Sets a flag according to which type of flag is specified in player->pendingFlag.flagType
+// and which flag is specified in player->pendingFlag.flagID.
+void Player_SetPendingFlag(Player* this, GlobalContext* globalCtx) {
+    switch (this->pendingFlag.flagType) {
+        case FLAG_SCENE_CLEAR:
+            Flags_SetClear(globalCtx, this->pendingFlag.flagID);
+            break;
+        case FLAG_SCENE_COLLECTIBLE:
+            Flags_SetCollectible(globalCtx, this->pendingFlag.flagID);
+            break;
+        case FLAG_SCENE_SWITCH:
+            Flags_SetSwitch(globalCtx, this->pendingFlag.flagID);
+            break;
+        case FLAG_SCENE_TREASURE:
+            Flags_SetTreasure(globalCtx, this->pendingFlag.flagID);
+            break;
+        case FLAG_RANDOMIZER_INF:
+            Flags_SetRandomizerInf(this->pendingFlag.flagID);
+            break;
+        case FLAG_EVENT_CHECK_INF:
+            Flags_SetEventChkInf(this->pendingFlag.flagID);
+            break;
+        case FLAG_NONE:
+        default:
+            break;
     }
+    this->pendingFlag.flagType = FLAG_NONE;
+    this->pendingFlag.flagID = 0;
 }
 
 s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
@@ -6597,40 +6652,48 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                 this->getItemId = iREG(68);
             }
 
-            if (this->getItemId < GI_MAX) {
-                GetItemEntry* giEntry = &sGetItemTable[this->getItemId - 1];
-
+            GetItemEntry giEntry;
+            if (this->getItemEntry.objectId == OBJECT_INVALID || (this->getItemId != this->getItemEntry.getItemId)) {
+                giEntry = ItemTable_Retrieve(this->getItemId);
+            } else {
+                giEntry = this->getItemEntry;
+            }
+            if (giEntry.collectable) {
                 if ((interactedActor != &this->actor) && !iREG(67)) {
                     interactedActor->parent = &this->actor;
                 }
 
                 iREG(67) = false;
 
-                if (gSaveContext.n64ddFlag && this->getItemId == GI_ICE_TRAP) {
+                if (gSaveContext.n64ddFlag && giEntry.getItemId == RG_ICE_TRAP) {
                     this->stateFlags1 &= ~(PLAYER_STATE1_GETTING_ITEM | PLAYER_STATE1_HOLDING_ACTOR);
                     this->actor.colChkInfo.damage = 0;
                     Player_SetupDamage(globalCtx, this, 3, 0.0f, 0.0f, 0, 20);
-                    return;
+                    Player_SetPendingFlag(this, globalCtx);
+                    this->getItemId == GI_NONE;
+                    this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
+                    return 1;
                 }
 
-                s32 drop = giEntry->objectId;
+                s32 drop = giEntry.objectId;
 
                 if (gSaveContext.n64ddFlag || (globalCtx->sceneNum == SCENE_BOWLING) || !(CVar_GetS32("gFastDrops", 0) &&
                     ((drop == OBJECT_GI_BOMB_1) || (drop == OBJECT_GI_NUTS) || (drop == OBJECT_GI_STICK) ||
                     (drop == OBJECT_GI_SEED) || (drop == OBJECT_GI_MAGICPOT) || (drop == OBJECT_GI_ARROW))) &&
-                    (Item_CheckObtainability(giEntry->itemId) == ITEM_NONE)) {
+                    (Item_CheckObtainability(giEntry.itemId) == ITEM_NONE)) {
 
                     if (gSaveContext.n64ddFlag &&
                         ((interactedActor->id == ACTOR_EN_ITEM00 &&
                           (interactedActor->params != 6 && interactedActor->params != 17)) ||
                          (interactedActor->id == ACTOR_EN_KAREBABA || interactedActor->id == ACTOR_EN_DEKUBABA))) {
-                        Player_PickupItemDrop(globalCtx, this, giEntry);
+                        Player_PickupItemDrop(globalCtx, this, &giEntry);
                         this->getItemId = GI_NONE;
+                        this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
                         return 0;
                     }                    
 
                     Player_DetatchHeldActor(globalCtx, this);
-                    Player_LoadGetItemObject(this, giEntry->objectId);
+                    Player_LoadGetItemObject(this, giEntry.objectId);
 
                     if (!(this->stateFlags2 & PLAYER_STATE2_DIVING) || (this->currentBoots == PLAYER_BOOTS_IRON)) {
                         Player_SetupMiniCsFunc(globalCtx, this, Player_SetupGetItem);
@@ -6644,30 +6707,36 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                     return 1;
                 }
 
-                Player_PickupItemDrop(globalCtx, this, giEntry);
+                Player_PickupItemDrop(globalCtx, this, &giEntry);
                 this->getItemId = GI_NONE;
+                this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
             }
         } else if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) &&
                    !(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) && !(this->stateFlags2 & PLAYER_STATE2_DIVING)) {
             if (this->getItemId != GI_NONE) {
-                GetItemEntry* giEntry = &sGetItemTable[-this->getItemId - 1];
+                GetItemEntry giEntry;
+                if (this->getItemEntry.objectId == OBJECT_INVALID) {
+                    giEntry = ItemTable_Retrieve(-this->getItemId);
+                } else {
+                    giEntry = this->getItemEntry;
+                }
                 EnBox* chest = (EnBox*)interactedActor;
                 if (CVar_GetS32("gFastChests", 0) != 0) {
-                    giEntry->gi = -1 * abs(giEntry->gi);
+                    giEntry.gi = -1 * abs(giEntry.gi);
                 }
 
-                if (giEntry->itemId != ITEM_NONE) {
-                    if (((Item_CheckObtainability(giEntry->itemId) == ITEM_NONE) && (giEntry->field & 0x40)) ||
-                        ((Item_CheckObtainability(giEntry->itemId) != ITEM_NONE) && (giEntry->field & 0x20))) {
+                if (giEntry.itemId != ITEM_NONE) {
+                    if (((Item_CheckObtainability(giEntry.itemId) == ITEM_NONE) && (giEntry.field & 0x40)) ||
+                        ((Item_CheckObtainability(giEntry.itemId) != ITEM_NONE) && (giEntry.field & 0x20))) {
                         this->getItemId = -GI_RUPEE_BLUE;
-                        giEntry = &sGetItemTable[GI_RUPEE_BLUE - 1];
+                        giEntry = ItemTable_Retrieve(GI_RUPEE_BLUE);
                     }
                 }
 
                 Player_SetupMiniCsFunc(globalCtx, this, Player_SetupGetItem);
                 this->stateFlags1 |=
                     PLAYER_STATE1_GETTING_ITEM | PLAYER_STATE1_HOLDING_ACTOR | PLAYER_STATE1_IN_CUTSCENE;
-                Player_LoadGetItemObject(this, giEntry->objectId);
+                Player_LoadGetItemObject(this, giEntry.objectId);
                 this->actor.world.pos.x =
                     chest->dyna.actor.world.pos.x - (Math_SinS(chest->dyna.actor.shape.rot.y) * 29.4343f);
                 this->actor.world.pos.z =
@@ -6675,7 +6744,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, GlobalContext* globalCtx) {
                 this->currentYaw = this->actor.shape.rot.y = chest->dyna.actor.shape.rot.y;
                 Player_ClearAttentionModeAndStopMoving(this);
 
-                if ((giEntry->itemId != ITEM_NONE) && (giEntry->gi >= 0) &&
+                if ((giEntry.itemId != ITEM_NONE) && (giEntry.gi >= 0) &&
                     (Item_CheckObtainability(giEntry->itemId) == ITEM_NONE)) {
                     Player_PlayAnimOnceSlowed(globalCtx, this, this->ageProperties->unk_98);
                     Player_SetupAnimMovement(globalCtx, this, 0x28F);
@@ -7069,6 +7138,7 @@ s32 Player_SetupSpecialWallInteraction(Player* this, GlobalContext* globalCtx) {
                         this->stateFlags1 |= PLAYER_STATE1_HOLDING_ACTOR;
                         this->interactRangeActor = &wallPolyActor->actor;
                         this->getItemId = GI_NONE;
+                        this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
                         this->currentYaw = this->actor.wallYaw + 0x8000;
                         Player_ClearAttentionModeAndStopMoving(this);
 
@@ -7461,7 +7531,7 @@ void Player_SetupIdleAnim(GlobalContext* globalCtx, Player* this) {
         if (this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) {
             anim = Player_GetStandingStillAnim(this);
         } else {
-            sp38 = globalCtx->roomCtx.curRoom.unk_02;
+            sp38 = globalCtx->roomCtx.curRoom.behaviorType2;
             if (heathIsCritical) {
                 if (this->idleCounter >= 0) {
                     sp38 = 7;
@@ -7473,8 +7543,8 @@ void Player_SetupIdleAnim(GlobalContext* globalCtx, Player* this) {
                 sp34 = Rand_ZeroOne() * 5.0f;
                 if (sp34 < 4) {
                     if (((sp34 != 0) && (sp34 != 3)) || ((this->rightHandType == PLAYER_MODELTYPE_RH_SHIELD) &&
-                                                         ((sp34 == 3) || Player_GetSwordHeld(this)))) {
-                        if ((sp34 == 1) && Player_HoldsTwoHandedWeapon(this) && CVar_GetS32("gTwoHandedIdle", 1) == 1) {
+                        ((sp34 == 3) || Player_GetSwordHeld(this)))) {
+                        if ((sp34 == 1) && Player_HoldsTwoHandedWeapon(this) && CVar_GetS32("gTwoHandedIdle", 0) == 1) {
                             sp34 = 4;
                         }
                         sp38 = sp34 + 9;
@@ -8167,15 +8237,35 @@ s32 func_8084285C(Player* this, f32 arg1, f32 arg2, f32 arg3) {
 }
 
 s32 func_808428D8(Player* this, GlobalContext* globalCtx) {
-    if (!Player_IsChildWithHylianShield(this) && Player_GetSwordHeld(this) && sUsingItemAlreadyInHand) {
-        Player_PlayAnimOnce(globalCtx, this, &gPlayerAnim_002EC8);
-        this->genericVar = 1;
-        this->swordAnimation = 0xC;
-        this->currentYaw = this->actor.shape.rot.y + this->upperBodyRot.y;
+    if (Player_IsChildWithHylianShield(this) || !Player_GetSwordHeld(this) || !sUsingItemAlreadyInHand) {
+        return 0;
+    }
+
+    func_80832264(globalCtx, this, &gPlayerAnim_002EC8);
+    this->genericVar = 1;
+    this->swordAnimation = 0xC;
+    this->currentYaw = this->actor.shape.rot.y + this->upperBodyRot.y;
+
+    if (!CVar_GetS32("gCrouchStabHammerFix", 0)) {
         return 1;
     }
 
-    return 0;
+    u32 swordId;
+    if (Player_HoldsBrokenKnife(this)) {
+        swordId = 1;
+    } else {
+        swordId = Player_GetSwordHeld(this) - 1;
+    }
+
+    if (swordId != 4 && !CVar_GetS32("gCrouchStabFix", 0)) { // 4 = Megaton Hammer
+        return 1;
+    }
+
+    u32 flags = sMeleeWeaponDmgFlags[swordId][0];
+    Player_SetupMeleeWeaponToucherFlags(this, 0, flags);
+    Player_SetupMeleeWeaponToucherFlags(this, 1, flags);
+
+    return 1;
 }
 
 s32 func_80842964(Player* this, GlobalContext* globalCtx) {
@@ -8644,7 +8734,7 @@ static PlayerAnimSfxEntry D_808545F0[] = {
 
 void Player_Die(Player* this, GlobalContext* globalCtx) {
     if (this->currentTunic != PLAYER_TUNIC_GORON && CVar_GetS32("gSuperTunic", 0) == 0) {
-        if ((globalCtx->roomCtx.curRoom.unk_02 == 3) || (sFloorSpecialProperty == 9) ||
+        if ((globalCtx->roomCtx.curRoom.behaviorType2 == ROOM_BEHAVIOR_TYPE2_3) || (sFloorSpecialProperty == 9) ||
             ((Player_GetHurtFloorType(sFloorSpecialProperty) >= 0) &&
              !SurfaceType_IsWallDamage(&globalCtx->colCtx, this->actor.floorPoly, this->actor.floorBgId))) {
             Player_StartBurning(this);
@@ -9814,7 +9904,7 @@ void Player_SetupSpawnFromFaroresWind(GlobalContext* globalCtx, Player* this) {
     this->stateFlags1 |= PLAYER_STATE1_IN_CUTSCENE;
 }
 
-static InitChainEntry D_80854708[] = {
+static InitChainEntry sInitChain[] = {
     ICHAIN_F32(targetArrowOffset, 500, ICHAIN_STOP),
 };
 
@@ -9827,7 +9917,7 @@ static Vec3s D_80854730 = { -57, 3377, 0 };
 
 void Player_InitCommon(Player* this, GlobalContext* globalCtx, FlexSkeletonHeader* skelHeader) {
     this->ageProperties = &sAgeProperties[gSaveContext.linkAge];
-    Actor_ProcessInitChain(&this->actor, D_80854708);
+    Actor_ProcessInitChain(&this->actor, sInitChain);
     this->swordEffectIndex = TOTAL_EFFECT_COUNT;
     this->currentYaw = this->actor.world.rot.y;
     Player_SetupHeldItemUpperActionFunc(globalCtx, this);
@@ -10118,10 +10208,10 @@ void func_808473D4(GlobalContext* globalCtx, Player* this) {
                     (!(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) ||
                      ((heldActor != NULL) && (heldActor->id == ACTOR_EN_RU1)))) {
                     doAction = DO_ACTION_OPEN;
-                } else if ((!(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) || (heldActor == NULL)) &&
-                           (interactRangeActor != NULL) &&
-                           ((!sp1C && (this->getItemId == GI_NONE)) ||
-                            ((this->getItemId < 0) && !(this->stateFlags1 & PLAYER_STATE1_SWIMMING)))) {
+                }
+                else if ((!(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) || (heldActor == NULL)) &&
+                    (interactRangeActor != NULL) &&
+                            (this->getItemId < 0 && !(this->stateFlags1 & PLAYER_STATE1_SWIMMING)))) {
                     if (this->getItemId < 0) {
                         doAction = DO_ACTION_OPEN;
                     } else if ((interactRangeActor->id == ACTOR_BG_TOKI_SWD) && LINK_IS_ADULT) {
@@ -10175,18 +10265,18 @@ void func_808473D4(GlobalContext* globalCtx, Player* this) {
                     doAction = sDiveDoActions[sp24];
                 } else if (sp1C && !(this->stateFlags2 & PLAYER_STATE2_DIVING)) {
                     doAction = DO_ACTION_DIVE;
-                } else if (!sp1C && (!(this->stateFlags1 & PLAYER_STATE1_SHIELDING) || Player_IsZTargeting(this) ||
-                                     !Player_IsChildWithHylianShield(this))) {
-                    if ((!(this->stateFlags1 & PLAYER_STATE1_CLIMBING_ONTO_LEDGE) && (sp20 <= 0) &&
+                }
+                else if (!sp1C && (!(this->stateFlags1 & PLAYER_STATE1_22) || func_80833BCC(this) ||
+                    !Player_IsChildWithHylianShield(this))) {
                          (Player_IsUnfriendlyZTargeting(this) ||
                           ((sFloorSpecialProperty != 7) &&
                            (Player_IsFriendlyZTargeting(this) ||
-                            ((globalCtx->roomCtx.curRoom.unk_03 != 2) &&
+                            ((globalCtx->roomCtx.curRoom.behaviorType1 != ROOM_BEHAVIOR_TYPE1_2) &&
                              !(this->stateFlags1 & PLAYER_STATE1_SHIELDING) && (sp20 == 0))))))) {
                         doAction = DO_ACTION_ATTACK;
                     } else if ((globalCtx->roomCtx.curRoom.unk_03 != 2) && Player_IsZTargeting(this) && (sp20 > 0)) {
                         doAction = DO_ACTION_JUMP;
-                    } else if ((this->heldItemActionParam >= PLAYER_AP_SWORD_MASTER) ||
+                        doAction = DO_ACTION_JUMP;
                                ((this->stateFlags2 & PLAYER_STATE2_NAVI_IS_ACTIVE) &&
                                 (globalCtx->actorCtx.targetCtx.arrowPointedActor == NULL))) {
                         doAction = DO_ACTION_PUTAWAY;
@@ -10197,9 +10287,17 @@ void func_808473D4(GlobalContext* globalCtx, Player* this) {
 
         if (doAction != DO_ACTION_PUTAWAY) {
             this->putAwayTimer = 20;
-        } else if (this->putAwayTimer != 0) {
-            doAction = DO_ACTION_NONE;
-            this->putAwayTimer--;
+        }
+        else if (this->putAwayTimer != 0) {
+            if (CVar_GetS32("gInstantPutaway", 0) != 0)
+            {
+                this->putAwayTimer = 0;
+            }
+            else
+            {
+                doAction = DO_ACTION_NONE;
+                this->putAwayTimer--;
+            }
         }
 
         Interface_SetDoAction(globalCtx, doAction);
@@ -10735,16 +10833,18 @@ void func_80848EF8(Player* this, GlobalContext* globalCtx) {
 
         /*Prevent it on horse, while jumping and on title screen.
         If you fly around no stone of agony for you! */
-        if (CVar_GetS32("gVisualAgony", 0) != 0 && !this->stateFlags1) {
-            s16 Top_Margins = (CVar_GetS32("gHUDMargin_T", 0) * -1);
+        Color_RGB8 StoneOfAgony_ori = { 255, 255, 255 };
+        if (CVar_GetS32("gVisualAgony", 0) !=0 && !this->stateFlags1) {
+            s16 Top_Margins = (CVar_GetS32("gHUDMargin_T", 0)*-1);
             s16 Left_Margins = CVar_GetS32("gHUDMargin_L", 0);
             s16 Right_Margins = CVar_GetS32("gHUDMargin_R", 0);
             s16 X_Margins_VSOA;
             s16 Y_Margins_VSOA;
             if (CVar_GetS32("gVSOAUseMargins", 0) != 0) {
                 if (CVar_GetS32("gVSOAPosType", 0) == 0) {
-                    X_Margins_VSOA = Left_Margins;
-                };
+                if (CVar_GetS32("gVSOAPosType", 0) == 0) {X_Margins_VSOA = Left_Margins;};
+                Y_Margins_VSOA = Top_Margins;
+            } else {
                 Y_Margins_VSOA = Top_Margins;
             } else {
                 X_Margins_VSOA = 0;
@@ -10786,49 +10886,45 @@ void func_80848EF8(Player* this, GlobalContext* globalCtx) {
             gDPPipeSync(OVERLAY_DISP++);
 
             if (CVar_GetS32("gHudColors", 1) == 2) {
-                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetS32("gCCVSOAPrimR", 255),
-                                CVar_GetS32("gCCVSOAPrimG", 255), CVar_GetS32("gCCVSOAPrimB", 255), DefaultIconA);
-            } else {
-                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, DefaultIconA);
+                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).r, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).g, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).b, DefaultIconA);
+            }
+            else {
+                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, StoneOfAgony_ori.r, StoneOfAgony_ori.g, StoneOfAgony_ori.b, DefaultIconA);
             }
 
-            gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
-                              PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
-            if (this->stoneOfAgonyRumbleTimer > 4000000.0f) {
+            gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
+            if (this->unk_6A0 > 4000000.0f) {
                 if (CVar_GetS32("gHudColors", 1) == 2) {
-                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetS32("gCCVSOAPrimR", 255),
-                                    CVar_GetS32("gCCVSOAPrimG", 255), CVar_GetS32("gCCVSOAPrimB", 255), 255);
-                } else {
-                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, 255);
+                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).r, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).g, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).b, 255);
                 }
-            } else {
+                else {
+                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, StoneOfAgony_ori.r, StoneOfAgony_ori.g, StoneOfAgony_ori.b, 255);
+                }
+            }
+            else {
                 if (CVar_GetS32("gHudColors", 1) == 2) {
-                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetS32("gCCVSOAPrimR", 255),
-                                    CVar_GetS32("gCCVSOAPrimG", 255), CVar_GetS32("gCCVSOAPrimB", 255), DefaultIconA);
-                } else {
-                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, DefaultIconA);
+                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).r, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).g, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).b, DefaultIconA);
+                }
+                else {
+                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, StoneOfAgony_ori.r, StoneOfAgony_ori.g, StoneOfAgony_ori.b, DefaultIconA);
                 }
             }
             if (temp == 0 || temp <= 0.1f) {
                 /*Fail check, it is used to draw off the icon when
-                link is standing out range but do not refresh stoneOfAgonyRumbleTimer.
+                link is standing out range but do not refresh unk_6A0.
                 Also used to make a default value in my case.*/
-                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, DefaultIconA);
+                if (CVar_GetS32("gHudColors", 1) == 2) {
+                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).r, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).g, CVar_GetRGB("gCCVSOAPrim", StoneOfAgony_ori).b, DefaultIconA);
+                }
+                else {
+                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, StoneOfAgony_ori.r, StoneOfAgony_ori.g, StoneOfAgony_ori.b, DefaultIconA);
+                }
             }
             gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 0, 255);
-            gDPSetOtherMode(OVERLAY_DISP++,
-                            G_AD_DISABLE | G_CD_DISABLE | G_CK_NONE | G_TC_FILT | G_TF_POINT | G_TT_IA16 | G_TL_TILE |
-                                G_TD_CLAMP | G_TP_NONE | G_CYC_1CYCLE | G_PM_NPRIMITIVE,
-                            G_AC_NONE | G_ZS_PRIM | G_RM_XLU_SURF | G_RM_XLU_SURF2);
-            gDPLoadTextureBlock(OVERLAY_DISP++, gStoneOfAgonyIconTex, G_IM_FMT_RGBA, G_IM_SIZ_32b, 24, 24, 0,
-                                G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
-                                G_TX_NOLOD, G_TX_NOLOD);
-            gDPSetOtherMode(OVERLAY_DISP++,
-                            G_AD_DISABLE | G_CD_DISABLE | G_CK_NONE | G_TC_FILT | G_TF_BILERP | G_TT_IA16 | G_TL_TILE |
-                                G_TD_CLAMP | G_TP_NONE | G_CYC_1CYCLE | G_PM_NPRIMITIVE,
-                            G_AC_NONE | G_ZS_PRIM | G_RM_XLU_SURF | G_RM_XLU_SURF2);
-            gSPWideTextureRectangle(OVERLAY_DISP++, rectLeft << 2, rectTop << 2, (rectLeft + rectWidth) << 2,
-                                    (rectTop + rectHeight) << 2, G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
+            gDPSetOtherMode(OVERLAY_DISP++, G_AD_DISABLE | G_CD_DISABLE | G_CK_NONE | G_TC_FILT | G_TF_POINT | G_TT_IA16 | G_TL_TILE | G_TD_CLAMP | G_TP_NONE | G_CYC_1CYCLE | G_PM_NPRIMITIVE, G_AC_NONE | G_ZS_PRIM | G_RM_XLU_SURF | G_RM_XLU_SURF2);
+            gDPLoadTextureBlock(OVERLAY_DISP++, gStoneOfAgonyIconTex, G_IM_FMT_RGBA, G_IM_SIZ_32b, 24, 24, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
+            gDPSetOtherMode(OVERLAY_DISP++, G_AD_DISABLE | G_CD_DISABLE | G_CK_NONE | G_TC_FILT | G_TF_BILERP | G_TT_IA16 | G_TL_TILE | G_TD_CLAMP | G_TP_NONE | G_CYC_1CYCLE | G_PM_NPRIMITIVE, G_AC_NONE | G_ZS_PRIM | G_RM_XLU_SURF | G_RM_XLU_SURF2);
+            gSPWideTextureRectangle(OVERLAY_DISP++, rectLeft << 2, rectTop << 2, (rectLeft + rectWidth) << 2, (rectTop + rectHeight) << 2, G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
             CLOSE_DISPS(globalCtx->state.gfxCtx);
         }
 
@@ -11773,6 +11869,11 @@ void Player_UpdateCommon(Player* this, GlobalContext* globalCtx, Input* input) {
 
     Collider_ResetQuadAC(globalCtx, &this->shieldQuad.base);
     Collider_ResetQuadAT(globalCtx, &this->shieldQuad.base);
+
+    if (this->pendingIceTrap) {
+        this->getItemEntry = ItemTable_RetrieveEntry(MOD_RANDOMIZER, RG_ICE_TRAP);
+        GiveItemEntryWithoutActor(globalCtx, this->getItemEntry);
+    }
 }
 
 static Vec3f D_80854838 = { 0.0f, 0.0f, -30.0f };
@@ -12060,9 +12161,9 @@ void Player_Destroy(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 s16 func_8084ABD8(GlobalContext* globalCtx, Player* this, s32 arg2, s16 arg3) {
-    s32 temp1;
-    s16 temp2;
-    s16 temp3;
+	s32 temp1;
+	s16 temp2;
+	s16 temp3;
 
     if (!Actor_PlayerIsAimingReadyFpsItem(this) && !Player_IsAimingReadyBoomerang(this) && (arg2 == 0)) {
         temp2 = sControlInput->rel.stick_y * 240.0f;
@@ -12071,30 +12172,71 @@ s16 func_8084ABD8(GlobalContext* globalCtx, Player* this, s32 arg2, s16 arg3) {
         temp2 = sControlInput->rel.stick_x * -16.0f;
         temp2 = CLAMP(temp2, -3000, 3000);
         this->actor.focus.rot.y += temp2;
-    } else {
-        temp1 = (this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) ? 3500 : 14000;
-        temp3 = ((sControlInput->rel.stick_y >= 0) ? 1 : -1) *
-                (s32)((1.0f - Math_CosS(sControlInput->rel.stick_y * 200)) * 1500.0f);
-        this->actor.focus.rot.x += temp3;
+		} else {
+			temp1 = (this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) ? 3500 : 14000;
+			temp3 = ((sControlInput->rel.stick_y >= 0) ? 1 : -1) *
+				(s32)((1.0f - Math_CosS(sControlInput->rel.stick_y * 200)) * 1500.0f * (CVar_GetS32("gInvertYAxis", 0) ? 1 : -1));
+            (s32)((1.0f - Math_CosS(sControlInput->rel.stick_y * 200)) * 1500.0f);
 
-        if (fabsf(sControlInput->cur.gyro_x) > 0.01f) {
-            this->actor.focus.rot.x -= (sControlInput->cur.gyro_x) * 750.0f;
-        }
+			if (fabsf(sControlInput->cur.gyro_x) > 0.01f) {
+				this->actor.focus.rot.x -= (sControlInput->cur.gyro_x) * 750.0f;
+			}
+            
+			if (fabsf(sControlInput->cur.right_stick_y) > 15.0f && CVar_GetS32("gRightStickAiming", 0) != 0) {
+				this->actor.focus.rot.x -= (sControlInput->cur.right_stick_y) * 10.0f * (CVar_GetS32("gInvertYAxis", 0) ? -1 : 1);
+			}
 
-        this->actor.focus.rot.x = CLAMP(this->actor.focus.rot.x, -temp1, temp1);
+			this->actor.focus.rot.x = CLAMP(this->actor.focus.rot.x, -temp1, temp1);
+
+			temp1 = 19114;
+			temp2 = this->actor.focus.rot.y - this->actor.shape.rot.y;
+			temp3 = ((sControlInput->rel.stick_x >= 0) ? 1 : -1) *
+				(s32)((1.0f - Math_CosS(sControlInput->rel.stick_x * 200)) * -1500.0f * (CVar_GetS32("gInvertXAxis", 0) ? -1 : 1));
+			temp2 += temp3;
+
+			this->actor.focus.rot.y = CLAMP(temp2, -temp1, temp1) + this->actor.shape.rot.y;
+
+			if (fabsf(sControlInput->cur.gyro_y) > 0.01f) {
+				this->actor.focus.rot.y += (sControlInput->cur.gyro_y) * 750.0f;
+			}
+
+			if (fabsf(sControlInput->cur.right_stick_x) > 15.0f && CVar_GetS32("gRightStickAiming", 0) != 0) {
+			this->actor.focus.rot.y += (sControlInput->cur.right_stick_x) * 10.0f * (CVar_GetS32("gInvertXAxis", 0) ? 1 : -1);
+			}
+		}
+}
+	else {
+		temp1 = (this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) ? 3500 : 14000;
+		temp3 = ((sControlInput->rel.stick_y >= 0) ? 1 : -1) *
+			(s32)((1.0f - Math_CosS(sControlInput->rel.stick_y * 200)) * 1500.0f * (CVar_GetS32("gInvertYAxis", 0) ? 1 : -1));
+		this->actor.focus.rot.x += temp3;
+
+		if (fabsf(sControlInput->cur.gyro_x) > 0.01f) {
+			this->actor.focus.rot.x -= (sControlInput->cur.gyro_x) * 750.0f;
+		}
+        
+		if (fabsf(sControlInput->cur.right_stick_y) > 15.0f && CVar_GetS32("gRightStickAiming", 0) != 0) {
+			this->actor.focus.rot.x -= (sControlInput->cur.right_stick_y) * 10.0f * (CVar_GetS32("gInvertYAxis", 0) ? -1 : 1);
+		}
+
+		this->actor.focus.rot.x = CLAMP(this->actor.focus.rot.x, -temp1, temp1);
 
         temp1 = 19114;
         temp2 = this->actor.focus.rot.y - this->actor.shape.rot.y;
         temp3 = ((sControlInput->rel.stick_x >= 0) ? 1 : -1) *
-                (s32)((1.0f - Math_CosS(sControlInput->rel.stick_x * 200)) * -1500.0f);
+            (s32)((1.0f - Math_CosS(sControlInput->rel.stick_x * 200)) * -1500.0f);
         temp2 += temp3;
 
-        this->actor.focus.rot.y = CLAMP(temp2, -temp1, temp1) + this->actor.shape.rot.y;
+		this->actor.focus.rot.y = CLAMP(temp2, -temp1, temp1) + this->actor.shape.rot.y;
 
-        if (fabsf(sControlInput->cur.gyro_y) > 0.01f) {
-            this->actor.focus.rot.y += (sControlInput->cur.gyro_y) * 750.0f;
-        }
-    }
+		if (fabsf(sControlInput->cur.gyro_y) > 0.01f) {
+			this->actor.focus.rot.y += (sControlInput->cur.gyro_y) * 750.0f;
+		}
+
+		if (fabsf(sControlInput->cur.right_stick_x) > 15.0f && CVar_GetS32("gRightStickAiming", 0) != 0) {
+			this->actor.focus.rot.y += (sControlInput->cur.right_stick_x) * 10.0f * (CVar_GetS32("gInvertXAxis", 0) ? 1 : -1);
+		}
+	}
 
     this->lookFlags |= 2;
     return Player_UpdateLookAngles(this, (globalCtx->shootingGalleryStatus != 0) || Actor_PlayerIsAimingReadyFpsItem(this) ||
@@ -13352,6 +13494,7 @@ void func_8084DF6C(GlobalContext* globalCtx, Player* this) {
     this->giDrawIdPlusOne = 0;
     this->stateFlags1 &= ~(PLAYER_STATE1_GETTING_ITEM | PLAYER_STATE1_HOLDING_ACTOR);
     this->getItemId = GI_NONE;
+    this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
     func_8005B1A4(Gameplay_GetCamera(globalCtx, 0));
 }
 
@@ -13372,9 +13515,18 @@ s32 Player_SetupGetItemText(GlobalContext* globalCtx, Player* this) {
     }
 
     if (this->genericVar == 0) {
-        giEntry = &sGetItemTable[this->getItemId - 1];
+        if (this->getItemEntry.objectId == OBJECT_INVALID) {
+            giEntry = ItemTable_Retrieve(this->getItemId);
+        }
+        else {
+            giEntry = this->getItemEntry;
+        }
         this->genericVar = 1;
 
+        // make sure we get the BGS instead of giant's knife
+        if(this->getItemId == GI_SWORD_BGS) {
+            gSaveContext.bgsFlag = 1;
+            gSaveContext.swordHealth = 8;       
         // make sure we get the BGS instead of giant's knife
         if(this->getItemId == GI_SWORD_BGS) {
             gSaveContext.bgsFlag = 1;
@@ -13385,24 +13537,48 @@ s32 Player_SetupGetItemText(GlobalContext* globalCtx, Player* this) {
             Message_StartTextbox(globalCtx, 0x5012, &this->actor);
         }
         else {
-            Message_StartTextbox(globalCtx, giEntry->textId, &this->actor);
+            Message_StartTextbox(globalCtx, giEntry.textId, &this->actor);
         }
-        Item_Give(globalCtx, giEntry->itemId);
+        if (giEntry.modIndex == MOD_NONE) {
+            Item_Give(globalCtx, giEntry.itemId);
+        }
+        else {
+            Randomizer_Item_Give(globalCtx, giEntry);
+        }
+        Player_SetPendingFlag(this, globalCtx);
 
-        if (((this->getItemId >= GI_RUPEE_GREEN) && (this->getItemId <= GI_RUPEE_RED)) ||
-            ((this->getItemId >= GI_RUPEE_PURPLE) && (this->getItemId <= GI_RUPEE_GOLD)) ||
-            ((this->getItemId >= GI_RUPEE_GREEN_LOSE) && (this->getItemId <= GI_RUPEE_PURPLE_LOSE)) ||
-            (this->getItemId == GI_HEART)) {
-            Audio_PlaySoundGeneral(NA_SE_SY_GET_BOXITEM, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
-        } else {
+        // Use this if we do have a getItemEntry
+        if (giEntry.modIndex == MOD_NONE) {
+            if (gSaveContext.n64ddFlag) {
+                Audio_PlayFanfare_Rando(giEntry);
+            } else if (((giEntry.itemId >= ITEM_RUPEE_GREEN) && (giEntry.itemId <= ITEM_RUPEE_RED)) ||
+                        ((giEntry.itemId >= ITEM_RUPEE_PURPLE) && (giEntry.itemId <= ITEM_RUPEE_GOLD)) ||
+                        (giEntry.itemId == ITEM_HEART)) {
             if ((this->getItemId == GI_HEART_CONTAINER_2) || (this->getItemId == GI_HEART_CONTAINER) ||
-                ((this->getItemId == GI_HEART_PIECE) &&
-                 ((gSaveContext.inventory.questItems & 0xF0000000) == 0x40000000))) {
-                temp1 = NA_BGM_HEART_GET | 0x900;
             } else {
-                temp1 = temp2 = (this->getItemId == GI_HEART_PIECE) ? NA_BGM_SMALL_ITEM_GET : NA_BGM_ITEM_GET | 0x900;
+                if ((giEntry.itemId == ITEM_HEART_CONTAINER) ||
+                    ((giEntry.itemId == ITEM_HEART_PIECE) &&
+                        ((gSaveContext.inventory.questItems & 0xF0000000) == 0x40000000))) {
+                    temp1 = NA_BGM_HEART_GET | 0x900;
+                } else {
+                    temp1 = temp2 =
+                        (giEntry.itemId == ITEM_HEART_PIECE) ? NA_BGM_SMALL_ITEM_GET : NA_BGM_ITEM_GET | 0x900;
+                }
+                Audio_PlayFanfare(temp1);
             }
-            Audio_PlayFanfare(temp1);
+        } else if (giEntry.modIndex == MOD_RANDOMIZER) {
+            if (gSaveContext.n64ddFlag) {
+                Audio_PlayFanfare_Rando(giEntry);
+            } else if (giEntry.itemId == RG_DOUBLE_DEFENSE || giEntry.itemId == RG_MAGIC_SINGLE ||
+                        giEntry.itemId == RG_MAGIC_DOUBLE) {
+                Audio_PlayFanfare(NA_BGM_HEART_GET | 0x900);
+            } else {
+                // Just in case something weird happens with MOD_INDEX
+                Audio_PlayFanfare(NA_BGM_ITEM_GET | 0x900);
+            }
+        } else {
+            // Just in case something weird happens with modIndex.
+            Audio_PlayFanfare(NA_BGM_ITEM_GET | 0x900);
         }
     } else {
         if (Message_GetState(&globalCtx->msgCtx) == TEXT_STATE_CLOSING) {
@@ -13414,7 +13590,16 @@ s32 Player_SetupGetItemText(GlobalContext* globalCtx, Player* this) {
                 this->stateFlags1 &= ~PLAYER_STATE1_IN_CUTSCENE;
                 Player_SetupPlayerCutscene(globalCtx, NULL, 8);
             }
+
+            // Set unk_862 to 0 early to not have the game draw non-custom colored models for a split second.
+            // This unk is what the game normally uses to decide what item to draw when holding up an item above Link's head.
+            // Only do this when the item actually has a custom draw function.
+            if (this->getItemEntry.drawFunc != NULL) {
+                this->unk_862 = 0;
+            }
+
             this->getItemId = GI_NONE;
+            this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
         }
     }
 
@@ -13571,30 +13756,37 @@ void Player_GetItem(Player* this, GlobalContext* globalCtx) {
         } else {
             Player_EndAnimMovement(this);
 
-            if (this->getItemId == GI_ICE_TRAP) {
+            if ((this->getItemId == GI_ICE_TRAP && !gSaveContext.n64ddFlag) ||
+                (gSaveContext.n64ddFlag && (this->getItemId == RG_ICE_TRAP || this->getItemEntry.getItemId == RG_ICE_TRAP))) {
                 this->stateFlags1 &= ~(PLAYER_STATE1_GETTING_ITEM | PLAYER_STATE1_HOLDING_ACTOR);
 
-                if (this->getItemId != GI_ICE_TRAP) {
+                if ((this->getItemId != GI_ICE_TRAP && !gSaveContext.n64ddFlag) ||
+                    (gSaveContext.n64ddFlag && (this->getItemId != RG_ICE_TRAP || this->getItemEntry.getItemId != RG_ICE_TRAP))) {
                     Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_CLEAR_TAG, this->actor.world.pos.x,
-                                this->actor.world.pos.y + 100.0f, this->actor.world.pos.z, 0, 0, 0, 0);
+                        this->actor.world.pos.y + 100.0f, this->actor.world.pos.z, 0, 0, 0, 0);
                     Player_SetupStandingStillNoMorph(this, globalCtx);
-                } else {
+                }
+                else {
                     this->actor.colChkInfo.damage = 0;
                     Player_SetupDamage(globalCtx, this, 3, 0.0f, 0.0f, 0, 20);
+                    this->getItemId == GI_NONE;
+                    this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
                 }
                 return;
             }
 
             if (this->skelAnime.animation == &gPlayerAnim_002DF8) {
                 Player_PlayAnimOnceSlowed(globalCtx, this, &gPlayerAnim_002788);
-            } else {
+            }
+            else {
                 Player_PlayAnimOnceSlowed(globalCtx, this, &gPlayerAnim_002780);
             }
 
             this->genericTimer = 2;
             Player_SetCameraTurnAround(globalCtx, 9);
         }
-    } else {
+    }
+    else {
         if (this->genericTimer == 0) {
             if (!LINK_IS_ADULT) {
                 Player_PlayAnimSfx(this, D_808549E0);
@@ -13798,14 +13990,19 @@ void Player_SwingBottle(Player* this, GlobalContext* globalCtx) {
     if (LinkAnimation_Update(globalCtx, &this->skelAnime)) {
         if (this->genericVar != 0) {
             if (this->genericTimer == 0) {
-                Message_StartTextbox(globalCtx, D_80854A04[this->genericVar - 1].textId, &this->actor);
+                if (CVar_GetS32("gFastDrops", 0))
+                    { this->genericVar = 0; }
+                else
+                    { Message_StartTextbox(globalCtx, D_80854A04[this->genericVar - 1].textId, &this->actor); }
                 Audio_PlayFanfare(NA_BGM_ITEM_GET | 0x900);
                 this->genericTimer = 1;
-            } else if (Message_GetState(&globalCtx->msgCtx) == TEXT_STATE_CLOSING) {
+            }
+            else if (Message_GetState(&globalCtx->msgCtx) == TEXT_STATE_CLOSING) {
                 this->genericVar = 0;
                 func_8005B1A4(Gameplay_GetCamera(globalCtx, 0));
             }
-        } else {
+        }
+        else {
             Player_SetupStandingStillNoMorph(this, globalCtx);
         }
     } else {
@@ -13831,11 +14028,13 @@ void Player_SwingBottle(Player* this, GlobalContext* globalCtx) {
                         if (i < 4) {
                             this->genericVar = i + 1;
                             this->genericTimer = 0;
-                            this->stateFlags1 |= PLAYER_STATE1_SKIP_OTHER_ACTORS_UPDATE | PLAYER_STATE1_IN_CUTSCENE;
                             this->interactRangeActor->parent = &this->actor;
                             Player_UpdateBottleHeld(globalCtx, this, catchInfo->itemId, ABS(catchInfo->actionParam));
-                            Player_PlayAnimOnceSlowed(globalCtx, this, sp24->bottleCatchAnim);
-                            Player_SetCameraTurnAround(globalCtx, 4);
+                            if (!CVar_GetS32("gFastDrops", 0)) {
+                                this->stateFlags1 |= PLAYER_STATE1_SKIP_OTHER_ACTORS_UPDATE | PLAYER_STATE1_IN_CUTSCENE;
+                                Player_PlayAnimOnceSlowed(globalCtx, this, sp24->unk_04);
+                                Player_SetCameraTurnAround(globalCtx, 4);
+                            }
                         }
                     }
                 }
@@ -13929,15 +14128,17 @@ void Player_PresentExchangeItem(Player* this, GlobalContext* globalCtx) {
                 this->actor.flags |= ACTOR_FLAG_8;
             }
 
-            Player_StartTalkingWithActor(globalCtx, targetActor);
-        } else {
-            GetItemEntry* giEntry = &sGetItemTable[sExchangeGetItemIDs[this->exchangeItemId - 1] - 1];
+            func_80853148(globalCtx, targetActor);
+        }
+        else {
+            GetItemEntry* giEntry = &sGetItemTable[sExchangeGetItemIDs[this->exchangeItemId - 1];
 
             if (this->itemActionParam >= PLAYER_AP_LETTER_ZELDA) {
-                if (giEntry->gi >= 0) {
-                    this->giDrawIdPlusOne = giEntry->gi;
-                } else {
-                    this->giDrawIdPlusOne = -giEntry->gi;
+                if (giEntry.gi >= 0) {
+                    this->unk_862 = giEntry.gi;
+                }
+                else {
+                    this->giDrawIdPlusOne = -giEntry.gi;
                 }
             }
 

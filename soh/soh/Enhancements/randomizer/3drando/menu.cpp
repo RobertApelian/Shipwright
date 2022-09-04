@@ -13,8 +13,8 @@
 #include "spoiler_log.hpp"
 #include "location_access.hpp"
 #include "debug.hpp"
-#include <Lib/spdlog/include/spdlog/spdlog.h>
-#include "soh/Enhancements/randomizer/randomizerTypes.h"
+#include <spdlog/spdlog.h>
+#include "../../randomizer/randomizerTypes.h"
 
 namespace {
 bool seedChanged;
@@ -26,13 +26,13 @@ Menu* currentMenu;
 } // namespace
 
 void PrintTopScreen() {
-    SPDLOG_INFO("\x1b[2;11H%sOcarina of Time 3D Randomizer%s", CYAN, RESET);
-    SPDLOG_INFO("\x1b[3;18H%s%s-%s%s", CYAN, RANDOMIZER_VERSION, COMMIT_NUMBER, RESET);
-    SPDLOG_INFO("\x1b[4;10HA/B/D-pad: Navigate Menu\n");
-    SPDLOG_INFO("            Select: Exit to Homebrew Menu\n");
-    SPDLOG_INFO("                 Y: New Random Seed\n");
-    SPDLOG_INFO("                 X: Input Custom Seed\n");
-    SPDLOG_INFO("\x1b[11;7HCurrent Seed: %s", Settings::seed.c_str());
+    SPDLOG_DEBUG("\x1b[2;11H%sOcarina of Time 3D Randomizer%s", CYAN, RESET);
+    SPDLOG_DEBUG("\x1b[3;18H%s%s-%s%s", CYAN, RANDOMIZER_VERSION, COMMIT_NUMBER, RESET);
+    SPDLOG_DEBUG("\x1b[4;10HA/B/D-pad: Navigate Menu\n");
+    SPDLOG_DEBUG("            Select: Exit to Homebrew Menu\n");
+    SPDLOG_DEBUG("                 Y: New Random Seed\n");
+    SPDLOG_DEBUG("                 X: Input Custom Seed\n");
+    SPDLOG_DEBUG("\x1b[11;7HCurrent Seed: %s", Settings::seed.c_str());
 }
 
 void MenuInit() {
@@ -516,17 +516,17 @@ void PrintOptionDescription() {
   printf("\x1b[22;0H%s", description.data());
 }
 
-std::string GenerateRandomizer(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettings) {
+std::string GenerateRandomizer(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettings, std::set<RandomizerCheck> excludedLocations) {
     // if a blank seed was entered, make a random one
     srand(time(NULL));
     Settings::seed = std::to_string(rand());
 
-    int ret = Playthrough::Playthrough_Init(std::hash<std::string>{}(Settings::seed), cvarSettings);
+    int ret = Playthrough::Playthrough_Init(std::hash<std::string>{}(Settings::seed), cvarSettings, excludedLocations);
     if (ret < 0) {
         if (ret == -1) { // Failed to generate after 5 tries
             printf("\n\nFailed to generate after 5 tries.\nPress B to go back to the menu.\nA different seed might be "
                    "successful.");
-            SPDLOG_INFO("\nRANDOMIZATION FAILED COMPLETELY. PLZ FIX\n");
+            SPDLOG_DEBUG("\nRANDOMIZATION FAILED COMPLETELY. PLZ FIX\n");
             return "";
         } else {
             printf("\n\nError %d with fill.\nPress Select to exit or B to go back to the menu.\n", ret);
