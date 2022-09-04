@@ -666,6 +666,8 @@ namespace GameMenuBar {
 
             if (ImGui::BeginMenu("Gameplay"))
             {
+                UIWidgets::EnhancementCheckbox("Chaos Mode", "gChaosEnabled");
+                UIWidgets::Tooltip("Toggles Chaos mode");
                 if (ImGui::BeginMenu("Time Savers"))
                 {
                     UIWidgets::PaddedEnhancementSliderInt("Text Speed: %dx", "##TEXTSPEED", "gTextSpeed", 1, 5, "", 1, false, false, true);

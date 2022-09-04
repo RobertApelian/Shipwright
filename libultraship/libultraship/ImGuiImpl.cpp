@@ -573,18 +573,6 @@ namespace SohImGui {
         //ImGui::End();
         //ImGui::PopStyleColor();
 
-        if (CVar_GetS32("gChatIntegration", 0)) {
-            std::string userName = "testName";
-            std::string chaosCommand = "testCmd";
-            std::string chaosMsg = userName + "activated:" + chaosCommand;
-            s32 chaosVal = 1;
-
-            if (CVar_GetS32(chaosCommand.c_str(), 0)) {
-                CVar_SetS32(chaosCommand.c_str(), chaosVal);
-                SohImGui::overlay->TextDrawNotification(30.0f, true, chaosMsg.c_str());
-            }
-        }
-
         console->Draw();
         controller->DrawHud();
 
