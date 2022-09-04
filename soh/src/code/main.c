@@ -1,6 +1,7 @@
 #include "global.h"
 #include "vt.h"
 #include <soh/Enhancements/bootcommands.h>
+#include <soh/Enhancements/chaos.h>
 #include "soh/OTRGlobals.h"
 
 #include <libultraship/CrashHandler.h>
@@ -49,6 +50,8 @@ int main(int argc, char** argv)
     GameConsole_Init();
     InitOTR();
     BootCommands_Init();
+    Chaos_Init();
+
     Main(0);
     DeinitOTR();
     return 0;
