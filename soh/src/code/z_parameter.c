@@ -3449,7 +3449,7 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
         // Setup DL for overlay disp
         func_80094520(globalCtx->state.gfxCtx);
 
-        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, sMagicBorderR, sMagicBorderG, sMagicBorderB,
+        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255,
                         CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
         gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
 

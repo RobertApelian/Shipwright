@@ -1980,7 +1980,7 @@ s32 GiveItemEntryWithoutActor(GlobalContext* globalCtx, GetItemEntry getItemEntr
                 player->interactRangeActor = &player->actor;
                 player->getItemDirection = player->actor.shape.rot.y;
                 // Player state 26 = Player is frozen
-                if (player->stateFlags1 & (PLAYER_STATE1_26)) {
+                if (player->stateFlags1 & (PLAYER_STATE1_TAKING_DAMAGE)) {
                     player->pendingIceTrap = false;
                 }
                 return true;
