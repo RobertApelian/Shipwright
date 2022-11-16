@@ -233,6 +233,7 @@ std::unordered_map<std::string, RandomizerSettingKey> SpoilerfileSettingNameToEn
     { "Skip Child Zelda", RSK_SKIP_CHILD_ZELDA },
     { "Start with Consumables", RSK_STARTING_CONSUMABLES },
     { "Start with Max Rupees", RSK_FULL_WALLETS },
+    { "Gold Skulltula Tokens", RSK_STARTING_SKULLTULA_TOKEN },
     { "Timesaver Settings:Cuccos to return", RSK_CUCCO_COUNT },
     { "Timesaver Settings:Big Poe Target Count", RSK_BIG_POE_COUNT },
     { "Timesaver Settings:Skip Child Stealth", RSK_SKIP_CHILD_STEALTH },
@@ -489,21 +490,44 @@ void Randomizer::LoadMerchantMessages(const char* spoilerFileName) {
             "!%w&Je ne te dirai pas ce que c'est avant&d'être payé rubis sur l'ongle...^"
             };
         }
-        std::vector<std::string> shopItemName = EnumToSpoilerfileGetName[shopItemGet];
-        u16 shopItemPrice = merchantPrices[shopItemCheck];
-        // Each shop item has two messages, one for when the cursor is over it, and one for when you select it and are
-        // prompted buy/don't buy, so we're adding the first at {index}, and the second at {index + NUM_SHOP_ITEMS}
-        CustomMessageManager::Instance->CreateMessage(
-            Randomizer::merchantMessageTableID, TEXT_SHOP_ITEM_RANDOM + index, { TEXTBOX_TYPE_BLACK, TEXTBOX_POS_VARIABLE,
-                "\x08%r" + shopItemName[0] + ": " + std::to_string(shopItemPrice) + " Rupees&%wSpecial deal! ONE LEFT!&Get it while it lasts!\x0A\x02",
-                "\x08%r" + shopItemName[1] + ": " + std::to_string(shopItemPrice) + " Rubine&%wSonderangebot! NUR NOCH EINES VERFÜGBAR!&Beeilen Sie sich!\x0A\x02",
-                "\x08%r" + shopItemName[2] + ": " + std::to_string(shopItemPrice) + " Rubis&%wOffre spéciale! DERNIER EN STOCK!&Faites vite!\x0A\x02",
+    CustomMessageManager::Instance->CreateMessage(
+        Randomizer::merchantMessageTableID, TEXT_CARPET_SALESMAN_1,
+        {
+            TEXTBOX_TYPE_BLACK,
+            TEXTBOX_POS_BOTTOM,
+            "Welcome!^I am selling stuff, strange and rare, &from all over the world to everybody.&Today's special is...^%r{{item}}" + cgBoxTwoText[0] +
+            "How about %g200 Rupees?%w\x1B&&%gYes&No%w",
+            "Sei gegrüßt!^Ich verkaufe allerlei Kuriorisäten.&Stets sonderliche und seltene Ware&aus aller Welt für jedermann.&Das heutige Angebot bleibt...^%r{{item}}" + 
+            cgBoxTwoText[1] + "Wie wäre es mit %g200 Rubinen?%w\x1B&&%gJa!&Nein!%w",
+            "Bienvenue!^Je vends des trucs étranges et rares,&de partout dans le monde et à tout le&monde! L'objet du jour est...^%r{{item}}" + 
+            cgBoxTwoText[2] + "Alors, marché conclu pour %g200 rubis?%w\x1B&&%gOui&Non%w"
+        }
+    );
+
+    CustomMessageManager::Instance->CreateMessage(
+        Randomizer::merchantMessageTableID, TEXT_CARPET_SALESMAN_2,
+        {
+            TEXTBOX_TYPE_BLACK,
+            TEXTBOX_POS_TOP,
+            "Finally! Now I can go back to being &an %rarms dealer!%w",
+            "Endlich! Schon bald kann ich wieder &%rKrabbelminen-Händler%w sein!",
+            "Squalala! Je vais enfin pouvoir &%rprendre des vacances!%w"
+        }
+    );
+
+    // Each shop item has two messages, one for when the cursor is over it, and one for when you select it and are
+    // prompted buy/don't buy
+    CustomMessageManager::Instance->CreateMessage(
+        Randomizer::merchantMessageTableID, TEXT_SHOP_ITEM_RANDOM, { TEXTBOX_TYPE_BLACK, TEXTBOX_POS_VARIABLE,
+            "\x08%r{{item}}  {{price}} Rupees&%wSpecial deal! ONE LEFT!&Get it while it lasts!\x0A\x02",
+            "\x08%r{{item}}  {{price}} Rubine&%wSonderangebot! NUR NOCH EINES VERFÜGBAR!&Beeilen Sie sich!\x0A\x02",
+            "\x08%r{{item}}  {{price}} Rubis&%wOffre spéciale! DERNIER EN STOCK!&Faites vite!\x0A\x02",
         });
-        CustomMessageManager::Instance->CreateMessage(
-            Randomizer::merchantMessageTableID, TEXT_SHOP_ITEM_RANDOM + index + NUM_SHOP_ITEMS, { TEXTBOX_TYPE_BLACK, TEXTBOX_POS_VARIABLE,
-                "\x08" + shopItemName[0] + ": " + std::to_string(shopItemPrice) + " Rupees\x09&&\x1B%gBuy&Don't buy%w\x09\x02",
-                "\x08" + shopItemName[1] + ": " + std::to_string(shopItemPrice) + " Rubine\x09&&\x1B%gKaufen&Nicht kaufen%w\x09\x02",
-                "\x08" + shopItemName[2] + ": " + std::to_string(shopItemPrice) + " Rubis\x09&&\x1B%gAcheter&Ne pas acheter%w\x09\x02",
+    CustomMessageManager::Instance->CreateMessage(
+        Randomizer::merchantMessageTableID, TEXT_SHOP_ITEM_RANDOM_CONFIRM, { TEXTBOX_TYPE_BLACK, TEXTBOX_POS_VARIABLE,
+            "\x08{{item}}  {{price}} Rupees\x09&&\x1B%gBuy&Don't buy%w\x09\x02",
+            "\x08{{item}}  {{price}} Rubine\x09&&\x1B%gKaufen&Nicht kaufen%w\x09\x02",
+            "\x08{{item}}  {{price}} Rubis\x09&&\x1B%gAcheter&Ne pas acheter%w\x09\x02",
         });
 }
 
@@ -647,6 +671,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                     case RSK_TRIAL_COUNT:
                     case RSK_BIG_POE_COUNT:
                     case RSK_CUCCO_COUNT:
+                    case RSK_STARTING_SKULLTULA_TOKEN:
                         numericValueString = it.value();
                         gSaveContext.randoSettings[index].value = std::stoi(numericValueString);
                         break;
@@ -2533,6 +2558,7 @@ void GenerateRandomizerImgui() {
     cvarSettings[RSK_SHUFFLE_KOKIRI_SWORD] = CVar_GetS32("gRandomizeShuffleKokiriSword", 0) ||
                                              CVar_GetS32("gRandomizeStartingKokiriSword", 0);
     cvarSettings[RSK_STARTING_DEKU_SHIELD] = CVar_GetS32("gRandomizeStartingDekuShield", 0);
+    cvarSettings[RSK_STARTING_SKULLTULA_TOKEN] = CVar_GetS32("gRandomizeStartingSkulltulaToken", 0);
     cvarSettings[RSK_STARTING_MAPS_COMPASSES] = CVar_GetS32("gRandomizeStartingMapsCompasses", 2);
     cvarSettings[RSK_SHUFFLE_DUNGEON_REWARDS] = CVar_GetS32("gRandomizeShuffleDungeonReward", 0);
     cvarSettings[RSK_SHUFFLE_SONGS] = CVar_GetS32("gRandomizeShuffleSongs", 0);
@@ -3925,6 +3951,8 @@ void DrawRandoEditor(bool& open) {
                 UIWidgets::PaddedSeparator();
                 UIWidgets::EnhancementCheckbox(Settings::StartingConsumables.GetName().c_str(),
                                               "gRandomizeStartingConsumables");
+                UIWidgets::PaddedSeparator();
+                UIWidgets::EnhancementSliderInt("Gold Skulltula Tokens: %d", "##RandoStartingSkulltulaToken", "gRandomizeStartingSkulltulaToken", 0, 100, "", 0, true);
                 UIWidgets::PaddedSeparator();
 
                 ImGui::EndChild();
