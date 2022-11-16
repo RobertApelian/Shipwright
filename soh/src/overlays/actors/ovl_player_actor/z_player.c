@@ -5616,6 +5616,9 @@ void Player_ClearLookAndAttention(Player* this, GlobalContext* globalCtx) {
         } else {
             Player_SetupStandingStillType(this, globalCtx);
         }
+        if (this->attentionMode < PLAYER_ATTENTIONMODE_ITEM_CUTSCENE) {
+            this->attentionMode = PLAYER_ATTENTIONMODE_NONE;
+        }
     }
 
     this->stateFlags1 &= ~(PLAYER_STATE1_HANGING_FROM_LEDGE_SLIP | PLAYER_STATE1_CLIMBING_ONTO_LEDGE |
