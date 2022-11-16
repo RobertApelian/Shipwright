@@ -733,9 +733,9 @@ typedef struct {
 #define PLAYER_STATE3_RESTORE_NAYRUS_LOVE (1 << 6)
 #define PLAYER_STATE3_MOVING_ALONG_HOOKSHOT_PATH (1 << 7)
 
-typedef void (*PlayerActionFunc)(struct Player*, struct GlobalContext*);
-typedef s32(*PlayerUpperActionFunc)(struct Player*, struct GlobalContext*);
-typedef void (*PlayerMiniCsFunc)(struct GlobalContext*, struct Player*);
+typedef void (*PlayerActionFunc)(struct Player*, struct PlayState*);
+typedef s32(*PlayerUpperActionFunc)(struct Player*, struct PlayState*);
+typedef void (*PlayerMiniCsFunc)(struct PlayState*, struct Player*);
 
 typedef struct Player {
     /* 0x0000 */ Actor      actor;

@@ -83,7 +83,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Sub-projects
 ################################################################################
 if (NOT TARGET libultraship)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship ${CMAKE_BINARY_DIR}/libultraship)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libultraship ${CMAKE_BINARY_DIR}/libultraship)
 endif()
 
 if (NOT TARGET ZAPDUtils)
@@ -174,6 +174,11 @@ set(Header_Files__soh__Enhancements__cosmetics
 )
 source_group("Header Files\\soh\\Enhancements\\cosmetics" FILES ${Header_Files__soh__Enhancements__cosmetics})
 
+set(Header_Files__soh__Enhancements__sfx_editor
+    "soh/Enhancements/sfx-editor/SfxEditor.h"
+)
+source_group("Header Files\\soh\\Enhancements\\sfx-editor" FILES ${Header_Files__soh__Enhancements__sfx_editor})
+
 set(Header_Files__soh__Enhancements__debugger
     "soh/Enhancements/debugger/actorViewer.h"
     "soh/Enhancements/debugger/colViewer.h"
@@ -184,6 +189,8 @@ source_group("Header Files\\soh\\Enhancements\\debugger" FILES ${Header_Files__s
 
 set(Header_Files__soh__Enhancements__randomizer
     "soh/Enhancements/randomizer/randomizer.h"
+    "soh/Enhancements/randomizer/randomizer_entrance.h"
+    "soh/Enhancements/randomizer/randomizer_grotto.h"
     "soh/Enhancements/randomizer/randomizer_inf.h"
     "soh/Enhancements/randomizer/randomizer_item_tracker.h"
     "soh/Enhancements/randomizer/adult_trade_shuffle.h"
@@ -246,7 +253,7 @@ set(Header_Files__soh__Enhancements__item_tables
 
 source_group("Header Files\\soh\\Enhancements\\item-tables" FILES ${Header_Files__soh__Enhancements__item_tables})
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (BUILD_CROWD_CONTROL)
 set(Header_Files__soh__Enhancements__crowd_control
     "soh/Enhancements/crowd-control/CrowdControl.h"
 )
@@ -296,6 +303,11 @@ set(Source_Files__soh__Enhancements__cosmetics
 )
 source_group("Source Files\\soh\\Enhancements\\cosmetics" FILES ${Source_Files__soh__Enhancements__cosmetics})
 
+set(Source_Files__soh__Enhancements__sfx_editor
+    "soh/Enhancements/sfx-editor/SfxEditor.cpp"
+)
+source_group("Source Files\\soh\\Enhancements\\sfx-editor" FILES ${Source_Files__soh__Enhancements__sfx_editor})
+
 set(Source_Files__soh__Enhancements__debugger
     "soh/Enhancements/debugger/actorViewer.cpp"
     "soh/Enhancements/debugger/colViewer.cpp"
@@ -306,6 +318,8 @@ source_group("Source Files\\soh\\Enhancements\\debugger" FILES ${Source_Files__s
 
 set(Source_Files__soh__Enhancements__randomizer
     "soh/Enhancements/randomizer/randomizer.cpp"
+    "soh/Enhancements/randomizer/randomizer_entrance.c"
+    "soh/Enhancements/randomizer/randomizer_grotto.c"
     "soh/Enhancements/randomizer/randomizer_item_tracker.cpp"
     "soh/Enhancements/randomizer/adult_trade_shuffle.c"
     "soh/Enhancements/randomizer/randomizer_check_objects.cpp"
@@ -389,7 +403,7 @@ set(Source_Files__soh__Enhancements__item_tables
 
 source_group("Source Files\\soh\\Enhancements\\item-tables" FILES ${Source_Files__soh__Enhancements__item_tables})
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (BUILD_CROWD_CONTROL)
 set(Source_Files__soh__Enhancements__crowd_control
     "soh/Enhancements/crowd-control/CrowdControl.cpp"
 )
@@ -1601,6 +1615,7 @@ set(ALL_FILES
     ${Header_Files__soh__Enhancements}
     ${Header_Files__soh__Enhancements__controls}
     ${Header_Files__soh__Enhancements__cosmetics}
+    ${Header_Files__soh__Enhancements__sfx_editor}
     ${Header_Files__soh__Enhancements__debugger}
     ${Header_Files__soh__Enhancements__randomizer}
     ${Header_Files__soh__Enhancements__randomizer__3drando}
@@ -1611,6 +1626,7 @@ set(ALL_FILES
     ${Source_Files__soh__Enhancements}
     ${Source_Files__soh__Enhancements__controls}
     ${Source_Files__soh__Enhancements__cosmetics}
+    ${Source_Files__soh__Enhancements__sfx_editor}
     ${Source_Files__soh__Enhancements__debugger}
     ${Source_Files__soh__Enhancements__randomizer}
     ${Source_Files__soh__Enhancements__randomizer__3drando}
@@ -1700,7 +1716,7 @@ endif()
 find_package(SDL2)
 set(SDL2-INCLUDE ${SDL2_INCLUDE_DIRS})
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (BUILD_CROWD_CONTROL)
     find_package(SDL2_net)
     set(SDL2-NET-INCLUDE ${SDL_NET_INCLUDE_DIRS})
 endif()
@@ -1709,10 +1725,24 @@ target_include_directories(${PROJECT_NAME} PRIVATE assets
 	${CMAKE_CURRENT_SOURCE_DIR}/include/
 	${CMAKE_CURRENT_SOURCE_DIR}/src/
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/binarytools
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/log
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/debug
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/menu
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/misc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/resource
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/resource/types
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/audio
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/extern
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/extern/Mercury
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/extern/tinyxml2
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/
 	${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/libjpeg/include/
 	${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/spdlog/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/Fast3D/U64/PR
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/graphic/Fast3D/U64/PR
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/graphic
 	${CMAKE_CURRENT_SOURCE_DIR}/../ZAPDTR/ZAPDUtils
 	${SDL2-INCLUDE}
     ${SDL2-NET-INCLUDE}
@@ -1731,6 +1761,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 			"$<$<CONFIG:Release>:"
 				"NDEBUG"
 			">"
+            "$<$<BOOL:${BUILD_CROWD_CONTROL}>:ENABLE_CROWD_CONTROL>"
 			"INCLUDE_GAME_PRINTF;"
             "ENABLE_CROWD_CONTROL;"
 			"UNICODE;"
@@ -1777,6 +1808,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
 		"$<$<CONFIG:Release>:"
 			"NDEBUG"
 		">"
+        "$<$<BOOL:${BUILD_CROWD_CONTROL}>:ENABLE_CROWD_CONTROL>"
 		"SPDLOG_ACTIVE_LEVEL=0;"
 		"_CONSOLE;"
 		"_CRT_SECURE_NO_WARNINGS;"
@@ -1974,7 +2006,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 			"glu32;"
 			"SDL2::SDL2;"
 			"SDL2::SDL2main;"
-            "SDL2_net::SDL2_net-static;"
+            "$<$<BOOL:${BUILD_CROWD_CONTROL}>:SDL2_net::SDL2_net-static>"
 			"glfw;"
 			"winmm;"
 			"imm32;"
@@ -2026,6 +2058,7 @@ else()
         "libultraship;"
         "ZAPDUtils;"
 		SDL2::SDL2
+        "$<$<BOOL:${BUILD_CROWD_CONTROL}>:SDL2_net::SDL2_net>"
 		${CMAKE_DL_LIBS}
 		Threads::Threads
 	)

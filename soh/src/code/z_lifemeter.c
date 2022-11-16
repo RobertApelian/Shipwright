@@ -123,8 +123,8 @@ s16 sBeatingHeartsDDEnv[3];
 s16 sHeartsDDPrim[2][3];
 s16 sHeartsDDEnv[2][3];
 
-void HealthMeter_Init(GlobalContext* globalCtx) {
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
+void HealthMeter_Init(PlayState* play) {
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
     if (CVar_GetS32("gHudColors", 1) == 2) {
         HeartInner = CVar_GetRGB("gCCHeartsPrim", HeartInner_ori);
         HeartDDInner = CVar_GetRGB("gCCDDHeartsPrim", HeartDDInner_ori);
@@ -169,8 +169,8 @@ void HealthMeter_Init(GlobalContext* globalCtx) {
     sHeartsDDEnv[0][2] = sHeartsDDEnv[1][2] = HeartDDInner.b;
 }
 
-void HealthMeter_Update(GlobalContext* globalCtx) {
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
+void HealthMeter_Update(PlayState* play) {
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
     f32 factor = interfaceCtx->unk_1FE * 0.1f;
     f32 ddFactor;
     s32 type = 0;
@@ -328,13 +328,13 @@ void HealthMeter_Update(GlobalContext* globalCtx) {
 
 }
 
-s32 func_80078E18(GlobalContext* globalCtx) {
-    gSaveContext.health = globalCtx->interfaceCtx.unk_226;
+s32 func_80078E18(PlayState* play) {
+    gSaveContext.health = play->interfaceCtx.unk_226;
     return 1;
 }
 
-s32 func_80078E34(GlobalContext* globalCtx) {
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
+s32 func_80078E34(PlayState* play) {
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
 
     interfaceCtx->unk_228 = 0x140;
     interfaceCtx->unk_226 += 0x10;
@@ -347,8 +347,8 @@ s32 func_80078E34(GlobalContext* globalCtx) {
     return 0;
 }
 
-s32 func_80078E84(GlobalContext* globalCtx) {
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
+s32 func_80078E84(PlayState* play) {
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
 
     if (interfaceCtx->unk_228 != 0) {
         interfaceCtx->unk_228--;
@@ -357,7 +357,7 @@ s32 func_80078E84(GlobalContext* globalCtx) {
         interfaceCtx->unk_226 -= 0x10;
         if (interfaceCtx->unk_226 <= 0) {
             interfaceCtx->unk_226 = 0;
-            globalCtx->damagePlayer(globalCtx, -(gSaveContext.health + 1));
+            play->damagePlayer(play, -(gSaveContext.health + 1));
             return 1;
         }
     }
@@ -380,10 +380,50 @@ static void* sHeartDDTextures[] = {
     gDefenseHeartThreeQuarterTex,
 };
 
-void HealthMeter_Draw(GlobalContext* globalCtx) {
+s16 getHealthMeterXOffset() {
+    s16 X_Margins;
+    if (CVar_GetS32("gHeartsUseMargins", 0) != 0)
+        X_Margins = Left_LM_Margin;
+    else
+        X_Margins = 0;
+
+    if (CVar_GetS32("gHeartsCountPosType", 0) != 0) {
+        if (CVar_GetS32("gHeartsCountPosType", 0) == 1) {//Anchor Left
+            return OTRGetDimensionFromLeftEdge(CVar_GetS32("gHeartsCountPosX", 0)+X_Margins+70.0f);
+        } else if (CVar_GetS32("gHeartsCountPosType", 0) == 2) {//Anchor Right
+            X_Margins = Right_LM_Margin;
+            return OTRGetDimensionFromRightEdge(CVar_GetS32("gHeartsCountPosX", 0)+X_Margins+70.0f);
+        } else if (CVar_GetS32("gHeartsCountPosType", 0) == 3) {//Anchor None
+            return CVar_GetS32("gHeartsCountPosX", 0)+70.0f;;
+        } else if (CVar_GetS32("gHeartsCountPosType", 0) == 4) {//Hidden
+            return -9999;
+        }
+    } else {
+        return OTRGetDimensionFromLeftEdge(0.0f)+X_Margins;
+    }
+}
+
+s16 getHealthMeterYOffset() {
+    s16 Y_Margins;
+    if (CVar_GetS32("gHeartsUseMargins", 0) != 0)
+        Y_Margins = (Top_LM_Margin*-1);
+    else
+        Y_Margins = 0;
+
+    f32 HeartsScale = 0.7f; 
+    if (CVar_GetS32("gHeartsCountPosType", 0) != 0) {
+        HeartsScale = CVar_GetFloat("gHeartsCountScale", 0.7f);
+        return CVar_GetS32("gHeartsCountPosY", 0)+Y_Margins+(HeartsScale*15);
+    } else {
+        return 0.0f+Y_Margins;
+    }
+}
+
+void HealthMeter_Draw(PlayState* play) {
     s32 pad[5];
     void* heartBgImg;
     u32 curColorSet;
+    f32 PosX_anchor;
     f32 offsetX;
     f32 offsetY;
     s32 i;
@@ -391,8 +431,8 @@ void HealthMeter_Draw(GlobalContext* globalCtx) {
     f32 temp2;
     f32 temp3;
     f32 temp4;
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
-    GraphicsContext* gfxCtx = globalCtx->state.gfxCtx;
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
+    GraphicsContext* gfxCtx = play->state.gfxCtx;
     Vtx* sp154 = interfaceCtx->beatingHeartVtx;
     s32 curHeartFraction = gSaveContext.health % 0x10;
     s16 totalHeartCount = gSaveContext.healthCapacity / 0x10;
@@ -402,7 +442,7 @@ void HealthMeter_Draw(GlobalContext* globalCtx) {
     s32 curCombineModeSet = 0;
     u8* curBgImgLoaded = NULL;
     s32 ddHeartCountMinusOne = gSaveContext.inventory.defenseHearts - 1;
-    float HeartsScale = 0.7f; 
+    f32 HeartsScale = 0.7f; 
     if (CVar_GetS32("gHeartsCountPosType", 0) != 0) {
         HeartsScale = CVar_GetFloat("gHeartsCountScale", 0.7f);
     }
@@ -416,6 +456,7 @@ void HealthMeter_Draw(GlobalContext* globalCtx) {
     }
 
     curColorSet = -1;
+/*
     s16 X_Margins;
     s16 Y_Margins;
     if (CVar_GetS32("gHeartsUseMargins", 0) != 0) {
@@ -443,6 +484,9 @@ void HealthMeter_Draw(GlobalContext* globalCtx) {
         offsetY = PosY_original;
         offsetX = PosX_original;
     }
+*/
+    offsetX = PosX_anchor = getHealthMeterXOffset();
+    offsetY = getHealthMeterYOffset();
 
     for (i = 0; i < totalHeartCount; i++) {
         FrameInterpolation_RecordOpenChild("HealthMeter Heart", i);
@@ -616,27 +660,11 @@ void HealthMeter_Draw(GlobalContext* globalCtx) {
             }
         }
 
-        //offsetX += 10.0f;
-        offsetX += (HeartsScale*14.5f);
-        if (i == 9) {
-            PosX_original = OTRGetDimensionFromLeftEdge(0.0f)+X_Margins;
-            PosY_original = (HeartsScale*15)+Y_Margins;
-            if (CVar_GetS32("gHeartsCountPosType", 0) != 0) {
-                offsetY = CVar_GetS32("gHeartsCountPosY", 0)+((HeartsScale*15)*2)+Y_Margins;
-                if (CVar_GetS32("gHeartsCountPosType", 0) == 1) {//Anchor Left
-                    offsetX = OTRGetDimensionFromLeftEdge(CVar_GetS32("gHeartsCountPosX", 0)+X_Margins+70.0f);
-                } else if (CVar_GetS32("gHeartsCountPosType", 0) == 2) {//Anchor Right
-                    X_Margins = Right_LM_Margin;
-                    offsetX = OTRGetDimensionFromRightEdge(CVar_GetS32("gHeartsCountPosX", 0)+X_Margins+70.0f);
-                } else if (CVar_GetS32("gHeartsCountPosType", 0) == 3) {//Anchor None
-                    offsetX = CVar_GetS32("gHeartsCountPosX", 0)+70.0f;
-                } else if (CVar_GetS32("gHeartsCountPosType", 0) == 4) {//Hidden
-                    offsetX = -9999;
-                }
-            } else {
-                offsetY = PosY_original;
-                offsetX = PosX_original;
-            }
+        offsetX += 10.0f;
+        s32 lineLength = CVar_GetS32("gHeartsLineLength", 10);
+        if (lineLength != 0 && (i+1)%lineLength == 0) {
+            offsetX = PosX_anchor;
+            offsetY += 10.0f;
         }
         
         FrameInterpolation_RecordCloseChild();
@@ -645,16 +673,16 @@ void HealthMeter_Draw(GlobalContext* globalCtx) {
     CLOSE_DISPS(gfxCtx);
 }
 
-void HealthMeter_HandleCriticalAlarm(GlobalContext* globalCtx) {
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
+void HealthMeter_HandleCriticalAlarm(PlayState* play) {
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
 
     if (interfaceCtx->unk_22C != 0) {
         interfaceCtx->unk_22A--;
         if (interfaceCtx->unk_22A <= 0) {
             interfaceCtx->unk_22A = 0;
             interfaceCtx->unk_22C = 0;
-            if (CVar_GetS32("gLowHpAlarm", 0) == 0 && !Player_InCsMode(globalCtx) && (globalCtx->pauseCtx.state == 0) &&
-            (globalCtx->pauseCtx.debugState == 0) && HealthMeter_IsCritical() && !Gameplay_InCsMode(globalCtx)) {
+            if (CVar_GetS32("gLowHpAlarm", 0) == 0 && !Player_InCsMode(play) && (play->pauseCtx.state == 0) &&
+            (play->pauseCtx.debugState == 0) && HealthMeter_IsCritical() && !Play_InCsMode(play)) {
                 func_80078884(NA_SE_SY_HITPOINT_ALARM);
             }
         }
