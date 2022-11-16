@@ -155,6 +155,7 @@ source_group("Header Files\\include" FILES ${Header_Files__include})
 set(Header_Files__soh__Enhancements
     "soh/Enhancements/bootcommands.h"
     #"soh/Enhancements/cvar.h"
+    "soh/Enhancements/debugconsole.h"
     "soh/Enhancements/gameconsole.h"
     "soh/Enhancements/savestates.h"
     "soh/Enhancements/savestates_extern.inc"

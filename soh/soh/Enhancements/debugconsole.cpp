@@ -605,7 +605,7 @@ static bool DamageHandler(std::shared_ptr<Ship::Console> Console, const std::vec
         Player* player = GET_PLAYER(gGlobalCtx);
 
         Health_ChangeBy(gGlobalCtx, -value * 0x10);
-        func_80837C0C(gGlobalCtx, player, 0, 0, 0, 0, 0);
+        Player_SetupDamage(gGlobalCtx, player, 0, 0, 0, 0, 0);
         player->invincibilityTimer = 28;
 
         return CMD_SUCCESS;
@@ -856,7 +856,7 @@ static bool KnockbackHandler(std::shared_ptr<Ship::Console> Console, const std::
 static bool ElectrocuteHandler(std::shared_ptr<Ship::Console> Console, const std::vector<std::string>& args) {
     Player* player = GET_PLAYER(gGlobalCtx);
     if (PlayerGrounded(player)) {
-        func_80837C0C(gGlobalCtx, player, 4, 0, 0, 0, 0);
+        Player_SetupDamage(gGlobalCtx, player, 4, 0, 0, 0, 0);
         return CMD_SUCCESS;
     }
 
@@ -870,7 +870,7 @@ static bool BurnHandler(std::shared_ptr<Ship::Console> Console, const std::vecto
             player->flameTimers[i] = Rand_S16Offset(0, 200);
         }
         player->isBurning = true;
-        func_80837C0C(gGlobalCtx, player, 0, 0, 0, 0, 0);
+        Player_SetupDamage(gGlobalCtx, player, 0, 0, 0, 0, 0);
         return CMD_FAILED;
     }
     return CMD_SUCCESS;
