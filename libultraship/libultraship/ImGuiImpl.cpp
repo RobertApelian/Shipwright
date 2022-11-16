@@ -595,13 +595,6 @@ namespace SohImGui {
             ImGui::PopStyleColor();
         }
 
-        //// DEBUGGING
-        //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
-        //ImGui::Begin("Health Bar Debugging", nullptr, ImGuiWindowFlags_NoFocusOnAppearing);
-        //ImGui::Text("X: %f", CVar_GetFloat("rupeeX", 0));
-        //ImGui::End();
-        //ImGui::PopStyleColor();
-
         console->Draw();
         controller->DrawHud();
 
