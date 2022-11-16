@@ -11,20 +11,26 @@
 #include <ImGui/imgui.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <ImGui/imgui_internal.h>
-#include <libultraship/ImGuiImpl.h>
-#include <libultraship/Cvar.h>
-#include <libultraship/Hooks.h>
+#include <ImGuiImpl.h>
+#include <Cvar.h>
+#include <Hooks.h>
 #include <ultra64/types.h>
 #include <ultra64/pi.h>
 #include <ultra64/sptask.h>
 
 #ifdef __SWITCH__
-#include <libultraship/SwitchImpl.h>
+#include <port/switch/SwitchImpl.h>
 #endif
 
 #include "UIWidgets.hpp"
 #include "include/global.h"
 #include "include/z64audio.h"
+#include "soh/SaveManager.h"
+#include "OTRGlobals.h"
+
+#ifdef ENABLE_CROWD_CONTROL
+#include "Enhancements/crowd-control/CrowdControl.h"
+#endif
 
 #define EXPERIMENTAL() \
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255)); \
@@ -94,12 +100,14 @@ namespace GameMenuBar {
     }
 
     void applyEnhancementPresetDefault(void) {
-        // D-pad Support on Pause and File Select
-        CVar_SetS32("gDpadPauseName", 0);
-        // D-pad Support in Ocarina and Text Choice
-        CVar_SetS32("gDpadOcarinaText", 0);
-        // D-pad Support for Browsing Shop Items
-        CVar_SetS32("gDpadShop", 0);
+        // D-pad Support on Pause
+        CVar_SetS32("gDpadPause", 0);
+        // D-pad Support in text and file select
+        CVar_SetS32("gDpadText", 0);
+        // Play Ocarina with D-pad
+        CVar_SetS32("gDpadOcarina", 0);
+        // Play Ocarina with Right Stick
+        CVar_SetS32("gRStickOcarina", 0);
         // D-pad as Equip Items
         CVar_SetS32("gDpadEquips", 0);
         // Allow the cursor to be on any slot
@@ -108,6 +116,14 @@ namespace GameMenuBar {
         CVar_SetS32("gDpadNoDropOcarinaInput", 0);
         // Answer Navi Prompt with L Button
         CVar_SetS32("gNaviOnL", 0);
+        // Invert Camera X Axis
+        CVar_SetS32("gInvertXAxis", 0);
+        // Invert Camera Y Axis
+        CVar_SetS32("gInvertYAxis", 1);
+        // Right Stick Aiming
+        CVar_SetS32("gRightStickAiming", 0);
+        // Disable Auto-Center First Person View
+        CVar_SetS32("gDisableAutoCenterView", 0);
 
         // Text Speed (1 to 5)
         CVar_SetS32("gTextSpeed", 1);
@@ -129,6 +145,10 @@ namespace GameMenuBar {
         CVar_SetS32("gMMBunnyHood", 0);
         // Fast Chests
         CVar_SetS32("gFastChests", 0);
+        // Chest size & texture matches contents
+        CVar_SetS32("gChestSizeAndTextureMatchesContents", 0);
+        // Chest size & texture matches contents only with agony
+        CVar_SetS32("gChestSizeDependsStoneOfAgony", 0);
         // Fast Drops
         CVar_SetS32("gFastDrops", 0);
         // Better Owl
@@ -139,10 +159,17 @@ namespace GameMenuBar {
         CVar_SetS32("gInstantPutaway", 0);
         // Instant Boomerang Recall
         CVar_SetS32("gFastBoomerang", 0);
+        // Ask to Equip New Items
+        CVar_SetS32("gAskToEquip", 0);
         // Mask Select in Inventory
         CVar_SetS32("gMaskSelect", 0);
         // Remember Save Location
         CVar_SetS32("gRememberSaveLocation", 0);
+        // Skip Magic Arrow Equip Animation
+        CVar_SetS32("gSkipArrowAnimation", 0);
+
+        // Equip arrows on multiple slots
+        CVar_SetS32("gSeparateArrows", 0);
 
         // Damage Multiplier (0 to 8)
         CVar_SetS32("gDamageMul", 0);
@@ -158,6 +185,8 @@ namespace GameMenuBar {
         CVar_SetS32("gBombchuDrops", 0);
         // Always Win Goron Pot
         CVar_SetS32("gGoronPot", 0);
+        // Always Win Dampe Digging First Try
+        CVar_SetS32("gDampeWin", 0);
 
         // Change Red Potion Effect
         CVar_SetS32("gRedPotionEffect", 0);
@@ -210,6 +239,8 @@ namespace GameMenuBar {
         CVar_SetS32("gInstantFishing", 0);
         // Guarantee Bite
         CVar_SetS32("gGuaranteeFishingBite", 0);
+        // Fish Never Escape
+        CVar_SetS32("gFishNeverEscape", 0);
         // Child Minimum Weight (6 to 10)
         CVar_SetS32("gChildMinimumWeightFish", 10);
         // Adult Minimum Weight (8 to 13)
@@ -234,10 +265,16 @@ namespace GameMenuBar {
         CVar_SetS32("gGuardVision", 0);
         // Enable passage of time on file select
         CVar_SetS32("gTimeFlowFileSelect", 0);
-        // Count Golden Skulltulas
-        CVar_SetS32("gInjectSkulltulaCount", 0);
+        // Inject Item Counts in messages
+        CVar_SetS32("gInjectItemCounts", 0);
         // Pull grave during the day
         CVar_SetS32("gDayGravePull", 0);
+        // Pull out Ocarina to Summon Scarecrow
+        CVar_SetS32("gSkipScarecrow", 0);
+        // Blue Fire Arrows
+        CVar_SetS32("gBlueFireArrows", 0);
+        // Sunlight Arrows
+        CVar_SetS32("gSunlightArrows", 0);
 
         // Rotate link (0 to 2)
         CVar_SetS32("gPauseLiveLinkRotation", 0);
@@ -277,6 +314,8 @@ namespace GameMenuBar {
         CVar_SetS32("gCrouchStabHammerFix", 0);
         // Fix all crouch stab
         CVar_SetS32("gCrouchStabFix", 0);
+        // Fix Gerudo Warrior's clothing colors
+        CVar_SetS32("gGerudoWarriorClothingFix", 0);
 
         // Red Ganon blood
         CVar_SetS32("gRedGanonBlood", 0);
@@ -287,20 +326,30 @@ namespace GameMenuBar {
         // Bombchus out of bounds
         CVar_SetS32("gBombchusOOB", 0);
 
+        // Restore old Gold Skulltula cutscene
         CVar_SetS32("gGsCutscene", 0);
+        // Skip save confirmation
+        CVar_SetS32("gSkipSaveConfirmation", 0);
         // Autosave
         CVar_SetS32("gAutosave", 0);
+
+        //Crit wiggle disable
+        CVar_SetS32("gDisableCritWiggle", 0);
     }
 
     void applyEnhancementPresetVanillaPlus(void) {
-        // D-pad Support in Ocarina and Text Choice
-        CVar_SetS32("gDpadOcarinaText", 1);
-        // D-pad Support for Browsing Shop Items
-        CVar_SetS32("gDpadShop", 1);
+        // D-pad Support in text and file select
+        CVar_SetS32("gDpadText", 1);
+        // Play Ocarina with D-pad
+        CVar_SetS32("gDpadOcarina", 1);
+        // Play Ocarina with Right Stick
+        CVar_SetS32("gRStickOcarina", 1);
         // D-pad as Equip Items
         CVar_SetS32("gDpadEquips", 1);
         // Prevent Dropped Ocarina Inputs
         CVar_SetS32("gDpadNoDropOcarinaInput", 1);
+        // Right Stick Aiming
+        CVar_SetS32("gRightStickAiming", 1);
 
         // Text Speed (1 to 5)
         CVar_SetS32("gTextSpeed", 5);
@@ -315,8 +364,8 @@ namespace GameMenuBar {
         CVar_SetS32("gAssignableTunicsAndBoots", 1);
         // Enable passage of time on file select
         CVar_SetS32("gTimeFlowFileSelect", 1);
-        // Count Golden Skulltulas
-        CVar_SetS32("gInjectSkulltulaCount", 1);
+        // Inject Item Counts in messages
+        CVar_SetS32("gInjectItemCounts", 1);
 
         // Pause link animation (0 to 16)
         CVar_SetS32("gPauseLiveLink", 1);
@@ -336,6 +385,8 @@ namespace GameMenuBar {
         CVar_SetS32("gGravediggingTourFix", 1);
         // Fix Deku Nut upgrade
         CVar_SetS32("gDekuNutUpgradeFix", 1);
+        // Fix Navi text HUD position
+        CVar_SetS32("gNaviTextFix", 1);
 
         // Red Ganon blood
         CVar_SetS32("gRedGanonBlood", 1);
@@ -345,6 +396,8 @@ namespace GameMenuBar {
         CVar_SetS32("gN64WeirdFrames", 1);
         // Bombchus out of bounds
         CVar_SetS32("gBombchusOOB", 1);
+        // Skip save confirmation
+        CVar_SetS32("gSkipSaveConfirmation", 1);
     }
 
     void applyEnhancementPresetEnhanced(void) {
@@ -353,7 +406,7 @@ namespace GameMenuBar {
         // Biggoron Forge Time (0 to 3)
         CVar_SetS32("gForgeTime", 0);
         // Vine/Ladder Climb speed (+0 to +12)
-        CVar_SetS32("gClimbSpeed", 1);
+        CVar_SetS32("gClimbSpeed", 3);
         // Faster Heavy Block Lift
         CVar_SetS32("gFasterHeavyBlockLift", 1);
         // No Forced Navi
@@ -372,43 +425,59 @@ namespace GameMenuBar {
         CVar_SetS32("gInstantPutaway", 1);
         // Instant Boomerang Recall
         CVar_SetS32("gFastBoomerang", 1);
+        // Ask to Equip New Items
+        CVar_SetS32("gAskToEquip", 1);
         // Mask Select in Inventory
         CVar_SetS32("gMaskSelect", 1);
+        // Always Win Goron Pot
+        CVar_SetS32("gGoronPot", 1);
+        // Always Win Dampe Digging
+        CVar_SetS32("gDampeWin", 1);
+        // Skip Magic Arrow Equip Animation
+        CVar_SetS32("gSkipArrowAnimation", 1);
+
+        // Equip arrows on multiple slots
+        CVar_SetS32("gSeparateArrows", 1);
 
         // Disable Navi Call Audio
         CVar_SetS32("gDisableNaviCallAudio", 1);
 
         // Equipment Toggle
         CVar_SetS32("gEquipmentCanBeRemoved", 1);
-        // Count Golden Skulltulas
-        CVar_SetS32("gInjectSkulltulaCount", 1);
+        // Link's Cow in Both Time Periods
+        CVar_SetS32("gCowOfTime", 1);
 
         // Enable 3D Dropped items/projectiles
         CVar_SetS32("gNewDrops", 1);
 
         // Fix Anubis fireballs
         CVar_SetS32("gAnubisFix", 1);
+
+        // Autosave
+        CVar_SetS32("gAutosave", 1);
     }
 
     void applyEnhancementPresetRandomizer(void) {
         // Allow the cursor to be on any slot
         CVar_SetS32("gPauseAnyCursor", 1);
 
-        // Instant Fishing
-        CVar_SetS32("gInstantFishing", 1);
         // Guarantee Bite
         CVar_SetS32("gGuaranteeFishingBite", 1);
+        // Fish Never Escape
+        CVar_SetS32("gFishNeverEscape", 1);
         // Child Minimum Weight (6 to 10)
-        CVar_SetS32("gChildMinimumWeightFish", 6);
+        CVar_SetS32("gChildMinimumWeightFish", 3);
         // Adult Minimum Weight (8 to 13)
-        CVar_SetS32("gAdultMinimumWeightFish", 8);
+        CVar_SetS32("gAdultMinimumWeightFish", 6);
 
         // Visual Stone of Agony
         CVar_SetS32("gVisualAgony", 1);
         // Pull grave during the day
         CVar_SetS32("gDayGravePull", 1);
         // Pull out Ocarina to Summon Scarecrow
-        CVar_SetS32("gSkipScarecrow", 0);
+        CVar_SetS32("gSkipScarecrow", 1);
+        // Chest size & texture matches contents
+        CVar_SetS32("gChestSizeAndTextureMatchesContents", 1);
 
         // Pause link animation (0 to 16)
         CVar_SetS32("gPauseLiveLink", 16);
@@ -467,6 +536,28 @@ namespace GameMenuBar {
                 UIWidgets::Spacer(0);
                 BindAudioSlider("Fanfare Volume: %d %%", "gFanfareVolume", 1.0f, SEQ_FANFARE);
 
+                ImGui::Text("Audio API (Needs reload)");
+                auto audioBackends = SohImGui::GetAvailableAudioBackends();
+                auto currentAudioBackend = SohImGui::GetCurrentAudioBackend();
+
+                if (audioBackends.size() <= 1) {
+                    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+                }
+                if (ImGui::BeginCombo("##AApi", currentAudioBackend.second)) {
+                    for (uint8_t i = 0; i < audioBackends.size(); i++) {
+                        if (ImGui::Selectable(audioBackends[i].second, audioBackends[i] == currentAudioBackend)) {
+                            SohImGui::SetCurrentAudioBackend(i, audioBackends[i]);
+                        }
+                    }
+
+                    ImGui::EndCombo();
+                }
+                if (audioBackends.size() <= 1) {
+                    ImGui::PopItemFlag();
+                    ImGui::PopStyleVar(1);
+                }
+
                 ImGui::EndMenu();
             }
 
@@ -496,6 +587,11 @@ namespace GameMenuBar {
                 ImGui::PushItemWidth(ImGui::GetWindowSize().x - 20.0f);
                 UIWidgets::EnhancementSliderFloat("Input Scale: %.1f", "##Input", "gInputScale", 1.0f, 3.0f, "", 1.0f, false);
                 UIWidgets::Tooltip("Sets the on screen size of the displayed inputs from the Show Inputs setting");
+                ImGui::PopItemWidth();
+                UIWidgets::Spacer(0);
+                ImGui::PushItemWidth(ImGui::GetWindowSize().x - 20.0f);
+                UIWidgets::EnhancementSliderInt("Simulated Input Lag: %d frames", "##SimulatedInputLag", "gSimulatedInputLag", 0, 6, "", 0, false);
+                UIWidgets::Tooltip("Buffers your inputs to be executed a specified amount of frames later");
                 ImGui::PopItemWidth();
 
                 ImGui::EndMenu();
@@ -542,7 +638,13 @@ namespace GameMenuBar {
                     }
                     ImGui::SameLine();
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
+                #ifdef __SWITCH__
+                    ImGui::PushItemWidth(ImGui::GetWindowSize().x - 110.0f);
+                #elif defined(__WIIU__)
+                    ImGui::PushItemWidth(ImGui::GetWindowSize().x - 79.0f * 2);
+                #else
                     ImGui::PushItemWidth(ImGui::GetWindowSize().x - 79.0f);
+                #endif
                     if (ImGui::SliderInt("##ExtraLatencyThreshold", &val, 0, 360, "", ImGuiSliderFlags_AlwaysClamp))
                     {
                         CVar_SetS32(cvar, val);
@@ -563,17 +665,30 @@ namespace GameMenuBar {
                 }
 
                 ImGui::Text("Renderer API (Needs reload)");
-                auto backends = SohImGui::GetAvailableRenderingBackends();
-                auto currentBackend = SohImGui::GetCurrentRenderingBackend();
+                auto renderingBackends = SohImGui::GetAvailableRenderingBackends();
+                auto currentRenderingBackend = SohImGui::GetCurrentRenderingBackend();
 
-                if (ImGui::BeginCombo("##RApi", currentBackend.second)) {
-                    for (uint8_t i = 0; i < sizeof(backends) / sizeof(backends[0]); i++) {
-                        if (ImGui::Selectable(backends[i].second, backends[i] == currentBackend)) {
-                            SohImGui::SetCurrentRenderingBackend(i, backends[i]);
+                if (renderingBackends.size() <= 1) {
+                    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+                }
+                if (ImGui::BeginCombo("##RApi", currentRenderingBackend.second)) {
+                    for (uint8_t i = 0; i < renderingBackends.size(); i++) {
+                        if (ImGui::Selectable(renderingBackends[i].second, renderingBackends[i] == currentRenderingBackend)) {
+                            SohImGui::SetCurrentRenderingBackend(i, renderingBackends[i]);
                         }
                     }
 
                     ImGui::EndCombo();
+                }
+                if (renderingBackends.size() <= 1) {
+                    ImGui::PopItemFlag();
+                    ImGui::PopStyleVar(1);
+                }
+
+                if (SohImGui::supportsViewports()) {
+                    UIWidgets::PaddedEnhancementCheckbox("Allow multi-windows", "gEnableMultiViewports", true, false);
+                    UIWidgets::Tooltip("Allows windows to be able to be dragged off of the main game window. Requires a reload to take effect.");
                 }
 
                 EXPERIMENTAL();
@@ -646,19 +761,25 @@ namespace GameMenuBar {
                 ImGui::PopStyleVar(3);
                 ImGui::PopStyleColor(1);
 
-                // TODO mutual exclusions -- There should be some system to prevent conclifting enhancements from being selected
-                UIWidgets::PaddedEnhancementCheckbox("D-pad Support on Pause and File Select", "gDpadPauseName");
-                UIWidgets::Tooltip("Enables Pause and File Select screen navigation with the D-pad\nIf used with D-pad as Equip Items, you must hold C-Up to equip instead of navigate");
-                UIWidgets::PaddedEnhancementCheckbox("D-pad Support in Text Choice", "gDpadText", true, false);
-                UIWidgets::PaddedEnhancementCheckbox("D-pad Support for Browsing Shop Items", "gDpadShop", true, false);
+                UIWidgets::PaddedEnhancementCheckbox("D-pad Support on Pause Screen", "gDpadPause", true, false);
+                UIWidgets::Tooltip("Navigate Pause with the D-pad\nIf used with D-pad as Equip Items, you must hold C-Up to equip instead of navigate\n"
+                    "To make the cursor only move a single space no matter how long a direction is held, manually set gDpadHoldChange to 0");
+                UIWidgets::PaddedEnhancementCheckbox("D-pad Support in Text Boxes", "gDpadText", true, false);
+                UIWidgets::Tooltip("Navigate choices in text boxes, shop item selection, and the file select / name entry screens with the D-pad\n"
+                    "To make the cursor only move a single space during name entry no matter how long a direction is held, manually set gDpadHoldChange to 0");
                 UIWidgets::PaddedEnhancementCheckbox("D-pad as Equip Items", "gDpadEquips", true, false);
-                UIWidgets::Tooltip("Allows the D-pad to be used as extra C buttons");
+                UIWidgets::Tooltip("Equip items and equipment on the D-pad\nIf used with D-pad on Pause Screen, you must hold C-Up to equip instead of navigate");
                 UIWidgets::PaddedEnhancementCheckbox("Allow the cursor to be on any slot", "gPauseAnyCursor", true, false);
                 UIWidgets::Tooltip("Allows the cursor on the pause menu to be over any slot\nSimilar to Rando and Spaceworld 97");
-                UIWidgets::PaddedEnhancementCheckbox("Prevent Dropped Ocarina Inputs", "gDpadNoDropOcarinaInput", true, false);
-                UIWidgets::Tooltip("Prevent dropping inputs when playing the ocarina quickly");
                 UIWidgets::PaddedEnhancementCheckbox("Answer Navi Prompt with L Button", "gNaviOnL", true, false);
                 UIWidgets::Tooltip("Speak to Navi with L but enter first-person camera with C-Up");
+                UIWidgets::PaddedEnhancementCheckbox("Enable walk speed modifiers", "gEnableWalkModify", true, false);
+                UIWidgets::Tooltip("Hold the assigned button to change the maximum walking speed\nTo change the assigned button, click Customize Game Controls");
+                if (CVar_GetS32("gEnableWalkModify", 0)) {
+                    UIWidgets::PaddedEnhancementCheckbox("Toggle modifier instead of holding", "gWalkSpeedToggle", true, false);
+                    UIWidgets::EnhancementSliderFloat("Modifier 1: %d %%", "##WalkMod1", "gWalkModifierOne", 0.0f, 5.0f, "", 1.0f, true);
+                    UIWidgets::EnhancementSliderFloat("Modifier 2: %d %%", "##WalkMod2", "gWalkModifierTwo", 0.0f, 5.0f, "", 1.0f, true);
+                }
                 ImGui::EndMenu();
             }
 
@@ -682,12 +803,32 @@ namespace GameMenuBar {
                     UIWidgets::Tooltip("Prevent forced Navi conversations");
                     UIWidgets::PaddedEnhancementCheckbox("No Skulltula Freeze", "gSkulltulaFreeze", true, false);
                     UIWidgets::Tooltip("Stops the game from freezing the player when picking up Gold Skulltulas");
-                    UIWidgets::PaddedEnhancementCheckbox("MM Bunny Hood", "gMMBunnyHood", true, false);
-                    UIWidgets::Tooltip("Wearing the Bunny Hood grants a speed increase like in Majora's Mask");
                     UIWidgets::PaddedEnhancementCheckbox("Fast Chests", "gFastChests", true, false);
                     UIWidgets::Tooltip("Kick open every chest");
+                    UIWidgets::PaddedText("Chest size & texture matches contents", true, false);
+                    const char* chestSizeAndTextureMatchesContentsOptions[4] = { "Disabled", "Both", "Texture Only", "Size Only"};
+                    UIWidgets::Tooltip(
+                        "Chest sizes and textures are changed to help identify the item inside.\n"
+                        " - Major items: Large gold chests\n"
+                        " - Lesser items: Large brown chests\n"
+                        " - Junk items: Small brown chests\n"
+                        " - Small keys: Small silver chest\n"
+                        " - Boss keys: Vanilla size and texture\n"
+                        " - Skulltula Tokens: Small skulltula chest\n"
+                    );
+                    if (UIWidgets::EnhancementCombobox("gChestSizeAndTextureMatchesContents", chestSizeAndTextureMatchesContentsOptions, 4, 0)) {
+                        if (CVar_GetS32("gChestSizeAndTextureMatchesContents", 0) == 0) {
+                            CVar_SetS32("gChestSizeDependsStoneOfAgony", 0);
+                        }
+                    }
+                    if (CVar_GetS32("gChestSizeAndTextureMatchesContents", 0) > 0) {
+                        UIWidgets::PaddedEnhancementCheckbox("Chests of Agony", "gChestSizeDependsStoneOfAgony", true, false);
+                        UIWidgets::Tooltip("Only change the size/texture of chests if you have the Stone of Agony.");
+                    }
                     UIWidgets::PaddedEnhancementCheckbox("Skip Pickup Messages", "gFastDrops", true, false);
                     UIWidgets::Tooltip("Skip pickup messages for new consumable items and bottle swipes");
+                    UIWidgets::PaddedEnhancementCheckbox("Ask to Equip New Items", "gAskToEquip", true, false);
+                    UIWidgets::Tooltip("Adds a prompt to equip newly-obtained swords, shields and tunics");
                     UIWidgets::PaddedEnhancementCheckbox("Better Owl", "gBetterOwl", true, false);
                     UIWidgets::Tooltip("The default response to Kaepora Gaebora is always that you understood what he said");
                     UIWidgets::PaddedEnhancementCheckbox("Fast Ocarina Playback", "gFastOcarinaPlayback", true, false);
@@ -699,15 +840,35 @@ namespace GameMenuBar {
                     UIWidgets::PaddedEnhancementCheckbox("Skip Scarecrow Song", "gSkipScarecrow", true, false,
                                                          forceSkipScarecrow, forceSkipScarecrowText, UIWidgets::CheckboxGraphics::Checkmark);
                     UIWidgets::Tooltip("Pierre appears when Ocarina is pulled out. Requires learning scarecrow song.");
+                    UIWidgets::PaddedEnhancementCheckbox("Remember Save Location", "gRememberSaveLocation", true, false);
+                    UIWidgets::Tooltip("When loading a save, places Link at the last entrance he went through.\n"
+                            "This doesn't work if the save was made in a grotto.");
+                    UIWidgets::PaddedEnhancementCheckbox("Skip Magic Arrow Equip Animation", "gSkipArrowAnimation", true, false);
+                    UIWidgets::PaddedEnhancementCheckbox("Skip save confirmation", "gSkipSaveConfirmation", true, false);
+                    UIWidgets::Tooltip("Skip the \"Game saved.\" confirmation screen");
+                    ImGui::EndMenu();
+                }
+
+                UIWidgets::Spacer(0);
+
+                if (ImGui::BeginMenu("Items"))
+                {
                     UIWidgets::PaddedEnhancementCheckbox("Instant Putaway", "gInstantPutaway", true, false);
                     UIWidgets::Tooltip("Allow Link to put items away without having to wait around");
                     UIWidgets::PaddedEnhancementCheckbox("Instant Boomerang Recall", "gFastBoomerang", true, false);
                     UIWidgets::Tooltip("Instantly return the boomerang to Link by pressing its item button while it's in the air");
+                    UIWidgets::PaddedEnhancementCheckbox("Prevent Dropped Ocarina Inputs", "gDpadNoDropOcarinaInput", true, false);
+                    UIWidgets::Tooltip("Prevent dropping inputs when playing the ocarina quickly");
+                    UIWidgets::PaddedText("Bunny Hood Effect", true, false);
+                    const char* bunnyHoodOptions[3] = { "Disabled", "Faster Run & Longer Jump", "Faster Run"};
+                    UIWidgets::EnhancementCombobox("gMMBunnyHood", bunnyHoodOptions, 3, 0);
+                    UIWidgets::Tooltip("Wearing the Bunny Hood grants a speed increase like in Majora's Mask. The longer jump option is not accounted for in randomizer logic.");
                     UIWidgets::PaddedEnhancementCheckbox("Mask Select in Inventory", "gMaskSelect", true, false);
                     UIWidgets::Tooltip("After completing the mask trading sub-quest, press A and any direction on the mask slot to change masks");
-                    UIWidgets::PaddedEnhancementCheckbox("Remember Save Location", "gRememberSaveLocation", true, false);
-                    UIWidgets::Tooltip("When loading a save, places Link at the last entrance he went through.\n"
-                            "This doesn't work if the save was made in a grotto.");
+                    UIWidgets::PaddedEnhancementCheckbox("Nuts explode bombs", "gNutsExplodeBombs", true, false);
+                    UIWidgets::Tooltip("Makes nuts explode bombs, similar to how they interact with bombchus. This does not affect bombflowers.");
+                    UIWidgets::PaddedEnhancementCheckbox("Equip Multiple Arrows at Once", "gSeparateArrows", true, false);
+                    UIWidgets::Tooltip("Allow the bow and magic arrows to be equipped at the same time on different slots");
                     ImGui::EndMenu();
                 }
 
@@ -764,6 +925,9 @@ namespace GameMenuBar {
                     UIWidgets::Tooltip("Disables heart drops, but not heart placements, like from a Deku Scrub running off\nThis simulates Hero Mode from other games in the series");
                     UIWidgets::PaddedEnhancementCheckbox("Always Win Goron Pot", "gGoronPot", true, false);
                     UIWidgets::Tooltip("Always get the heart piece/purple rupee from the spinning Goron pot");
+                    UIWidgets::PaddedEnhancementCheckbox("Always Win Dampe Digging Game", "gDampeWin", true, false, SaveManager::Instance->IsRandoFile(),
+                                                         "This setting is always enabled in randomizer files", UIWidgets::CheckboxGraphics::Checkmark);
+                    UIWidgets::Tooltip("Always win the heart piece/purple rupee on the first dig in Dampe's grave digging game, just like in rando\nIn a rando file, this is unconditionally enabled");
                     UIWidgets::Spacer(0);
 
                     if (ImGui::BeginMenu("Potion Values"))
@@ -846,9 +1010,11 @@ namespace GameMenuBar {
                         UIWidgets::Tooltip("All fish will be caught instantly");
                         UIWidgets::PaddedEnhancementCheckbox("Guarantee Bite", "gGuaranteeFishingBite", true, false);
                         UIWidgets::Tooltip("When a line is stable, guarantee bite. Otherwise use default logic");
-                        UIWidgets::PaddedEnhancementSliderInt("Child Minimum Weight: %d", "##cMinimumWeight", "gChildMinimumWeightFish", 6, 10, "", 10, false, true, false);
+                        UIWidgets::PaddedEnhancementCheckbox("Fish Never Escape", "gFishNeverEscape", true, false);
+                        UIWidgets::Tooltip("Once a hook has been set, fish will never let go while being reeled in.");
+                        UIWidgets::PaddedEnhancementSliderInt("Child Minimum Weight: %d", "##cMinimumWeight", "gChildMinimumWeightFish", 3, 10, "", 10, false, true, false);
                         UIWidgets::Tooltip("The minimum weight for the unique fishing reward as a child");
-                        UIWidgets::PaddedEnhancementSliderInt("Adult Minimum Weight: %d", "##aMinimumWeight", "gAdultMinimumWeightFish", 8, 13, "", 13, false, true, false);
+                        UIWidgets::PaddedEnhancementSliderInt("Adult Minimum Weight: %d", "##aMinimumWeight", "gAdultMinimumWeightFish", 6, 13, "", 13, false, true, false);
                         UIWidgets::Tooltip("The minimum weight for the unique fishing reward as an adult");
                         ImGui::EndMenu();
                     }
@@ -882,10 +1048,32 @@ namespace GameMenuBar {
                 UIWidgets::Tooltip("Allows the Lon Lon Ranch obstacle course reward to be shared across time periods");
                 UIWidgets::PaddedEnhancementCheckbox("Enable visible guard vision", "gGuardVision", true, false);
                 UIWidgets::PaddedEnhancementCheckbox("Enable passage of time on file select", "gTimeFlowFileSelect", true, false);
-                UIWidgets::PaddedEnhancementCheckbox("Count Golden Skulltulas", "gInjectSkulltulaCount", true, false);
-                UIWidgets::Tooltip("Injects Golden Skulltula total count in pickup messages");
+                UIWidgets::PaddedEnhancementCheckbox("Item counts in messages", "gInjectItemCounts", true, false);
+                UIWidgets::Tooltip("Injects item counts in pickup messages, like golden skulltula tokens and heart pieces");
                 UIWidgets::PaddedEnhancementCheckbox("Pull grave during the day", "gDayGravePull", true, false);
                 UIWidgets::Tooltip("Allows graves to be pulled when child during the day");
+
+                // Blue Fire Arrows
+                bool forceEnableBlueFireArrows = gSaveContext.n64ddFlag &&
+                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BLUE_FIRE_ARROWS);
+                const char* forceEnableBlueFireArrowsText =
+                    "This setting is forcefully enabled because a savefile\nwith \"Blue Fire Arrows\" is loaded.";
+                UIWidgets::PaddedEnhancementCheckbox("Blue Fire Arrows", "gBlueFireArrows", true, false, 
+                    forceEnableBlueFireArrows, forceEnableBlueFireArrowsText, UIWidgets::CheckboxGraphics::Checkmark);
+                UIWidgets::Tooltip("Allows Ice Arrows to melt red ice.\nMay require a room reload if toggled during gameplay.");
+
+                // Sunlight Arrows
+                bool forceEnableSunLightArrows = gSaveContext.n64ddFlag &&
+                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SUNLIGHT_ARROWS);
+                const char* forceEnableSunLightArrowsText =
+                    "This setting is forcefully enabled because a savefile\nwith \"Sunlight Arrows\" is loaded.";
+                UIWidgets::PaddedEnhancementCheckbox("Sunlight Arrows", "gSunlightArrows", true, false, 
+                    forceEnableSunLightArrows, forceEnableSunLightArrowsText, UIWidgets::CheckboxGraphics::Checkmark);
+                UIWidgets::Tooltip("Allows Light Arrows to activate sun switches.\nMay require a room reload if toggled during gameplay.");
+
+                UIWidgets::PaddedEnhancementCheckbox("Disable Crit wiggle", "gDisableCritWiggle", true, false);
+                UIWidgets::Tooltip("Disable random camera wiggle at low health");
+
                 ImGui::EndMenu();
             }
 
@@ -938,6 +1126,8 @@ namespace GameMenuBar {
                 }
                 UIWidgets::PaddedEnhancementCheckbox("N64 Mode", "gN64Mode", true, false);
                 UIWidgets::Tooltip("Sets aspect ratio to 4:3 and lowers resolution to 240p, the N64's native resolution");
+                UIWidgets::PaddedEnhancementCheckbox("Glitch line-up tick", "gDrawLineupTick", true, false);
+                UIWidgets::Tooltip("Displays a tick in the top center of the screen to help with glitch line-ups in SoH, as traditional UI based line-ups do not work outside of 4:3");
                 UIWidgets::PaddedEnhancementCheckbox("Enable 3D Dropped items/projectiles", "gNewDrops", true, false);
                 UIWidgets::Tooltip("Change most 2D items and projectiles on the overworld to their 3D versions");
                 UIWidgets::PaddedEnhancementCheckbox("Disable Black Bar Letterboxes", "gDisableBlackBars", true, false);
@@ -978,6 +1168,8 @@ namespace GameMenuBar {
                     UIWidgets::PaddedEnhancementCheckbox("Remove power crouch stab", "gCrouchStabFix", true, false);
                     UIWidgets::Tooltip("Make crouch stabbing always do the same damage as a regular slash");
                 }
+                UIWidgets::PaddedEnhancementCheckbox("Fix Gerudo Warrior's clothing colors", "gGerudoWarriorClothingFix", true, false);
+                UIWidgets::Tooltip("Prevent the Gerudo Warrior's clothes changing color when changing Link's tunic or using bombs in front of her");
 
                 ImGui::EndMenu();
             }
@@ -1001,7 +1193,8 @@ namespace GameMenuBar {
 
             UIWidgets::PaddedEnhancementCheckbox("Autosave", "gAutosave", true, false);
             UIWidgets::Tooltip("Automatically save the game every time a new area is entered or item is obtained\n"
-                "To disable saving when obtaining an item, manually set gAutosaveAllItems and gAutosaveMajorItems to 0\n"
+                "To disable saving when obtaining a major item, manually set gAutosaveMajorItems to 0\n"
+                "To enable saving when obtaining any item, manually set gAutosaveAllItems to 1\n"
                 "gAutosaveAllItems takes priority over gAutosaveMajorItems if both are set to 1\n"
                 "gAutosaveMajorItems excludes rupees and health/magic/ammo refills (but includes bombchus)");
 
@@ -1011,13 +1204,19 @@ namespace GameMenuBar {
             ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0, 0));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.22f, 0.38f, 0.56f, 1.0f));
-            static ImVec2 buttonSize(200.0f, 0.0f);
-            if (ImGui::Button(GetWindowButtonText("Cosmetics Editor", CVar_GetS32("gCosmeticsEditorEnabled", 0)).c_str(), buttonSize))
+            if (ImGui::Button(GetWindowButtonText("Cosmetics Editor", CVar_GetS32("gCosmeticsEditorEnabled", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
             {
                 bool currentValue = CVar_GetS32("gCosmeticsEditorEnabled", 0);
                 CVar_SetS32("gCosmeticsEditorEnabled", !currentValue);
                 SohImGui::RequestCvarSaveOnNextTick();
                 SohImGui::EnableWindow("Cosmetics Editor", CVar_GetS32("gCosmeticsEditorEnabled", 0));
+            }
+            if (ImGui::Button(GetWindowButtonText("SFX Editor", CVar_GetS32("gSfxEditor", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
+            {
+                bool currentValue = CVar_GetS32("gSfxEditor", 0);
+                CVar_SetS32("gSfxEditor", !currentValue);
+                SohImGui::RequestCvarSaveOnNextTick();
+                SohImGui::EnableWindow("SFX Editor", CVar_GetS32("gSfxEditor", 0));
             }
             ImGui::PopStyleVar(3);
             ImGui::PopStyleColor(1);
@@ -1067,7 +1266,9 @@ namespace GameMenuBar {
                 }
                 ImGui::SameLine();
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 7.0f);
-            #ifdef __WIIU__
+            #ifdef __SWITCH__
+                ImGui::PushItemWidth(ImGui::GetWindowSize().x - 110.0f);
+            #elif defined(__WIIU__)
                 ImGui::PushItemWidth(ImGui::GetWindowSize().x - 79.0f * 2);
             #else
                 ImGui::PushItemWidth(ImGui::GetWindowSize().x - 79.0f);
@@ -1130,16 +1331,18 @@ namespace GameMenuBar {
             }
             UIWidgets::EnhancementCheckbox("Disable LOD", "gDisableLOD");
             UIWidgets::Tooltip("Turns off the Level of Detail setting, making models use their higher-poly variants at any distance");
-            UIWidgets::PaddedEnhancementCheckbox("Disable Draw Distance", "gDisableDrawDistance", true, false);
+            if (UIWidgets::PaddedEnhancementCheckbox("Disable Draw Distance", "gDisableDrawDistance", true, false)) {
+                if (CVar_GetS32("gDisableDrawDistance", 0) == 0) {
+                    CVar_SetS32("gDisableKokiriDrawDistance", 0);
+                }
+            }
             UIWidgets::Tooltip("Turns off the objects draw distance, making objects being visible from a longer range");
-            if (CVar_GetS32("gDisableDrawDistance", 0) == 0) {
-                CVar_SetS32("gDisableKokiriDrawDistance", 0);
-            } else if (CVar_GetS32("gDisableDrawDistance", 0) == 1) {
+            if (CVar_GetS32("gDisableDrawDistance", 0) == 1) {
                 UIWidgets::PaddedEnhancementCheckbox("Kokiri Draw Distance", "gDisableKokiriDrawDistance", true, false);
                 UIWidgets::Tooltip("The Kokiri are mystical beings that fade into view when approached\nEnabling this will remove their draw distance");
             }
             UIWidgets::PaddedEnhancementCheckbox("Skip Text", "gSkipText", true, false);
-            UIWidgets::Tooltip("Holding down B skips text\nKnown to cause a cutscene softlock in Water Temple\nSoftlock can be fixed by pressing D-Right in Debug mode");
+            UIWidgets::Tooltip("Holding down B skips text");
             UIWidgets::PaddedEnhancementCheckbox("Free Camera", "gFreeCamera", true, false);
             UIWidgets::Tooltip("Enables camera control\nNote: You must remap C buttons off of the right stick in the controller config menu, and map the camera stick to the right stick.");
 
@@ -1183,12 +1386,18 @@ namespace GameMenuBar {
             UIWidgets::Tooltip("Allows you to walk through walls");
             UIWidgets::PaddedEnhancementCheckbox("Climb Everything", "gClimbEverything", true, false);
             UIWidgets::Tooltip("Makes every surface in the game climbable");
+            UIWidgets::PaddedEnhancementCheckbox("Hookshot Everything", "gHookshotEverything", true, false);
+            UIWidgets::Tooltip("Makes every surface in the game hookshot-able");
             UIWidgets::PaddedEnhancementCheckbox("Moon Jump on L", "gMoonJumpOnL", true, false);
             UIWidgets::Tooltip("Holding L makes you float into the air");
             UIWidgets::PaddedEnhancementCheckbox("Super Tunic", "gSuperTunic", true, false);
             UIWidgets::Tooltip("Makes every tunic have the effects of every other tunic");
             UIWidgets::PaddedEnhancementCheckbox("Easy ISG", "gEzISG", true, false);
             UIWidgets::Tooltip("Passive Infinite Sword Glitch\nIt makes your sword's swing effect and hitbox stay active indefinitely");
+            UIWidgets::PaddedEnhancementCheckbox("Timeless Equipment", "gTimelessEquipment", true, false);
+            UIWidgets::Tooltip("Allows any item to be equipped, regardless of age\nAlso allows Child to use Adult strength upgrades");
+            UIWidgets::PaddedEnhancementCheckbox("Easy Frame Advancing", "gCheatEasyPauseBufferEnabled", true, false);
+            UIWidgets::Tooltip("Continue holding START button when unpausing to only advance a single frame and then re-pause");
             UIWidgets::PaddedEnhancementCheckbox("Unrestricted Items", "gNoRestrictItems", true, false);
             UIWidgets::Tooltip("Allows you to use any item at any location");
             UIWidgets::PaddedEnhancementCheckbox("Freeze Time", "gFreezeTime", true, false);
@@ -1268,6 +1477,11 @@ namespace GameMenuBar {
                 }
             }
 
+            if (ImGui::Button("Change Age")) {
+                CVar_SetS32("gSwitchAge", 1);
+            }
+            UIWidgets::Tooltip("Switches links age and reloads the area.");   
+
             ImGui::EndMenu();
         }
 
@@ -1286,21 +1500,20 @@ namespace GameMenuBar {
                     "File N.1",
                     "File N.2",
                     "File N.3",
+                    "Zelda Map Select (require OoT Debug Mode)",
                     "File select",
-                    "Zelda Map Select (require OoT Debug Mode)"
                 };
                 ImGui::Text("Loading :");
                 UIWidgets::EnhancementCombobox("gSaveFileID", FastFileSelect, 5, 0);
-                UIWidgets::PaddedEnhancementCheckbox("Create a new save if none", "gCreateNewSave", true, false);
-                UIWidgets::Tooltip("Enable the creation of a new save file if none exist in the File number selected\nNo file name will be assigned please do in Save editor once you see the first text else your save file name will be named \"00000000\"\nIf disabled you will fall back in File select menu");
             };
+            UIWidgets::PaddedEnhancementCheckbox("Better Debug Warp Screen", "gBetterDebugWarpScreen", true, false);
+            UIWidgets::Tooltip("Optimized debug warp screen, with the added ability to chose entrances and time of day");
             UIWidgets::PaddedSeparator();
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 6.0f));
             ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0,0));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.22f, 0.38f, 0.56f, 1.0f));
-            static ImVec2 buttonSize(160.0f, 0.0f);
-            if (ImGui::Button(GetWindowButtonText("Stats", CVar_GetS32("gStatsEnabled", 0)).c_str(), buttonSize))
+            if (ImGui::Button(GetWindowButtonText("Stats", CVar_GetS32("gStatsEnabled", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
             {
                 bool currentValue = CVar_GetS32("gStatsEnabled", 0);
                 CVar_SetS32("gStatsEnabled", !currentValue);
@@ -1309,7 +1522,7 @@ namespace GameMenuBar {
             }
             UIWidgets::Tooltip("Shows the stats window, with your FPS and frametimes, and the OS you're playing on");
             UIWidgets::Spacer(0);
-            if (ImGui::Button(GetWindowButtonText("Console", CVar_GetS32("gConsoleEnabled", 0)).c_str(), buttonSize))
+            if (ImGui::Button(GetWindowButtonText("Console", CVar_GetS32("gConsoleEnabled", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
             {
                 bool currentValue = CVar_GetS32("gConsoleEnabled", 0);
                 CVar_SetS32("gConsoleEnabled", !currentValue);
@@ -1318,7 +1531,7 @@ namespace GameMenuBar {
             }
             UIWidgets::Tooltip("Enables the console window, allowing you to input commands, type help for some examples");
             UIWidgets::Spacer(0);
-            if (ImGui::Button(GetWindowButtonText("Save Editor", CVar_GetS32("gSaveEditorEnabled", 0)).c_str(), buttonSize))
+            if (ImGui::Button(GetWindowButtonText("Save Editor", CVar_GetS32("gSaveEditorEnabled", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
             {
                 bool currentValue = CVar_GetS32("gSaveEditorEnabled", 0);
                 CVar_SetS32("gSaveEditorEnabled", !currentValue);
@@ -1326,7 +1539,7 @@ namespace GameMenuBar {
                 SohImGui::EnableWindow("Save Editor", CVar_GetS32("gSaveEditorEnabled", 0));
             }
             UIWidgets::Spacer(0);
-            if (ImGui::Button(GetWindowButtonText("Collision Viewer", CVar_GetS32("gCollisionViewerEnabled", 0)).c_str(), buttonSize))
+            if (ImGui::Button(GetWindowButtonText("Collision Viewer", CVar_GetS32("gCollisionViewerEnabled", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
             {
                 bool currentValue = CVar_GetS32("gCollisionViewerEnabled", 0);
                 CVar_SetS32("gCollisionViewerEnabled", !currentValue);
@@ -1334,7 +1547,7 @@ namespace GameMenuBar {
                 SohImGui::EnableWindow("Collision Viewer", CVar_GetS32("gCollisionViewerEnabled", 0));
             }
             UIWidgets::Spacer(0);
-            if (ImGui::Button(GetWindowButtonText("Actor Viewer", CVar_GetS32("gActorViewerEnabled", 0)).c_str(), buttonSize))
+            if (ImGui::Button(GetWindowButtonText("Actor Viewer", CVar_GetS32("gActorViewerEnabled", 0)).c_str(), ImVec2(-1.0f, 0.0f)))
             {
                 bool currentValue = CVar_GetS32("gActorViewerEnabled", 0);
                 CVar_SetS32("gActorViewerEnabled", !currentValue);
@@ -1355,7 +1568,11 @@ namespace GameMenuBar {
             ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0, 0));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.22f, 0.38f, 0.56f, 1.0f));
+        #ifdef __WIIU__
+            static ImVec2 buttonSize(200.0f * 2.0f, 0.0f);
+        #else
             static ImVec2 buttonSize(200.0f, 0.0f);
+        #endif
             if (ImGui::Button(GetWindowButtonText("Randomizer Settings", CVar_GetS32("gRandomizerSettingsEnabled", 0)).c_str(), buttonSize))
             {
                 bool currentValue = CVar_GetS32("gRandomizerSettingsEnabled", 0);
@@ -1381,6 +1598,16 @@ namespace GameMenuBar {
             }
             ImGui::PopStyleVar(3);
             ImGui::PopStyleColor(1);
+#ifdef ENABLE_CROWD_CONTROL
+            UIWidgets::PaddedEnhancementCheckbox("Crowd Control", "gCrowdControl", true, false);
+            UIWidgets::Tooltip("Requires a full SoH restart to take effect!\n\nEnables CrowdControl. Will attempt to connect to the local Crowd Control server.");
+
+            if (CVar_GetS32("gCrowdControl", 0)) {
+                CrowdControl::Instance->Enable();
+            } else {
+                CrowdControl::Instance->Disable();
+            }
+#endif
 
             UIWidgets::PaddedSeparator();
 
@@ -1394,7 +1621,24 @@ namespace GameMenuBar {
                 UIWidgets::Tooltip(
                     "When obtaining rupees, randomize what the rupee is called in the textbox."
                 );
-                UIWidgets::PaddedEnhancementCheckbox("Key Colors Match Dungeon", "gRandoMatchKeyColors", true, false);
+
+                // Only disable the key colors checkbox when none of the keysanity settings are set to "Any Dungeon", "Overworld" or "Anywhere"
+                bool disableKeyColors = true;
+
+                if (OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_KEYSANITY) > 2 ||
+                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_GERUDO_KEYS) > 0 ||
+                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOSS_KEYSANITY) > 2 ||
+                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_GANONS_BOSS_KEY) > 2 || 
+                    !gSaveContext.n64ddFlag) {
+                    disableKeyColors = false;
+                }
+
+                const char* disableKeyColorsText = 
+                    "This setting is disabled because a savefile is loaded without any key\n"
+                    "shuffle settings set to \"Any Dungeon\", \"Overworld\" or \"Anywhere\"";
+
+                UIWidgets::PaddedEnhancementCheckbox("Key Colors Match Dungeon", "gRandoMatchKeyColors", true, false,
+                                                     disableKeyColors, disableKeyColorsText);
                 UIWidgets::Tooltip(
                     "Matches the color of small keys and boss keys to the dungeon they belong to. "
                     "This helps identify keys from afar and adds a little bit of flair.\n\nThis only "

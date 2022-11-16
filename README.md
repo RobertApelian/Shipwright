@@ -4,7 +4,7 @@ A PC port of OoT allowing you to enjoy the game with modern controls, widescreen
 
 The Ship does not include assets and as such requires a prior copy of the game to play.
 
-## Quick Start
+## Quick Start (Windows)
 
 1) Download The Ship of Harkinian from [Discord](https://discord.com/invite/BtBmd55HVH).
 2) Requires a supported copy of the game (See supported games below).
@@ -23,6 +23,13 @@ sha1: cee6bc3c2a634b41728f2af8da54d9bf8cc14099
 > May lead to crashes and instability
 ```
 sha1: 0227d7c0074f2d0ac935631990da8ec5914597b4
+```
+#### Ocarina of Time Debug PAL GC MQ (Dungeons will be Master Quest)
+```
+Build team: `zelda@srd022j`
+Build date: `03-02-21 00:16:31` (year-month-day)
+sha1: 079b855b943d6ad8bd1eb026c0ed169ecbdac7da (Produced by decomp)
+sha1: 50bebedad9e0f10746a52b07239e47fa6c284d03 (Alternate)
 ```
 
 Congratulations, you are now sailing with the Ship of Harkinian! Have fun!
@@ -109,12 +116,19 @@ Official Discord: https://discord.com/invite/BtBmd55HVH
 
 Refer to the [building instructions](BUILDING.md) to compile SoH.
 
+## Getting CI to work on your fork
+
+The CI works via [Github Actions](https://github.com/features/actions) where we mostly make use of machines hosted by Github; except for the very first step of the CI process called "Extract assets". This steps extracts assets from the game file and generates an "assets" folder in `soh/`.
+
+To get this step working on your fork, you'll need to add a machine to your own repository as a self-hosted runner via "Settings > Actions > Runners" in your repository settings. If you're on macOS or Linux take a look at `macports-deps.txt` or `apt-deps.txt` to see the dependencies expected to be on your machine. For Windows, deps get installed as part of the CI process. To setup your runner as a service read the docs [here](https://docs.github.com/en/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service?platform=linux).
+
+
 ## Troubleshooting The Exporter
 - Confirm that you have an `/assets` folder filled with XMLs in the same directory as OTRGui.exe
 - Confirm that `zapd.exe` exists in the `/assets/extractor` folder
 
 ## Nightly Builds
-Nightly builds of Ship of Harkinian are available [here](https://builds.shipofharkinian.com/)
+Nightly builds of Ship of Harkinian are available here: [Windows](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-windows.zip), [macOS](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-mac.zip), [Linux](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-linux.zip), [Switch](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-switch.zip), [Wii U](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-wiiu.zip)
 
 
 ## The Harbour Masters Are...
@@ -154,7 +168,8 @@ Nightly builds of Ship of Harkinian are available [here](https://builds.shipofha
 	
 ## Video Credits
     Kenix | Producer / Writer
-	rainbow_fash | Executive Producer
+    briaguya | Writer
+    rainbow_fash | Executive Producer
     ReveriePass | Editor
     MicTheMicrophone | Gwonam / The King
     Amphibibro | Link

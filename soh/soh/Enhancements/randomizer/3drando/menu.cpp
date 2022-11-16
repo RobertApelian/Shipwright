@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 #include <ctime>
 
 #include "cosmetics.hpp"
@@ -186,7 +187,7 @@ void MenuUpdate(uint32_t kDown, bool updatedByHeld) {
         kDown = 0;
     }
 
-    if (currentMenu->mode != GENERATE_MODE) {
+    if (currentMenu->mode != POST_GENERATE) {
 
         // New Random Seed
         if (kDown & KEY_Y) {
@@ -541,8 +542,18 @@ std::string GenerateRandomizer(std::unordered_map<RandomizerSettingKey, uint8_t>
         }
         Settings::Keysanity.RestoreDelayedOption();
     }
-
-    return "./Randomizer/" + Settings::seed + ".json";
+    std::ostringstream fileNameStream;
+    for (int i = 0; i < Settings::hashIconIndexes.size(); i++) {
+        if (i) {
+            fileNameStream << '-';
+        }
+        if (Settings::hashIconIndexes[i] < 10) {
+            fileNameStream << '0';
+        }
+        fileNameStream << std::to_string(Settings::hashIconIndexes[i]);
+    }
+    std::string fileName = fileNameStream.str();
+    return "./Randomizer/" + fileName + ".json";
 }
 
 std::string GetInput(const char* hintText) {

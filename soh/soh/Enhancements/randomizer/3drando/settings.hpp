@@ -81,8 +81,8 @@ typedef enum {
 } LACSConditionSetting;
 
 typedef enum {
-    AGE_ADULT,
     AGE_CHILD,
+    AGE_ADULT,
     AGE_RANDOM,
 } AgeSetting;
 
@@ -201,6 +201,13 @@ typedef enum {
     GERUDOKEYS_OVERWORLD,
     GERUDOKEYS_ANYWHERE,
 } GerudoKeysSetting;
+
+typedef enum {
+    KEYRINGS_OFF,
+    KEYRINGS_RANDOM,
+    KEYRINGS_RANDOM_COUNT,
+    KEYRINGS_SELECTION,
+} KeyRingsSetting;
 
 typedef enum {
     BOSSKEYSANITY_START_WITH,
@@ -458,6 +465,8 @@ typedef struct {
     uint8_t ingameSpoilers;
     uint8_t menuOpeningButton;
     uint8_t randomTrapDmg;
+    uint8_t blueFireArrows;
+    uint8_t sunLightArrows;
 
     uint8_t faroresWindAnywhere;
     uint8_t stickAsAdult;
@@ -863,6 +872,7 @@ void UpdateSettings(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettin
   extern std::string seed;
   extern std::string version;
   extern std::array<uint8_t, 5> hashIconIndexes;
+  extern std::string hash;
 
   extern bool skipChildZelda;
 
@@ -922,6 +932,7 @@ void UpdateSettings(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettin
   extern Option LACSDungeonCount;
   extern Option LACSTokenCount;
   extern Option KeyRings;
+  extern Option KeyRingsRandomCount;
   extern Option RingFortress;
   extern Option RingForest;
   extern Option RingFire;
@@ -960,6 +971,8 @@ void UpdateSettings(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettin
   extern Option IngameSpoilers;
   extern Option MenuOpeningButton;
   extern Option RandomTrapDmg;
+  extern Option BlueFireArrows;
+  extern Option SunlightArrows;
   extern bool HasNightStart;
 
   extern Option FaroresWindAnywhere;

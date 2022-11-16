@@ -114,6 +114,7 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
     u8 temp;
     s16 phi_v0;
     char* filename = Save_GetSaveMetaInfo(this->buttonIndex)->playerName;
+    Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -133,8 +134,9 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
     for (phi_t1 = 0; phi_t1 < 2; phi_t1++, phi_s0 += 4) {
 
         if (CVar_GetS32("gHudColors", 1) == 2) {
-            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetS32("gCCFileChoosePrimR", 100), CVar_GetS32("gCCFileChoosePrimG", 150),
-                            CVar_GetS32("gCCFileChoosePrimB", 255), 255);
+            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetRGB("gCCFileChoosePrim", Background_Color).r,
+                            CVar_GetRGB("gCCFileChoosePrim", Background_Color).g,
+                            CVar_GetRGB("gCCFileChoosePrim", Background_Color).b, 255);
         } else {
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->windowColor[0], this->windowColor[1], this->windowColor[2],
                             255);
@@ -202,8 +204,9 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
                       ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
 
     if (CVar_GetS32("gHudColors", 1) == 2) {
-        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetS32("gCCFileChoosePrimR", 100),
-                        CVar_GetS32("gCCFileChoosePrimG", 150), CVar_GetS32("gCCFileChoosePrimB", 255),
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetRGB("gCCFileChoosePrim", Background_Color).r,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).g,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).b,
                         this->nameEntryBoxAlpha);
     } else {
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->windowColor[0], this->windowColor[1], this->windowColor[2],
@@ -279,6 +282,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
     u16 dayTime;
     s16 validName;
     char* filename = Save_GetSaveMetaInfo(this->buttonIndex)->playerName;
+    Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -332,8 +336,9 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
                       PRIMITIVE, 0);
 
     if (CVar_GetS32("gHudColors", 1) == 2) {
-        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetS32("gCCFileChoosePrimR", 100),
-                        CVar_GetS32("gCCFileChoosePrimG", 150), CVar_GetS32("gCCFileChoosePrimB", 255),
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetRGB("gCCFileChoosePrim", Background_Color).r,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).g,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).b,
                         this->highlightColor[3]);
     } else {
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->highlightColor[0], this->highlightColor[1],
@@ -385,7 +390,12 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
 
                 if (this->newFileNameCharCount < 0) {
                     this->newFileNameCharCount = 0;
-                    this->configMode = CM_NAME_ENTRY_TO_MAIN;
+                    if (this->prevConfigMode == CM_QUEST_MENU) {
+                        this->configMode = CM_NAME_ENTRY_TO_QUEST_MENU;
+                    } else {
+                        this->configMode = CM_NAME_ENTRY_TO_MAIN;
+                    }
+                    this->prevConfigMode = CM_NAME_ENTRY;
                     CVar_SetS32("gOnFileSelectNameEntry", 0);
                 } else {
                     for (i = this->newFileNameCharCount; i < 7; i++) {
@@ -459,6 +469,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
                             dayTime = ((void)0, gSaveContext.dayTime);
                             Sram_InitSave(this);
                             gSaveContext.dayTime = dayTime;
+                            this->prevConfigMode = CM_MAIN_MENU;
                             this->configMode = CM_NAME_ENTRY_TO_MAIN;
                             CVar_SetS32("gOnFileSelectNameEntry", 0);
                             CVar_SetS32("gNewFileDropped", 0);
@@ -533,7 +544,7 @@ void FileChoose_UpdateKeyboardCursor(GameState* thisx) {
     FileChooseContext* this = (FileChooseContext*)thisx;
     Input* input = &this->state.input[0];
     s16 prevKbdX;
-    bool dpad = CVar_GetS32("gDpadPauseName", 0);
+    bool dpad = CVar_GetS32("gDpadText", 0);
 
     this->kbdButton = 99;
 
@@ -678,10 +689,11 @@ static u8 sSelectedSetting;
 void FileChoose_UpdateOptionsMenu(GameState* thisx) {
     FileChooseContext* this = (FileChooseContext*)thisx;
     Input* input = &this->state.input[0];
-    bool dpad = CVar_GetS32("gDpadPauseName", 0);
+    bool dpad = CVar_GetS32("gDpadText", 0);
 
     if (CHECK_BTN_ALL(input->press.button, BTN_B)) {
         Audio_PlaySoundGeneral(NA_SE_SY_FSEL_DECIDE_L, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+        this->prevConfigMode = this->configMode;
         this->configMode = CM_OPTIONS_TO_MAIN;
         osSyncPrintf("ＳＡＶＥ");
         Save_SaveGlobal();

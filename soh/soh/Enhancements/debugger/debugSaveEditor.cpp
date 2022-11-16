@@ -1,14 +1,15 @@
 #include "debugSaveEditor.h"
 #include "../../util.h"
 #include "../../OTRGlobals.h"
-#include <libultraship/ImGuiImpl.h>
+#include <ImGuiImpl.h>
 #include "../../UIWidgets.hpp"
 
+#include <spdlog/fmt/fmt.h>
 #include <array>
 #include <bit>
 #include <map>
 #include <string>
-#include <libultraship/Cvar.h>
+#include <Cvar.h>
 
 extern "C" {
 #include <z64.h>
@@ -16,7 +17,7 @@ extern "C" {
 #include "functions.h"
 #include "macros.h"
 #include "soh/Enhancements/randomizer/adult_trade_shuffle.h"
-extern GlobalContext* gGlobalCtx;
+extern PlayState* gPlayState;
 
 #include "textures/icon_item_static/icon_item_static.h"
 #include "textures/icon_item_24_static/icon_item_24_static.h"
@@ -133,6 +134,7 @@ std::map<uint32_t, ItemMapEntry> itemMapping = {
     ITEM_MAP_ENTRY(ITEM_DUNGEON_MAP),
     ITEM_MAP_ENTRY(ITEM_KEY_SMALL),
     ITEM_MAP_ENTRY(ITEM_HEART_CONTAINER),
+    ITEM_MAP_ENTRY(ITEM_HEART_PIECE),
     ITEM_MAP_ENTRY(ITEM_MAGIC_SMALL),
     ITEM_MAP_ENTRY(ITEM_MAGIC_LARGE)
 };
@@ -514,6 +516,75 @@ void DrawInfoTab() {
     
     if (ImGui::TreeNode("Minigames")) {
         for (int i = 0; i < 7; i++) {
+            if(i == 2 && ImGui::TreeNode("Fishing") ){ //fishing has a few more flags to it
+                u8 fishSize = gSaveContext.highScores[i] & 0x7F;
+                if(ImGui::InputScalar("Child Size Record",ImGuiDataType_U8,&fishSize)){
+                    gSaveContext.highScores[i]&=~0x7F;
+                    gSaveContext.highScores[i]|=fishSize & 0x7F;
+                }
+                char fishMsg[64];
+                std::sprintf(fishMsg,"Weight: %2.0f lbs",((SQ(fishSize)*.0036)+.5));
+                UIWidgets::InsertHelpHoverText(fishMsg);
+                bool FishBool = gSaveContext.highScores[i]&0x80;
+                if (ImGui::Checkbox("Cheated as Child", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x80;
+                        gSaveContext.highScores[i] |= (0x80 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("Used the Sinking lure to catch it.");
+                fishSize=(gSaveContext.highScores[i] & 0x7F000000)>>0x18;
+                if(ImGui::InputScalar("Adult Size Record",ImGuiDataType_U8,&fishSize)){
+                    gSaveContext.highScores[i]&=~0x7F000000;
+                    gSaveContext.highScores[i]|=(fishSize & 0x7F) << 0x18;
+                }
+                std::sprintf(fishMsg,"Weight: %2.0f lbs",((SQ(fishSize)*.0036)+.5));
+                UIWidgets::InsertHelpHoverText(fishMsg);
+                FishBool = gSaveContext.highScores[i] & 0x80000000;
+                if (ImGui::Checkbox("Cheated as Adult", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x80000000;
+                        gSaveContext.highScores[i] |= (0x80000000 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("Used the Sinking lure to catch it.");
+                FishBool = gSaveContext.highScores[i]&0x100;
+                if (ImGui::Checkbox("Played as Child", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x100;
+                        gSaveContext.highScores[i] |= (0x100 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("Played at least one game as a child");
+                FishBool = gSaveContext.highScores[i]&0x200;
+                if (ImGui::Checkbox("Played as Adult", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x200;
+                        gSaveContext.highScores[i] |= (0x200 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("Played at least one game as an adult");
+                FishBool = gSaveContext.highScores[i]&0x400;
+                if (ImGui::Checkbox("Got Prize as Child", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x400;
+                        gSaveContext.highScores[i] |= (0x400 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("Got the prize item (Heart Piece, unless rando.)\nunlocks Sinking Lure for Child Link.");
+                FishBool = gSaveContext.highScores[i]&0x800;
+                if (ImGui::Checkbox("Got Prize as Adult", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x800;
+                        gSaveContext.highScores[i] |= (0x800 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("Got the prize item (Golden Scale, unless rando.)\nUnlocks Sinking Lure for Adult Link.");
+                FishBool = gSaveContext.highScores[i] & 0x1000;
+                if (ImGui::Checkbox("Stole Owner's Hat", &FishBool)) {
+                        gSaveContext.highScores[i] &= ~0x1000;
+                        gSaveContext.highScores[i] |= (0x1000 * FishBool);
+                }
+                UIWidgets::InsertHelpHoverText("The owner's now visibly bald when Adult Link.");
+                fishSize=(gSaveContext.highScores[i] & 0xFF0000)>>16;
+                if(ImGui::InputScalar("Times Played",ImGuiDataType_U8,&fishSize)){
+                    gSaveContext.highScores[i]&=~0xFF0000;
+                    gSaveContext.highScores[i]|=(fishSize) << 16;
+                }
+                UIWidgets::InsertHelpHoverText("Determines weather and school size during dawn/dusk.");
+                
+                ImGui::TreePop();
+                continue;
+            }
+            
             if (i == 5) { //HS_UNK_05 is unused
                 continue;
             }
@@ -543,7 +614,7 @@ void DrawBGSItemFlag(uint8_t itemID) {
             }
         } else {
             gSaveContext.adultTradeItems &= ~(1 << tradeIndex);
-            Inventory_ReplaceItem(gGlobalCtx, itemID, Randomizer_GetNextAdultTradeItem());
+            Inventory_ReplaceItem(gPlayState, itemID, Randomizer_GetNextAdultTradeItem());
         }
     }
 }
@@ -699,12 +770,14 @@ void DrawFlagArray32(const std::string& name, uint32_t& flags) {
     ImGui::PopID();
 }
 
-void DrawFlagArray16(const std::string& name, uint16_t& flags) {
-    ImGui::PushID(name.c_str());
+void DrawFlagArray16(const FlagTable& flagTable, uint16_t row, uint16_t& flags) {
+    ImGui::PushID((std::to_string(row) + flagTable.name).c_str());
     for (int32_t flagIndex = 15; flagIndex >= 0; flagIndex--) {
         ImGui::SameLine();
         ImGui::PushID(flagIndex);
+        bool hasDescription = !!flagTable.flagDescriptions.contains(row * 16 + flagIndex);
         uint32_t bitMask = 1 << flagIndex;
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, hasDescription ? ImVec4(0.16f, 0.29f, 0.48f, 0.54f) : ImVec4(0.16f, 0.29f, 0.48f, 0.24f));
         bool flag = (flags & bitMask) != 0;
         if (ImGui::Checkbox("##check", &flag)) {
             if (flag) {
@@ -713,6 +786,12 @@ void DrawFlagArray16(const std::string& name, uint16_t& flags) {
                 flags &= ~bitMask;
             }
         }
+        ImGui::PopStyleColor();
+        if (ImGui::IsItemHovered() && hasDescription) {
+            ImGui::BeginTooltip();
+            ImGui::Text("%s", UIWidgets::WrappedText(flagTable.flagDescriptions.at(row * 16 + flagIndex), 60));
+            ImGui::EndTooltip();
+        }
         ImGui::PopID();
     }
     ImGui::PopID();
@@ -720,8 +799,8 @@ void DrawFlagArray16(const std::string& name, uint16_t& flags) {
 
 void DrawFlagsTab() {
     if (ImGui::TreeNode("Current Scene")) {
-        if (gGlobalCtx != nullptr) {
-            ActorContext* act = &gGlobalCtx->actorCtx;
+        if (gPlayState != nullptr) {
+            ActorContext* act = &gPlayState->actorCtx;
 
             DrawGroupWithBorder([&]() {
                 ImGui::Text("Switch");
@@ -776,20 +855,29 @@ void DrawFlagsTab() {
             ImGui::BeginGroup();
 
             if (ImGui::Button("Reload Flags")) {
-                act->flags.swch = gSaveContext.sceneFlags[gGlobalCtx->sceneNum].swch;
-                act->flags.clear = gSaveContext.sceneFlags[gGlobalCtx->sceneNum].clear;
-                act->flags.collect = gSaveContext.sceneFlags[gGlobalCtx->sceneNum].collect;
-                act->flags.chest = gSaveContext.sceneFlags[gGlobalCtx->sceneNum].chest;
+                act->flags.swch = gSaveContext.sceneFlags[gPlayState->sceneNum].swch;
+                act->flags.clear = gSaveContext.sceneFlags[gPlayState->sceneNum].clear;
+                act->flags.collect = gSaveContext.sceneFlags[gPlayState->sceneNum].collect;
+                act->flags.chest = gSaveContext.sceneFlags[gPlayState->sceneNum].chest;
             }
             UIWidgets::SetLastItemHoverText("Load flags from saved scene flags. Normally happens on scene load");
 
             if (ImGui::Button("Save Flags")) {
-                gSaveContext.sceneFlags[gGlobalCtx->sceneNum].swch = act->flags.swch;
-                gSaveContext.sceneFlags[gGlobalCtx->sceneNum].clear = act->flags.clear;
-                gSaveContext.sceneFlags[gGlobalCtx->sceneNum].collect = act->flags.collect;
-                gSaveContext.sceneFlags[gGlobalCtx->sceneNum].chest = act->flags.chest;
+                gSaveContext.sceneFlags[gPlayState->sceneNum].swch = act->flags.swch;
+                gSaveContext.sceneFlags[gPlayState->sceneNum].clear = act->flags.clear;
+                gSaveContext.sceneFlags[gPlayState->sceneNum].collect = act->flags.collect;
+                gSaveContext.sceneFlags[gPlayState->sceneNum].chest = act->flags.chest;
             }
             UIWidgets::SetLastItemHoverText("Save current scene flags. Normally happens on scene exit");
+            
+            if (ImGui::Button("Clear Flags")) {
+                act->flags.swch = 0;
+                act->flags.clear = 0;
+                act->flags.collect = 0;
+                act->flags.chest = 0;
+            }
+            UIWidgets::SetLastItemHoverText("Clear current scene flags. Reload scene to see changes");
+
 
             ImGui::EndGroup();
         } else {
@@ -814,10 +902,10 @@ void DrawFlagsTab() {
         }
 
         // Don't show current scene button if there is no current scene
-        if (gGlobalCtx != nullptr) {
+        if (gPlayState != nullptr) {
             ImGui::SameLine();
             if (ImGui::Button("Current")) {
-                selectedSceneFlagMap = gGlobalCtx->sceneNum;
+                selectedSceneFlagMap = gPlayState->sceneNum;
             }
             UIWidgets::SetLastItemHoverText("Open flags for current scene");
         }
@@ -927,122 +1015,37 @@ void DrawFlagsTab() {
         }
     });
 
-    if (ImGui::TreeNode("Event Check Inf Flags")) {
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("0");
-            UIWidgets::InsertHelpHoverText("Mostly Kokiri Forest related");
-            DrawFlagArray16("eci0", gSaveContext.eventChkInf[0]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("1");
-            UIWidgets::InsertHelpHoverText("Mostly Lon Lon Ranch related");
-            DrawFlagArray16("eci1", gSaveContext.eventChkInf[1]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("2");
-            UIWidgets::InsertHelpHoverText("Dodongo Related?");
-            DrawFlagArray16("eci2", gSaveContext.eventChkInf[2]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("3");
-            UIWidgets::InsertHelpHoverText("Mostly Zora related");
-            DrawFlagArray16("eci3", gSaveContext.eventChkInf[3]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("4");
-            UIWidgets::InsertHelpHoverText("Random");
-            DrawFlagArray16("eci4", gSaveContext.eventChkInf[4]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("5");
-            UIWidgets::InsertHelpHoverText("Mostly song learning related");
-            DrawFlagArray16("eci5", gSaveContext.eventChkInf[5]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("6");
-            UIWidgets::InsertHelpHoverText("Random");
-            DrawFlagArray16("eci6", gSaveContext.eventChkInf[6]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("7");
-            UIWidgets::InsertHelpHoverText("Boss Battle related");
-            DrawFlagArray16("eci7", gSaveContext.eventChkInf[7]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("8");
-            UIWidgets::InsertHelpHoverText("Mask related?");
-            DrawFlagArray16("eci8", gSaveContext.eventChkInf[8]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("9");
-            UIWidgets::InsertHelpHoverText("Mostly carpenter related");
-            DrawFlagArray16("eci9", gSaveContext.eventChkInf[9]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("A");
-            UIWidgets::InsertHelpHoverText("First-time overworld entrance cs related");
-            DrawFlagArray16("eci10", gSaveContext.eventChkInf[10]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("B");
-            UIWidgets::InsertHelpHoverText("First-time dungeon entrance cs/trial cs related");
-            DrawFlagArray16("eci11", gSaveContext.eventChkInf[11]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("C");
-            UIWidgets::InsertHelpHoverText("Random");
-            DrawFlagArray16("eci12", gSaveContext.eventChkInf[12]);
-        });
-
-        DrawGroupWithBorder([&]() {
-            ImGui::Text("D");
-            UIWidgets::InsertHelpHoverText("Frog songs/GS rewards");
-            DrawFlagArray16("eci13", gSaveContext.eventChkInf[13]);
-        });
-
-        ImGui::TreePop();
-    }
-    if (ImGui::TreeNode("Inf Table Flags")) {
-        for (int i = 0; i < 30; i++) {
-            std::string it_id = "it" + std::to_string(i);
-            DrawGroupWithBorder([&]() {
-                ImGui::Text("%2d", i);
-                DrawFlagArray16(it_id, gSaveContext.infTable[i]);
-            });
+    for (int i = 0; i < flagTables.size(); i++) {
+        const FlagTable& flagTable = flagTables[i];
+        if (flagTable.flagTableType == RANDOMIZER_INF && !gSaveContext.n64ddFlag) {
+            continue;
         }
-        ImGui::TreePop();
-    }
-    if (ImGui::TreeNode("Item Get Inf Flags")) {
-        for (int i = 0; i < 4; i++) {
-            std::string igi_id = "igi" + std::to_string(i);
-            DrawGroupWithBorder([&]() {
-                ImGui::Text("%d", i);
-                DrawFlagArray16(igi_id, gSaveContext.itemGetInf[i]);
-            });
+
+        if (ImGui::TreeNode(flagTable.name)) {
+            for (int j = 0; j < flagTable.size + 1; j++) {
+                DrawGroupWithBorder([&]() {
+                    ImGui::Text(fmt::format("{:<2x}", j).c_str());
+                    switch (flagTable.flagTableType) {
+                        case EVENT_CHECK_INF:
+                            DrawFlagArray16(flagTable, j, gSaveContext.eventChkInf[j]);
+                            break;
+                        case ITEM_GET_INF:
+                            DrawFlagArray16(flagTable, j, gSaveContext.itemGetInf[j]);
+                            break;
+                        case INF_TABLE:
+                            DrawFlagArray16(flagTable, j, gSaveContext.infTable[j]);
+                            break;
+                        case EVENT_INF:
+                            DrawFlagArray16(flagTable, j, gSaveContext.eventInf[j]);
+                            break;
+                        case RANDOMIZER_INF:
+                            DrawFlagArray16(flagTable, j, gSaveContext.randomizerInf[j]);
+                            break;
+                    }
+                });
+            }
+            ImGui::TreePop();
         }
-        ImGui::TreePop();
-    }
-    if (ImGui::TreeNode("Event Inf Flags")) {
-        for (int i = 0; i < 4; i++) {
-            std::string ei_id = "ei" + std::to_string(i);
-            DrawGroupWithBorder([&]() {
-                ImGui::Text("%d", i);
-                DrawFlagArray16(ei_id, gSaveContext.eventInf[i]);
-            });
-        }
-        ImGui::TreePop();
     }
 }
 
@@ -1201,11 +1204,19 @@ void DrawEquipmentTab() {
     DrawUpgradeIcon("Strength", UPG_STRENGTH, strengthValues);
 
     // There is no icon for child wallet, so default to a text list
-    const std::vector<std::string> walletNames = {
+    // this was const, but I needed to append to it depending in rando settings.
+    std::vector<std::string> walletNamesImpl = {
         "Child (99)",
         "Adult (200)",
         "Giant (500)",
     };
+    // only display Tycoon wallet if you're in a save file that would allow it.
+    if (gSaveContext.n64ddFlag && OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHOPSANITY) > 1) {
+        const std::string walletName = "Tycoon (999)";
+        walletNamesImpl.push_back(walletName);
+    }
+    // copy it to const value for display in ImGui.
+    const std::vector<std::string> walletNames = walletNamesImpl;
     DrawUpgrade("Wallet", UPG_WALLET, walletNames);
 
     const std::vector<std::string> stickNames = {
@@ -1361,7 +1372,9 @@ void DrawQuestStatusTab() {
             float lineHeight = ImGui::GetTextLineHeightWithSpacing();
             ImGui::Image(SohImGui::GetTextureByName(itemMapping[ITEM_KEY_SMALL].name), ImVec2(lineHeight, lineHeight));
             ImGui::SameLine();
-            ImGui::InputScalar("##Keys", ImGuiDataType_S8, gSaveContext.inventory.dungeonKeys + dungeonItemsScene);
+            if (ImGui::InputScalar("##Keys", ImGuiDataType_S8, gSaveContext.inventory.dungeonKeys + dungeonItemsScene)) {
+                gSaveContext.sohStats.dungeonKeys[dungeonItemsScene] = gSaveContext.inventory.dungeonKeys[dungeonItemsScene];
+            };
         } else {
             // dungeonItems is size 20 but dungeonKeys is size 19, so there are no keys for the last scene (Barinade's Lair)
             ImGui::Text("Barinade's Lair does not have small keys");
@@ -1372,8 +1385,8 @@ void DrawQuestStatusTab() {
 }
 
 void DrawPlayerTab() {
-    if (gGlobalCtx != nullptr) {
-        Player* player = GET_PLAYER(gGlobalCtx);
+    if (gPlayState != nullptr) {
+        Player* player = GET_PLAYER(gPlayState);
         const char* curSword;
         const char* curShield;
         const char* curTunic;
@@ -1490,12 +1503,12 @@ void DrawPlayerTab() {
         ImGui::InputScalar("Gravity", ImGuiDataType_Float, &player->actor.gravity);
         UIWidgets::InsertHelpHoverText("Rate at which Link falls. Default -4.0f");
 
-        if (ImGui::BeginCombo("Link Age on Load", gGlobalCtx->linkAgeOnLoad == 0 ? "Adult" : "Child")) {
+        if (ImGui::BeginCombo("Link Age on Load", gPlayState->linkAgeOnLoad == 0 ? "Adult" : "Child")) {
             if (ImGui::Selectable("Adult")) {
-                gGlobalCtx->linkAgeOnLoad = 0;
+                gPlayState->linkAgeOnLoad = 0;
             }
             if (ImGui::Selectable("Child")) {
-                gGlobalCtx->linkAgeOnLoad = 1;
+                gPlayState->linkAgeOnLoad = 1;
             }
             ImGui::EndCombo();
         }
@@ -1620,6 +1633,27 @@ void DrawPlayerTab() {
                 ImGui::SameLine();
                 ImGui::InputScalar("D-pad Right", ImGuiDataType_U8, &gSaveContext.equips.buttonItems[7], &one, NULL);
             }
+        });
+
+        ImGui::Text("Player State");
+        uint8_t bit[32] = {};
+        uint32_t flags[3] = { player->stateFlags1, player->stateFlags2, player->stateFlags3 };
+
+        for (int j = 0; j <= 2; j++) {
+            DrawGroupWithBorder([&]() {
+                ImGui::Text("State Flags %d", j + 1);
+                for (int i = 0; i <= 31; i++) {
+                    bit[i] = ((flags[j] >> i) & 1);
+                    if (bit[i] != 0) {
+                        ImGui::Text("Flag %d", i);
+                    }
+                }
+            });
+            ImGui::SameLine();
+        }
+        DrawGroupWithBorder([&]() {
+            ImGui::Text("Sword");
+            ImGui::Text("  %d", player->swordState);
         });
 
     } else {

@@ -1,5 +1,5 @@
-#include "../../libultraship/ImGuiImpl.h"
-#include "../../libultraship/Cvar.h"
+#include <ImGuiImpl.h>
+#include <Cvar.h>
 
 #include "chaos_commands.h"
 #include "chaos_commands_macros.h"
@@ -59,8 +59,8 @@ static std::map<uint8_t, CommandCreator> kCommands {
 			CR_ONE_SHOT({ toggle_age(); }))),
 
 	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
-	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gGlobalCtx)->actor), 2.f, 2.f, 2.f); }),
-	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gGlobalCtx)->actor), 0.5f, 0.5f, 0.5f); }),
+	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 2.f, 2.f, 2.f); }),
+	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.5f, 0.5f, 0.5f); }),
 
 	CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
 	CMD_TIMED_BOOL_CVAR(0x07, "gChaosNoHud"),
