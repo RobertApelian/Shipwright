@@ -20,6 +20,7 @@ using namespace SFX;
 
 namespace Settings {
   std::string seed;
+  std::string hash;
   std::string version = RANDOMIZER_VERSION "-" COMMIT_NUMBER;
   std::array<uint8_t, 5> hashIconIndexes;
 
@@ -156,7 +157,7 @@ namespace Settings {
   Option ShuffleRewards         = Option::U8  ("Shuffle Dungeon Rewards",{"End of dungeons", "Any dungeon", "Overworld", "Anywhere"},       {shuffleRewardsEndOfDungeon, shuffleRewardsAnyDungeon, shuffleRewardsOverworld, shuffleRewardsAnywhere});
   Option LinksPocketItem        = Option::U8  ("Link's Pocket",          {"Dungeon Reward", "Advancement", "Anything", "Nothing"},          {linksPocketDungeonReward, linksPocketAdvancement, linksPocketAnything, linksPocketNothing});
   Option ShuffleSongs           = Option::U8  ("Shuffle Songs",          {"Song locations", "Dungeon rewards", "Anywhere"},                 {songsSongLocations, songsDungeonRewards, songsAllLocations});
-  Option Shopsanity             = Option::U8  ("Shopsanity",             {MultiVecOpts({{"Off"}, NumOpts(0, 4), {"Random"}})},              {shopsOff, shopsZero, shopsOne, shopsTwo, shopsThree, shopsFour, shopsRandom});
+  Option Shopsanity             = Option::U8  ("Shopsanity",             {"Off","0 Items","1 Item","2 Items","3 Items","4 Items","Random"}, {shopsOff, shopsZero, shopsOne, shopsTwo, shopsThree, shopsFour, shopsRandom});
   Option Tokensanity            = Option::U8  ("Tokensanity",            {"Off", "Dungeons", "Overworld", "All Tokens"},                    {tokensOff, tokensDungeon, tokensOverworld, tokensAllTokens});
   Option Scrubsanity            = Option::U8  ("Scrub Shuffle",          {"Off", "Affordable", "Expensive", "Random Prices"},               {scrubsOff, scrubsAffordable, scrubsExpensive, scrubsRandomPrices});
   Option ShuffleCows            = Option::Bool("Shuffle Cows",           {"Off", "On"},                                                     {shuffleCowsDesc});
@@ -304,6 +305,8 @@ namespace Settings {
   Option IngameSpoilers      = Option::Bool("Ingame Spoilers",        {"Hide", "Show"},                                                       {ingameSpoilersHideDesc, ingameSpoilersShowDesc });
   Option MenuOpeningButton   = Option::U8  ("Open Info Menu with",    {"Select","Start","D-Pad Up","D-Pad Down","D-Pad Right","D-Pad Left",}, {menuButtonDesc});
   Option RandomTrapDmg       = Option::U8  ("Random Trap Damage",     {"Off", "Basic", "Advanced"},                                           {randomTrapDmgDesc, basicTrapDmgDesc, advancedTrapDmgDesc},                                                       OptionCategory::Setting,    1); // Basic
+  Option BlueFireArrows      = Option::Bool("Blue Fire Arrows",       {"Off", "On"},                                                          {blueFireArrowsDesc});
+  Option SunlightArrows      = Option::Bool("Sunlight Arrows",        {"Off", "On"},                                                          {sunlightArrowsDesc});
   bool HasNightStart         = false;
   std::vector<Option *> miscOptions = {
     &GossipStoneHints,
@@ -320,6 +323,8 @@ namespace Settings {
     &IngameSpoilers,
     &MenuOpeningButton,
     &RandomTrapDmg,
+    &BlueFireArrows,
+    &SunlightArrows
   };
 
   //Item Usability Settings
@@ -1322,6 +1327,8 @@ namespace Settings {
     ctx.ingameSpoilers       = (IngameSpoilers) ? 1 : 0;
     ctx.menuOpeningButton    = MenuOpeningButton.Value<uint8_t>();
     ctx.randomTrapDmg        = RandomTrapDmg.Value<uint8_t>();
+    ctx.blueFireArrows       = (BlueFireArrows) ? 1 : 0;
+    ctx.sunLightArrows       = (SunlightArrows) ? 1 : 0;
 
     ctx.faroresWindAnywhere  = (FaroresWindAnywhere) ? 1 : 0;
     ctx.stickAsAdult         = (StickAsAdult) ? 1 : 0;
@@ -2530,6 +2537,7 @@ namespace Settings {
     ShuffleRewards.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_DUNGEON_REWARDS]);
     ShuffleSongs.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_SONGS]);
     Tokensanity.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_TOKENS]);
+    Shopsanity.SetSelectedIndex(cvarSettings[RSK_SHOPSANITY]);
     Scrubsanity.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_SCRUBS]);
     ShuffleCows.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_COWS]);
     ShuffleKokiriSword.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_KOKIRI_SWORD]);
@@ -2572,6 +2580,8 @@ namespace Settings {
     GossipStoneHints.SetSelectedIndex(cvarSettings[RSK_GOSSIP_STONE_HINTS]);
     ClearerHints.SetSelectedIndex(cvarSettings[RSK_HINT_CLARITY]);
     HintDistribution.SetSelectedIndex(cvarSettings[RSK_HINT_DISTRIBUTION]);
+    BlueFireArrows.SetSelectedIndex(cvarSettings[RSK_BLUE_FIRE_ARROWS]);
+    SunlightArrows.SetSelectedIndex(cvarSettings[RSK_SUNLIGHT_ARROWS]);
 
     ItemPoolValue.SetSelectedIndex(cvarSettings[RSK_ITEM_POOL]);
     IceTrapValue.SetSelectedIndex(cvarSettings[RSK_ICE_TRAPS]);

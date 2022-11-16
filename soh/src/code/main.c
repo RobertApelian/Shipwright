@@ -5,6 +5,7 @@
 #include "soh/OTRGlobals.h"
 
 #include <libultraship/CrashHandler.h>
+#include "soh/CrashHandlerExp.h"
 
 
 s32 gScreenWidth = SCREEN_WIDTH;
@@ -39,13 +40,13 @@ void Main_LogSystemHeap(void) {
     osSyncPrintf(VT_RST);
 }
 
+#ifdef _WIN32
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow) 
+#else
 int main(int argc, char** argv)
-{
-#ifdef __linux__
-    SetupHandlerLinux();
-#elif _WIN32
-    SetUnhandledExceptionFilter(seh_filter);
 #endif
+{
+    CrashHandler_Init(CrashHandler_PrintSohData);
     
     GameConsole_Init();
     InitOTR();

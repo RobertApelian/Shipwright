@@ -84,7 +84,8 @@ namespace SohImGui {
     std::function<void(void)> clientSetupHooks;
 
     bool needs_save = false;
-    int lastBackendID = 0;
+    int lastRenderingBackendID = 0;
+    int lastAudioBackendID = 0;
     bool statsWindowOpen;
 
     const char* filters[3] = {
@@ -97,7 +98,7 @@ namespace SohImGui {
         "None"
     };
 
-    std::pair<const char*, const char*> backends[] = {
+    std::vector<std::pair<const char*, const char*>> renderingBackends = {
 #ifdef _WIN32
         { "dx11", "DirectX" },
 #endif
@@ -106,6 +107,16 @@ namespace SohImGui {
 #else
         { "wiiu", "GX2" }
 #endif
+    };
+
+    std::vector<std::pair<const char*, const char*>> audioBackends = {
+#ifdef _WIN32
+        { "wasapi", "Windows Audio Session API" },
+#endif
+#if defined(__linux)
+        { "pulse", "PulseAudio" },
+#endif
+        { "sdl", "SDL Audio" }
     };
 
     std::map<std::string, std::vector<std::string>> hiddenwindowCategories;
@@ -130,19 +141,30 @@ namespace SohImGui {
         });
     }
 
-    int GetBackendID(std::shared_ptr<Mercury> cfg) {
-        std::string backend = cfg->getString("Window.GfxBackend");
-        if (backend.empty()) {
-            return 0;
+    void PopulateBackendIds(std::shared_ptr<Mercury> cfg) {
+        std::string renderingBackend = cfg->getString("Window.GfxBackend");
+        if (renderingBackend.empty()) {
+            lastRenderingBackendID = 0;
+        } else {
+            for (size_t i = 0; i < renderingBackends.size(); i++) {
+                if(renderingBackend == renderingBackends[i].first) {
+                    lastRenderingBackendID = i;
+                    break;
+                }
+            }
         }
 
-        for (size_t i = 0; i < (sizeof(backends) / sizeof(backends[0])); i++) {
-            if(backend == backends[i].first) {
-				return i;
-			}
+        std::string audioBackend = cfg->getString("Window.AudioBackend");
+        if (audioBackend.empty()) {
+            lastAudioBackendID = 0;
+        } else {
+            for (size_t i = 0; i < audioBackends.size(); i++) {
+                if(audioBackend == audioBackends[i].first) {
+                    lastAudioBackendID = i;
+                    break;
+                }
+            }
         }
-
-        return 0;
     }
 
     void ImGuiWMInit() {
@@ -329,6 +351,7 @@ namespace SohImGui {
         statsWindowOpen = CVar_GetS32("gStatsEnabled", 0);
         CVar_RegisterS32("gRandomizeRupeeNames", 1);
         CVar_RegisterS32("gRandoRelevantNavi", 1);
+        CVar_RegisterS32("gRandoMatchKeyColors", 1);
     #ifdef __SWITCH__
         Ship::Switch::SetupFont(io->Fonts);
     #endif
@@ -343,7 +366,8 @@ namespace SohImGui {
         io->DisplaySize.y =  window_impl.gx2.height;
     #endif
 
-        lastBackendID = GetBackendID(Window::GetInstance()->GetConfig());
+        PopulateBackendIds(Window::GetInstance()->GetConfig());
+
         if (CVar_GetS32("gOpenMenuBar", 0) != 1) {
             #if defined(__SWITCH__) || defined(__WIIU__)
             SohImGui::overlay->TextDrawNotification(30.0f, true, "Press - to access enhancements menu");
@@ -362,7 +386,7 @@ namespace SohImGui {
         }
 
         if (CVar_GetS32("gControlNav", 0) && CVar_GetS32("gOpenMenuBar", 0)) {
-            io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_NavEnableKeyboard;
+            io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
         } else {
             io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
         }
@@ -377,8 +401,11 @@ namespace SohImGui {
     #endif
 
         Ship::RegisterHook<Ship::GfxInit>([] {
-            if (Window::GetInstance()->IsFullscreen())
-                ShowCursor(CVar_GetS32("gOpenMenuBar", 0), Dialogues::dLoadSettings);
+            bool menuBarOpen = CVar_GetS32("gOpenMenuBar", 0);
+            Window::GetInstance()->SetMenuBar(menuBarOpen);
+            if (Window::GetInstance()->IsFullscreen()) {
+                SetCursorVisibility(menuBarOpen);
+            }
 
             LoadTexture("Game_Icon", "assets/ship_of_harkinian/icons/gSohIcon.png");
             LoadTexture("A-Btn", "assets/ship_of_harkinian/buttons/ABtn.png");
@@ -458,14 +485,16 @@ namespace SohImGui {
 
         if (ImGui::IsKeyPressed(TOGGLE_BTN) ||
            (ImGui::IsKeyPressed(TOGGLE_PAD_BTN) && CVar_GetS32("gControlNav", 0))) {
-            bool menu_bar = CVar_GetS32("gOpenMenuBar", 0);
-            CVar_SetS32("gOpenMenuBar", !menu_bar);
+            bool menu_bar = !CVar_GetS32("gOpenMenuBar", 0);
+            CVar_SetS32("gOpenMenuBar", menu_bar);
             needs_save = true;
             Window::GetInstance()->SetMenuBar(menu_bar);
-            ShowCursor(menu_bar, Dialogues::dMenubar);
+            if (Window::GetInstance()->IsFullscreen()) {
+                SetCursorVisibility(menu_bar);
+            }
             Window::GetInstance()->GetControlDeck()->SaveControllerSettings();
             if (CVar_GetS32("gControlNav", 0) && CVar_GetS32("gOpenMenuBar", 0)) {
-                io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_NavEnableKeyboard;
+                io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
             } else {
                 io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
             }
@@ -643,7 +672,12 @@ namespace SohImGui {
 
         ImGui::End();
 
+    #ifdef __WIIU__
+        const float scale = CVar_GetFloat("gInputScale", 1.0f) * 2.0f;
+    #else
         const float scale = CVar_GetFloat("gInputScale", 1.0f);
+    #endif
+
         ImVec2 BtnPos = ImVec2(160 * scale, 85 * scale);
 
         if (CVar_GetS32("gInputEnabled", 0)) {
@@ -732,17 +766,30 @@ namespace SohImGui {
         return gfx_get_detected_hz();
     }
 
-    std::pair<const char*, const char*>* GetAvailableRenderingBackends() {
-        return backends;
+    std::vector<std::pair<const char*, const char*>> GetAvailableRenderingBackends() {
+        return renderingBackends;
+    }
+
+    std::vector<std::pair<const char*, const char*>> GetAvailableAudioBackends() {
+        return audioBackends;
     }
 
     std::pair<const char*, const char*> GetCurrentRenderingBackend() {
-        return backends[lastBackendID];
+        return renderingBackends[lastRenderingBackendID];
+    }
+
+    std::pair<const char*, const char*> GetCurrentAudioBackend() {
+        return audioBackends[lastAudioBackendID];
     }
 
     void SetCurrentRenderingBackend(uint8_t index, std::pair<const char*, const char*> backend) {
         Window::GetInstance()->GetConfig()->setString("Window.GfxBackend", backend.first);
-        lastBackendID = index;
+        lastRenderingBackendID = index;
+    }
+
+    void SetCurrentAudioBackend(uint8_t index, std::pair<const char*, const char*> backend) {
+        Window::GetInstance()->GetConfig()->setString("Window.AudioBackend", backend.first);
+        lastAudioBackendID = index;
     }
 
     const char** GetSupportedTextureFilters() {
@@ -883,24 +930,8 @@ namespace SohImGui {
         DefaultAssets[name] = asset;
     }
 
-    void ShowCursor(bool hide, Dialogues d) {
-        if (d == Dialogues::dLoadSettings) {
-            Window::GetInstance()->ShowCursor(hide);
-            return;
-        }
-
-        if (d == Dialogues::dConsole && CVar_GetS32("gOpenMenuBar", 0)) {
-            return;
-        }
-        if (!Window::GetInstance()->IsFullscreen()) {
-            oldCursorState = false;
-            return;
-        }
-
-        if (oldCursorState != hide) {
-            oldCursorState = hide;
-            Window::GetInstance()->ShowCursor(hide);
-        }
+    void SetCursorVisibility(bool visible) {
+        Window::GetInstance()->SetCursorVisibility(visible);
     }
 
     void BeginGroupPanel(const char* name, const ImVec2& size) {

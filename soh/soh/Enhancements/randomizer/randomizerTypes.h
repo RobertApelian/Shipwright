@@ -946,7 +946,6 @@ typedef enum {
     RG_BUY_HEART,
     RG_BUY_BOMBCHU_10,
     RG_BUY_BOMBCHU_20,
-    RG_BUY_BOMBCHU_5,
     RG_BUY_DEKU_SEEDS_30,
     RG_SOLD_OUT,
     RG_BUY_BLUE_FIRE,
@@ -961,6 +960,7 @@ typedef enum {
     RG_BUY_RED_POTION_50,
     RG_TRIFORCE,
     RG_HINT,
+    RG_TYCOON_WALLET,
     RG_MAX
 } RandomizerGet;
 
@@ -989,6 +989,7 @@ typedef enum {
     RSK_SHUFFLE_DUNGEON_REWARDS,
     RSK_SHUFFLE_SONGS,
     RSK_SHUFFLE_TOKENS,
+    RSK_SHOPSANITY,
     RSK_SHUFFLE_SCRUBS,
     RSK_SHUFFLE_COWS,
     RSK_SHUFFLE_WEIRD_EGG,
@@ -1019,6 +1020,8 @@ typedef enum {
     RSK_SKULLS_SUNS_SONG,
     RSK_SHUFFLE_ADULT_TRADE,
     RSK_SHUFFLE_MAGIC_BEANS,
+    RSK_BLUE_FIRE_ARROWS,
+    RSK_SUNLIGHT_ARROWS,
     RSK_ENABLE_BOMBCHU_DROPS,
     RSK_BOMBCHUS_IN_LOGIC,
     RSK_LINKS_POCKET
@@ -1037,5 +1040,13 @@ typedef struct ScrubIdentity {
     RandomizerCheck randomizerCheck;
     GetItemID getItemId;
     int32_t itemPrice;
-    bool isShuffled;
+    uint8_t isShuffled;
 } ScrubIdentity;
+
+typedef struct ShopItemIdentity {
+    RandomizerInf randomizerInf;
+    RandomizerCheck randomizerCheck;
+    GetItemID ogItemId;
+    int32_t enGirlAShopItem;
+    int32_t itemPrice;
+} ShopItemIdentity;

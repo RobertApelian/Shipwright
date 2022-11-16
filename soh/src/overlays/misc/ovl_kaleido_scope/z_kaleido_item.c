@@ -100,7 +100,7 @@ void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
     s16 cursorY;
     s16 oldCursorPoint;
     s16 moveCursorResult;
-    bool dpad = (CVar_GetS32("gDpadPauseName", 0) && !CHECK_BTN_ALL(input->cur.button, BTN_CUP));
+    bool dpad = (CVar_GetS32("gDpadPause", 0) && !CHECK_BTN_ALL(input->cur.button, BTN_CUP));
 
     OPEN_DISPS(globalCtx->state.gfxCtx);
 
@@ -381,7 +381,12 @@ void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
                             --INV_CONTENT(ITEM_TRADE_CHILD);
                         } else if ((pauseCtx->stickRelX < -30 || pauseCtx->stickRelX > 30 || pauseCtx->stickRelY < -30 || pauseCtx->stickRelY > 30) ||
                                    dpad && CHECK_BTN_ANY(input->press.button, BTN_DUP | BTN_DDOWN | BTN_DLEFT | BTN_DRIGHT)) {
-                            INV_CONTENT(ITEM_TRADE_CHILD) ^= ITEM_MASK_KEATON ^ ITEM_MASK_TRUTH;
+                            // Change to keaton mask if no mask is in child trade slot. Catches Zelda's letter and bottle duping over this slot.
+                            if (INV_CONTENT(ITEM_TRADE_CHILD) < ITEM_MASK_KEATON || INV_CONTENT(ITEM_TRADE_CHILD) > ITEM_MASK_TRUTH) {
+                                INV_CONTENT(ITEM_TRADE_CHILD) = ITEM_MASK_KEATON;
+                            } else {
+                                INV_CONTENT(ITEM_TRADE_CHILD) ^= ITEM_MASK_KEATON ^ ITEM_MASK_TRUTH;
+                            }
                             Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
                         }
                         for (uint16_t cSlotIndex = 0; cSlotIndex < ARRAY_COUNT(gSaveContext.equips.cButtonSlots); cSlotIndex++) {
@@ -415,7 +420,7 @@ void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
                         gSelectingAdultTrade = cursorSlot == SLOT_TRADE_ADULT;
                     }
                     u16 buttonsToCheck = BTN_CLEFT | BTN_CDOWN | BTN_CRIGHT;
-                    if (CVar_GetS32("gDpadEquips", 0) && (!CVar_GetS32("gDpadPauseName", 0) || CHECK_BTN_ALL(input->cur.button, BTN_CUP))) {
+                    if (CVar_GetS32("gDpadEquips", 0) && (!CVar_GetS32("gDpadPause", 0) || CHECK_BTN_ALL(input->cur.button, BTN_CUP))) {
                         buttonsToCheck |= BTN_DUP | BTN_DDOWN | BTN_DLEFT | BTN_DRIGHT;
                     }
                     if (CHECK_BTN_ANY(input->press.button, buttonsToCheck)) {

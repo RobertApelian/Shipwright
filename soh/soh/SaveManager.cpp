@@ -15,6 +15,8 @@
 #include <array>
 
 extern "C" SaveContext gSaveContext;
+extern "C" uint32_t ResourceMgr_GetGameVersion();
+extern "C" uint32_t ResourceMgr_IsGameMasterQuest();
 
 std::filesystem::path SaveManager::GetFileName(int fileNum) {
     const std::filesystem::path sSavePath(Ship::Window::GetPathRelativeToAppDirectory("Save"));
@@ -47,6 +49,7 @@ SaveManager::SaveManager() {
         }
 
         info.randoSave = 0;
+        info.isMasterQuest = 0;
     }
 }
 
@@ -91,6 +94,29 @@ void SaveManager::LoadRandomizerVersion1() {
     }
 
     SaveManager::Instance->LoadData("adultTradeItems", gSaveContext.adultTradeItems);
+
+    SaveManager::Instance->LoadData("pendingIceTrapCount", gSaveContext.pendingIceTrapCount);
+
+    std::shared_ptr<Randomizer> randomizer = OTRGlobals::Instance->gRandomizer;
+
+    randomizer->LoadRandomizerSettings("");
+    size_t merchantPricesSize = 0;
+    if (randomizer->GetRandoSettingValue(RSK_SHUFFLE_SCRUBS) > 0) {
+        merchantPricesSize += NUM_SCRUBS;
+    }
+    if (randomizer->GetRandoSettingValue(RSK_SHOPSANITY) > 0) {
+        merchantPricesSize += NUM_SHOP_ITEMS;
+    }
+
+    SaveManager::Instance->LoadArray("merchantPrices", merchantPricesSize, [&](size_t i) {
+        SaveManager::Instance->LoadStruct("", [&]() {
+            RandomizerCheck rc;
+            SaveManager::Instance->LoadData("check", rc);
+            uint32_t price;
+            SaveManager::Instance->LoadData("price", price);
+            randomizer->merchantPrices[rc] = price;
+        });
+    });
 }
 
 void SaveManager::SaveRandomizer() {
@@ -135,6 +161,22 @@ void SaveManager::SaveRandomizer() {
     }
 
     SaveManager::Instance->SaveData("adultTradeItems", gSaveContext.adultTradeItems);
+
+    SaveManager::Instance->SaveData("pendingIceTrapCount", gSaveContext.pendingIceTrapCount);
+
+    std::shared_ptr<Randomizer> randomizer = OTRGlobals::Instance->gRandomizer;
+
+    std::vector<std::pair<RandomizerCheck, u16>> merchantPrices;
+    for (const auto & [ check, price ] : randomizer->merchantPrices) {
+        merchantPrices.push_back(std::make_pair(check, price));
+    }
+
+    SaveManager::Instance->SaveArray("merchantPrices", merchantPrices.size(), [&](size_t i) {
+        SaveManager::Instance->SaveStruct("", [&]() {
+            SaveManager::Instance->SaveData("check", merchantPrices[i].first);
+            SaveManager::Instance->SaveData("price", merchantPrices[i].second);
+        });
+    });
 }
 
 void SaveManager::Init() {
@@ -157,11 +199,6 @@ void SaveManager::Init() {
     // If the global save file exist, load it. Otherwise, create it.
     if (std::filesystem::exists(sGlobalPath)) {
         std::ifstream input(sGlobalPath);
-
-#ifdef __WIIU__
-        alignas(0x40) char buffer[8192];
-        input.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-#endif
 
         nlohmann::json globalBlock;
         input >> globalBlock;
@@ -213,6 +250,7 @@ void SaveManager::InitMeta(int fileNum) {
     }
 
     fileMetaInfo[fileNum].randoSave = gSaveContext.n64ddFlag;
+    fileMetaInfo[fileNum].isMasterQuest = gSaveContext.isMasterQuest;
 }
 
 void SaveManager::InitFile(bool isDebug) {
@@ -359,6 +397,8 @@ void SaveManager::InitFileNormal() {
     gSaveContext.infTable[29] = 1;
     gSaveContext.sceneFlags[5].swch = 0x40000000;
 
+    gSaveContext.isMasterQuest = ResourceMgr_IsGameMasterQuest();
+
     //RANDOTODO (ADD ITEMLOCATIONS TO GSAVECONTEXT)
 }
 
@@ -484,14 +524,15 @@ void SaveManager::SaveFile(int fileNum) {
         section.second.second();
     }
 
+#if defined(__SWITCH__) || defined(__WIIU__)
+    FILE* w = fopen(GetFileName(fileNum).c_str(), "w");
+    std::string json_string = baseBlock.dump(4);
+    fwrite(json_string.c_str(), sizeof(char), json_string.length(), w);
+    fclose(w);
+#else
     std::ofstream output(GetFileName(fileNum));
-
-#ifdef __WIIU__
-    alignas(0x40) char buffer[8192];
-    output.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-#endif
-
     output << std::setw(4) << baseBlock << std::endl;
+#endif
 
     InitMeta(fileNum);
 }
@@ -502,13 +543,11 @@ void SaveManager::SaveGlobal() {
     globalBlock["audioSetting"] = gSaveContext.audioSetting;
     globalBlock["zTargetSetting"] = gSaveContext.zTargetSetting;
     globalBlock["language"] = gSaveContext.language;
-    std::ofstream output("Save/global.sav");
 
-#ifdef __WIIU__
-    alignas(0x40) char buffer[8192];
-    output.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-#endif
+    const std::filesystem::path sSavePath(Ship::Window::GetPathRelativeToAppDirectory("Save"));
+    const std::filesystem::path sGlobalPath = sSavePath / std::string("global.sav");
 
+    std::ofstream output(sGlobalPath);
     output << std::setw(4) << globalBlock << std::endl;
 }
 
@@ -517,11 +556,6 @@ void SaveManager::LoadFile(int fileNum) {
     InitFile(false);
 
     std::ifstream input(GetFileName(fileNum));
-
-#ifdef __WIIU__
-    alignas(0x40) char buffer[8192];
-    input.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-#endif
 
     nlohmann::json saveBlock;
     input >> saveBlock;
@@ -919,6 +953,7 @@ void SaveManager::LoadBaseVersion2() {
     SaveManager::Instance->LoadArray("randomizerInf", ARRAY_COUNT(gSaveContext.randomizerInf), [](size_t i) {
         SaveManager::Instance->LoadData("", gSaveContext.randomizerInf[i]);
     });
+    SaveManager::Instance->LoadData("isMasterQuest", gSaveContext.isMasterQuest);
 }
 
 void SaveManager::SaveBase() {
@@ -1072,6 +1107,7 @@ void SaveManager::SaveBase() {
     SaveManager::Instance->SaveArray("randomizerInf", ARRAY_COUNT(gSaveContext.randomizerInf), [](size_t i) {
         SaveManager::Instance->SaveData("", gSaveContext.randomizerInf[i]);
     });
+    SaveManager::Instance->SaveData("isMasterQuest", ResourceMgr_IsGameMasterQuest());
 }
 
 void SaveManager::SaveArray(const std::string& name, const size_t size, SaveArrayFunc func) {
@@ -1145,7 +1181,7 @@ void SaveManager::LoadStruct(const std::string& name, LoadStructFunc func) {
     }
 }
 
-#ifdef __WIIU__
+#if defined(__WIIU__) || defined(__SWITCH__)
 // std::filesystem::copy_file doesn't work properly with the Wii U's toolchain atm
 int copy_file(const char* src, const char* dst)
 {
@@ -1175,8 +1211,8 @@ int copy_file(const char* src, const char* dst)
 void SaveManager::CopyZeldaFile(int from, int to) {
     assert(std::filesystem::exists(GetFileName(from)));
     DeleteZeldaFile(to);
-#ifdef __WIIU__
-    assert(copy_file(GetFileName(from).c_str(), GetFileName(to).c_str()) == 0);
+#if defined(__WIIU__) || defined(__SWITCH__)
+    copy_file(GetFileName(from).c_str(), GetFileName(to).c_str());
 #else
     std::filesystem::copy_file(GetFileName(from), GetFileName(to));
 #endif
@@ -1193,6 +1229,7 @@ void SaveManager::CopyZeldaFile(int from, int to) {
     fileMetaInfo[to].defense = fileMetaInfo[from].defense;
     fileMetaInfo[to].health = fileMetaInfo[from].health;
     fileMetaInfo[to].randoSave = fileMetaInfo[from].randoSave;
+    fileMetaInfo[to].isMasterQuest = fileMetaInfo[from].isMasterQuest;
 }
 
 void SaveManager::DeleteZeldaFile(int fileNum) {
@@ -1201,6 +1238,10 @@ void SaveManager::DeleteZeldaFile(int fileNum) {
     }
     fileMetaInfo[fileNum].valid = false;
     fileMetaInfo[fileNum].randoSave = false;
+}
+
+bool SaveManager::IsRandoFile() {
+    return gSaveContext.n64ddFlag != 0 ? true : false;
 }
 
 // Functionality required to convert old saves into versioned saves
@@ -1508,11 +1549,6 @@ void SaveManager::ConvertFromUnversioned() {
 #define SLOT_OFFSET(index) (SRAM_HEADER_SIZE + 0x10 + (index * SLOT_SIZE))
 
     std::ifstream input("oot_save.sav", std::ios::binary);
-
-#ifdef __WIIU__
-    alignas(0x40) char buffer[8192];
-    input.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-#endif
 
     std::vector<char> data(std::istreambuf_iterator<char>(input), {});
     input.close();

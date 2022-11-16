@@ -8,7 +8,6 @@
 
 #define NUM_DUNGEONS 8
 #define NUM_COWS 10
-#define NUM_SCRUBS 35
 
 /**
  *  Initialize new save.
@@ -106,7 +105,11 @@ void GiveLinksPocketItem() {
             }
             Item_Give(NULL, getItemEntry.itemId);
         } else if (getItemEntry.modIndex == MOD_RANDOMIZER) {
-            Randomizer_Item_Give(NULL, getItemEntry);
+            if (getItemEntry.getItemId == RG_ICE_TRAP) {
+                gSaveContext.pendingIceTrapCount++;
+            } else {
+                Randomizer_Item_Give(NULL, getItemEntry);
+            }
         }
     }
 }
@@ -346,6 +349,9 @@ void Sram_InitSave(FileChooseContext* fileChooseCtx) {
             gSaveContext.adultTradeItems = 0;
         }
 
+        // Starts pending ice traps out at 0 before potentially incrementing them down the line.
+        gSaveContext.pendingIceTrapCount = 0;
+
         // Give Link's pocket item
         GiveLinksPocketItem();
 
@@ -408,7 +414,11 @@ void Sram_InitSave(FileChooseContext* fileChooseCtx) {
                 }
                 Item_Give(NULL, getItem.itemId);
             } else if (getItem.modIndex == MOD_RANDOMIZER) {
-                Randomizer_Item_Give(NULL, getItem);
+                if (getItem.getItemId == RG_ICE_TRAP) {
+                    gSaveContext.pendingIceTrapCount++;
+                } else {
+                    Randomizer_Item_Give(NULL, getItem);
+                }
             }
 
             // malon/talon back at ranch
@@ -440,7 +450,7 @@ void Sram_InitSave(FileChooseContext* fileChooseCtx) {
             gSaveContext.inventory.dungeonKeys[SCENE_MIZUSIN] = 6; // Water
             gSaveContext.inventory.dungeonKeys[SCENE_JYASINZOU] = 5; // Spirit
             gSaveContext.inventory.dungeonKeys[SCENE_HAKADAN] = 5; // Shadow
-            gSaveContext.inventory.dungeonKeys[SCENE_HAKADANCH] = 2; // BotW
+            gSaveContext.inventory.dungeonKeys[SCENE_HAKADANCH] = 3; // BotW
             gSaveContext.inventory.dungeonKeys[SCENE_MEN] = 9; // GTG
             gSaveContext.inventory.dungeonKeys[SCENE_GANONTIKA] = 2; // Ganon
         }
@@ -521,6 +531,7 @@ void Sram_InitSave(FileChooseContext* fileChooseCtx) {
 
         // complete mask quest
         if (Randomizer_GetSettingValue(RSK_COMPLETE_MASK_QUEST)) {
+            gSaveContext.infTable[7] |= 0x80;      // Soldier Wears Keaton Mask
             gSaveContext.itemGetInf[3] |= 0x100;   // Sold Keaton Mask
             gSaveContext.itemGetInf[3] |= 0x200;   // Sold Skull Mask
             gSaveContext.itemGetInf[3] |= 0x400;   // Sold Spooky Mask

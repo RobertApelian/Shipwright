@@ -908,10 +908,9 @@ typedef struct Player {
     /* 0x0A86 */ s8         voidRespawnCounter;
     /* 0x0A87 */ u8         deathTimer;
     /* 0x0A88 */ Vec3f      prevWaistPos; // previous body part 0 position
-    /* 0x0A89 */ bool       pendingIceTrap;
     /* 0x0A95 */ PendingFlag pendingFlag;
     /* 0x0AA1 */ u8         boomerangQuickRecall; // Has the player pressed the boomerang button while it's in the air still?
     /* 0x0AA2 */ GetItemEntry getItemEntry;
-} Player; // size = 0xA94
+} Player; // size = 0xAAA
 
 #endif

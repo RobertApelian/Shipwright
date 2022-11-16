@@ -14,13 +14,11 @@ class Randomizer {
   private:
     std::unordered_map<RandomizerCheck, RandomizerGet> itemLocations;
     std::unordered_map<RandomizerCheck, std::string> hintLocations;
-    std::unordered_map<RandomizerInf, bool> trialsRequired;
     std::string childAltarText;
     std::string adultAltarText;
     std::string ganonHintText;
     std::string ganonText;
     std::unordered_map<RandomizerSettingKey, u8> randoSettings;
-    std::unordered_map<RandomizerCheck, u16> randomizerMerchantPrices;
     void ParseRandomizerSettingsFile(const char* spoilerFileName);
     void ParseHintLocationsFile(const char* spoilerFileName);
     void ParseRequiredTrialsFile(const char* spoilerFileName);
@@ -38,14 +36,19 @@ class Randomizer {
     static const std::string rupeeMessageTableID;
     static const std::string NaviRandoMessageTableID;
 
+    // Public for now to be accessed by SaveManager, will be made private again soon :tm:
+    std::unordered_map<RandomizerInf, bool> trialsRequired;
+    std::unordered_map<RandomizerCheck, u16> merchantPrices;
+
     static Sprite* GetSeedTexture(uint8_t index);
     s16 GetItemModelFromId(s16 itemId);
     s32 GetItemIDFromGetItemID(s32 getItemId);
     bool SpoilerFileExists(const char* spoilerFileName);
     void LoadRandomizerSettings(const char* spoilerFileName);
     void LoadHintLocations(const char* spoilerFileName);
+    void LoadMerchantMessages(const char* spoilerFileName);
+    void LoadItemLocations(const char* spoilerFileName, bool silent);
     void LoadRequiredTrials(const char* spoilerFileName);
-    void LoadItemLocations(const char* spoilerFileName,bool silent);
     bool IsTrialRequired(RandomizerInf trial);
     u8 GetRandoSettingValue(RandomizerSettingKey randoSettingKey);
     RandomizerCheck GetCheckFromActor(s16 actorId, s16 sceneNum, s16 actorParams);
@@ -56,6 +59,7 @@ class Randomizer {
     std::string GetGanonText() const;
     std::string GetGanonHintText() const;
     ScrubIdentity IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respawnData);
+    ShopItemIdentity IdentifyShopItem(s32 sceneNum, u8 slotIndex);
     GetItemID GetItemIdFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogItemId);
     GetItemID GetItemIdFromActor(s16 actorId, s16 sceneNum, s16 actorParams, GetItemID ogItemId);
     GetItemID GetItemIdFromRandomizerGet(RandomizerGet randoGet, GetItemID ogItemId);
