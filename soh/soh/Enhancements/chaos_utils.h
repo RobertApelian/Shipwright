@@ -6,10 +6,10 @@ extern "C" {
 #include "variables.h"
 #include "functions.h"
 #include "macros.h"
-extern GlobalContext* gGlobalCtx;
-extern void Player_SpawnExplosion(GlobalContext*, Player*);
+extern PlayState* gPlayState;
+extern void Player_SpawnExplosion(PlayState*, Player*);
 extern void Player_SetupInvincibility(Player*, s32);
-extern void Player_SetupDamage(GlobalContext*, Player*, s32, f32, f32, s16, s32);
+extern void Player_SetupDamage(PlayState*, Player*, s32, f32, f32, s16, s32);
 }
 
 #define MAX_TURBO_SPEED 16.0f
@@ -21,8 +21,8 @@ void scale(Actor* actor, float x, float y, float z) {
 }
 
 void spawn_on_link(int16_t id, int16_t params) {
-    Player* player = GET_PLAYER(gGlobalCtx);
-    Actor_Spawn(&(gGlobalCtx->actorCtx), gGlobalCtx, id,
+    Player* player = GET_PLAYER(gPlayState);
+    Actor_Spawn(&(gPlayState->actorCtx), gPlayState, id,
                 player->actor.world.pos.x,
                 player->actor.world.pos.y,
                 player->actor.world.pos.z,
@@ -38,11 +38,11 @@ void spawn_n(int16_t id, int16_t params, int32_t n) {
     if (n == 1) {
         spawn_on_link(id, params);
     } else {
-        Player* player = GET_PLAYER(gGlobalCtx);
+        Player* player = GET_PLAYER(gPlayState);
         float sigma = (float)rand()/(float)(RAND_MAX/(M_PI / 2.f));
         float angle_step = (2.f * M_PI) / static_cast<float>(n);
         for (int32_t i = 0; i < n; ++i, sigma += angle_step) {
-            Actor_Spawn(&(gGlobalCtx->actorCtx), gGlobalCtx, id,
+            Actor_Spawn(&(gPlayState->actorCtx), gPlayState, id,
                 player->actor.world.pos.x + DIST_FROM_PLAYER * sin(sigma),
                 player->actor.world.pos.y,
                 player->actor.world.pos.z + DIST_FROM_PLAYER * cos(sigma),
@@ -59,14 +59,14 @@ void spawn_n(int16_t id, int16_t params, int32_t n) {
 
 uint32_t g_satisified_pending_frames = 0;
 bool link_is_ready() {
-    Player* player = GET_PLAYER(gGlobalCtx);
+    Player* player = GET_PLAYER(gPlayState);
 
     if ((player->targetSwitchTimer & 0xFCAC2485) == 0 &&
         (player->actor.bgCheckFlags & 0x0001) &&
         (player->swordEffectIndex & 0x000C0000) == 0 &&
         //TODO: Figure this one out 
         //(z64_event_state_1 & 0x20) == 0 &&
-        (gGlobalCtx->cameraPtrs[1] == 0)) {
+        (gPlayState->cameraPtrs[1] == 0)) {
         g_satisified_pending_frames++;
     }
     else {
@@ -89,11 +89,11 @@ void push_pending_ice_trap() {
 }
 
 void give_ice_trap() {
-    Player* player = GET_PLAYER(gGlobalCtx);
+    Player* player = GET_PLAYER(gPlayState);
     if (g_pending_freezes) {
         g_pending_freezes--;
         Player_SetupInvincibility(player, 0x14);
-		Player_SetupDamage(gGlobalCtx, player, 3, 0.0f, 0.0f, 0, 20);
+		Player_SetupDamage(gPlayState, player, 3, 0.0f, 0.0f, 0, 20);
     }
 }
 
@@ -110,33 +110,33 @@ void execute_game(int16_t entrance_index, uint16_t cutscene_index)
   gSaveContext.gameMode = 0;
   if (gSaveContext.minigameState == 1)
     gSaveContext.minigameState = 3;
-  gGlobalCtx->nextEntranceIndex = entrance_index;
-  gGlobalCtx->state.running = 0;
-  gGlobalCtx->state.init = (GameStateFunc)(gGameStateOverlayTable[3].init);
-  gGlobalCtx->state.size = gGameStateOverlayTable[3].instanceSize;
+  gPlayState->nextEntranceIndex = entrance_index;
+  gPlayState->state.running = 0;
+  gPlayState->state.init = (GameStateFunc)(gGameStateOverlayTable[3].init);
+  gPlayState->state.size = gGameStateOverlayTable[3].instanceSize;
 }
 
 void void_out() {
-  gSaveContext.respawn[0].tempSwchFlags = gGlobalCtx->actorCtx.flags.tempSwch;
-  gSaveContext.respawn[0].tempCollectFlags = gGlobalCtx->actorCtx.flags.tempCollect;
+  gSaveContext.respawn[0].tempSwchFlags = gPlayState->actorCtx.flags.tempSwch;
+  gSaveContext.respawn[0].tempCollectFlags = gPlayState->actorCtx.flags.tempCollect;
   gSaveContext.respawnFlag = 1;
   execute_game(gSaveContext.respawn[0].entranceIndex, 0x0000);
 }
 
 void toggle_age() {
-  Player* player = GET_PLAYER(gGlobalCtx);
+  Player* player = GET_PLAYER(gPlayState);
   int age = gSaveContext.linkAge;
-  gSaveContext.linkAge = gGlobalCtx->linkAgeOnLoad;
-  gGlobalCtx->linkAgeOnLoad = !gGlobalCtx->linkAgeOnLoad;
+  gSaveContext.linkAge = gPlayState->linkAgeOnLoad;
+  gPlayState->linkAgeOnLoad = !gPlayState->linkAgeOnLoad;
   Inventory_SwapAgeEquipment();
   gSaveContext.linkAge = age;
 
   // TODO: check if this is the right function to call to update the c-buttons
   for (int i = 0; i < 4; ++i)
     if (gSaveContext.equips.buttonItems[i] != -1)
-      Interface_LoadItemIcon1(gGlobalCtx, i);
+      Interface_LoadItemIcon1(gPlayState, i);
 
-  Player_SetEquipmentData(gGlobalCtx, player);
+  Player_SetEquipmentData(gPlayState, player);
   execute_game(gSaveContext.entranceIndex, 0x0);
 }
 
@@ -144,7 +144,7 @@ void toggle_age() {
 bool previous_frame_had_forced_boots = false;
 bool previous_frame_had_ohko = false;
 void apply_ongoing_effects() {
-    Player* player = GET_PLAYER(gGlobalCtx);
+    Player* player = GET_PLAYER(gPlayState);
 
     // TODO: replace |timers| with just a CVar
     int16_t forced_boots = CVar_GetS32("gChaosForcedBoots", 0);
@@ -157,11 +157,11 @@ void apply_ongoing_effects() {
     if (forced_boots > 0) {
         // Boots are the first nibble of the |equipement| u16
         gSaveContext.equips.equipment = ((gSaveContext.equips.equipment & 0x0FFF) | (forced_boots << 12));
-        Player_SetEquipmentData(gGlobalCtx, player);
+        Player_SetEquipmentData(gPlayState, player);
     } else if (previous_frame_had_forced_boots) {
         // Restore to kokiri boots when the time elapses
         gSaveContext.equips.equipment = ((gSaveContext.equips.equipment & 0x0FFF) | (1 << 12));
-        Player_SetEquipmentData(gGlobalCtx, player);
+        Player_SetEquipmentData(gPlayState, player);
     }
 
     previous_frame_had_forced_boots = forced_boots;
@@ -187,7 +187,7 @@ void apply_ongoing_effects() {
     }
 
     if (no_z) {
-        gGlobalCtx->state.input[0].press.button &= (~BTN_Z);
+        gPlayState->state.input[0].press.button &= (~BTN_Z);
     }
 
     if (turbo) {
@@ -197,10 +197,10 @@ void apply_ongoing_effects() {
     }
 
     if (invert_controls) {
-        gGlobalCtx->state.input[0].cur.stick_x = -gGlobalCtx->state.input[0].cur.stick_x;
-        gGlobalCtx->state.input[0].cur.stick_y = -gGlobalCtx->state.input[0].cur.stick_y;
-        gGlobalCtx->state.input[0].rel.stick_x = -gGlobalCtx->state.input[0].rel.stick_x;
-        gGlobalCtx->state.input[0].rel.stick_y = -gGlobalCtx->state.input[0].rel.stick_y;
+        gPlayState->state.input[0].cur.stick_x = -gPlayState->state.input[0].cur.stick_x;
+        gPlayState->state.input[0].cur.stick_y = -gPlayState->state.input[0].cur.stick_y;
+        gPlayState->state.input[0].rel.stick_x = -gPlayState->state.input[0].rel.stick_x;
+        gPlayState->state.input[0].rel.stick_y = -gPlayState->state.input[0].rel.stick_y;
     }
 }
 

@@ -3610,10 +3610,10 @@ void Interface_DrawMagicBar(PlayState* play) {
 
 #define R_HEALTH_BAR_WIDTH 64
 
-void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
-    InterfaceContext* interfaceCtx = &globalCtx->interfaceCtx;
+void Interface_DrawEnemyHealthBar(PlayState* play) {
+    InterfaceContext* interfaceCtx = &play->interfaceCtx;
     TargetContextEntry* entry;
-    Player* player = GET_PLAYER(globalCtx);
+    Player* player = GET_PLAYER(play);
     Actor* targetActor = player->targetActor;
     Vec3f projTarget;
     f32 projTargetCappedInvW;
@@ -3623,10 +3623,10 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
     s16 healthBarX;
     s16 healthBarY;
 
-    OPEN_DISPS(globalCtx->state.gfxCtx);
+    OPEN_DISPS(play->state.gfxCtx);
 
     // Get actor projected position
-    func_8002BE04(globalCtx, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
+    func_8002BE04(play, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
 
     projTarget.x = (SCREEN_WIDTH / 2) * ((projTarget.x * projTargetCappedInvW) + 1);
     healthBarX = projTarget.x - (R_HEALTH_BAR_WIDTH / 2);
@@ -3641,7 +3641,7 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
 
     if (healthBarX > -8 && healthBarY > 0) {
         // Setup DL for overlay disp
-        func_80094520(globalCtx->state.gfxCtx);
+        func_80094520(play->state.gfxCtx);
 
         gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255,
                         CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
@@ -3683,7 +3683,7 @@ void Interface_DrawEnemyHealthBar(GlobalContext* globalCtx) {
                             G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
     }
 
-    CLOSE_DISPS(globalCtx->state.gfxCtx);
+    CLOSE_DISPS(play->state.gfxCtx);
 }
 
 void func_80088AA0(s16 arg0) {
@@ -5154,11 +5154,11 @@ void Interface_Draw(PlayState* play) {
         if (CVar_GetS32("gDrawLineupTick", 0)) {
             Interface_DrawLineupTick(play);
         }
-        
+
         // Check if target actor exists
         if (player->targetActor != NULL && CVar_GetS32("gEnemyHealthBar", 0)) {
-            if (player->targetActor->category == ACTORCAT_ENEMY && globalCtx->pauseCtx.state < 4) {
-                Interface_DrawEnemyHealthBar(globalCtx);
+            if (player->targetActor->category == ACTORCAT_ENEMY && play->pauseCtx.state < 4) {
+                Interface_DrawEnemyHealthBar(play);
             }
         }
 

@@ -13561,16 +13561,16 @@ s32 Player_SetupGetItemText(PlayState* play, Player* this) {
             if (equipItem >= ITEM_SWORD_KOKIRI && equipItem <= ITEM_SWORD_BGS) {
                 gSaveContext.equips.buttonItems[0] = equipItem;
                 Inventory_ChangeEquipment(EQUIP_SWORD, equipItem - ITEM_SWORD_KOKIRI + 1);
-                func_808328EC(this, NA_SE_IT_SWORD_PUTAWAY);
+                Player_PlayReactableSfx(this, NA_SE_IT_SWORD_PUTAWAY);
 
             } else if (equipItem >= ITEM_SHIELD_DEKU && equipItem <= ITEM_SHIELD_MIRROR) {
                 Inventory_ChangeEquipment(EQUIP_SHIELD, equipItem - ITEM_SHIELD_DEKU + 1);
-                func_808328EC(&this->actor, NA_SE_IT_SHIELD_REMOVE);
+                Player_PlayReactableSfx(&this->actor, NA_SE_IT_SHIELD_REMOVE);
                 Player_SetEquipmentData(play, this);
 
             } else if (equipItem == ITEM_TUNIC_GORON || equipItem == ITEM_TUNIC_ZORA) {
                 Inventory_ChangeEquipment(EQUIP_TUNIC, equipItem - ITEM_TUNIC_KOKIRI + 1);
-                func_808328EC(this, NA_SE_PL_CHANGE_ARMS);
+                Player_PlayReactableSfx(this, NA_SE_PL_CHANGE_ARMS);
                 Player_SetEquipmentData(play, this);
             }
         }
