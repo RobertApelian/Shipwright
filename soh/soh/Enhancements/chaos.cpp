@@ -59,8 +59,8 @@ static std::map<uint8_t, CommandCreator> kCommands {
 			CR_ONE_SHOT({ toggle_age(); }))),
 
 	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
-	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 2.f, 2.f, 2.f); }),
-	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.5f, 0.5f, 0.5f); }),
+	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 1.5f, 1.5f, 1.5f); }),
+	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
 
 	CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
 	CMD_TIMED_BOOL_CVAR(0x07, "gChaosNoHud"),
@@ -139,24 +139,24 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// Gravity (- down, + up)
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_gravity_modifier++; },
-                [&]() { g_gravity_modifier--; })),
+                [&]() { g_gravity_modifier += 3; },
+                [&]() { g_gravity_modifier -= 3; })),
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_gravity_modifier--; },
-                [&]() { g_gravity_modifier++; })),
+                [&]() { g_gravity_modifier -= 3; },
+                [&]() { g_gravity_modifier += 3; })),
 
 	// Climb speed
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_climb_speed_modifier++; },
-                [&]() { g_climb_speed_modifier--; })),
+                [&]() { g_climb_speed_modifier += 3; },
+                [&]() { g_climb_speed_modifier -= 3; })),
 
 	// HS Length 
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_hookshot_length_modifier++; },
-                [&]() { g_hookshot_length_modifier--; })),
+                [&]() { g_hookshot_length_modifier += 3; },
+                [&]() { g_hookshot_length_modifier -= 3; })),
 
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSpawnExplosion"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRestrainLink"),
