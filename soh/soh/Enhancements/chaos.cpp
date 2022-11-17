@@ -9,6 +9,8 @@
 #include <variables.h>
 #undef Polygon
 
+#include "debugconsole.h"
+
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -162,6 +164,13 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRestrainLink"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gTripToSpace"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRedoRando"),
+
+	// Paper link
+	CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+		CR_ONE_SHOT_TIMED(
+			[&]() { chaosEffectPaperLink = 1; },
+			[&]() { chaosEffectPaperLink = 0; chaosEffectResetLinkScale = 1; })),
+
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
 	CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),

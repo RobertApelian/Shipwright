@@ -74,4 +74,6 @@
 
 #define CMD_GIVE_AMMO(id, item, upgrade) CMD_ONE_SHOT(id, PL_BYTES(sizeof(uint32_t)), { uint32_t amt = Read<uint32_t>(payload, 0); AMMO(item) = s_add(AMMO(item), amt, CUR_CAPACITY(upgrade)); })
 
+#define CMD_TIMED_BOOL(id, variable) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_ONE_SHOT_TIMED([&]() { variable = 1; }, [&]() { variable = 0; }))
+
 #endif
