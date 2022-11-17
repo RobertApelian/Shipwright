@@ -362,6 +362,10 @@ extern "C" {
 		CVar_SetS32("gSpawnExplosion", 0);
 		CVar_SetS32("gRestrainLink", 0);
 		CVar_SetS32("gTripToSpace", 0);
+		CVar_SetS32("gThiccLink", 0);
+		CVar_SetS32("gFlipLink", 0);
+		CVar_SetS32("gNoStart", 0);
+		CVar_SetS32("gFlashbang", 0);
 	}
 
 	void Chaos_Init() {
