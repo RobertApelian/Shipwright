@@ -959,6 +959,32 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
             D_80160000++;
         }
 
+        static f32 scuffScales[PLAYER_LIMB_MAX] = { 0.0f };
+        static u8 i = 0;
+
+        if (CVar_GetS32("gScuffedLink", 0)) {
+            if (i < PLAYER_LIMB_MAX) {
+                scuffScales[limbIndex] = (Rand_ZeroOne() + 0.01f) * 2.0f;
+                i++;
+            }
+            Matrix_Scale(scuffScales[limbIndex], scuffScales[limbIndex], scuffScales[limbIndex], MTXMODE_APPLY);
+        } else {
+            i = 0;
+        }
+
+        if (CVar_GetS32("gThiccLink", 0)) {
+            if (limbIndex == PLAYER_LIMB_WAIST) {
+                Matrix_Scale(2.0f, 2.0f, 2.0f, MTXMODE_APPLY);
+            }
+            if (limbIndex > PLAYER_LIMB_WAIST && limbIndex < PLAYER_LIMB_UPPER) {
+                Matrix_Scale(0.8f, 0.8f, 0.8f, MTXMODE_APPLY);
+            }
+        }
+
+        if (CVar_GetS32("gFlipLink", 0)) {
+            Matrix_Scale(1.0f, -1.0f, 1.0f, MTXMODE_APPLY);
+        }
+
         if (limbIndex == PLAYER_LIMB_HEAD) {
             if (CVar_GetS32("gBigHead", 0)) {
                 Matrix_Scale(3.0f, 3.0f, 3.0f, MTXMODE_APPLY);

@@ -787,6 +787,19 @@ namespace GameMenuBar {
 
             if (ImGui::BeginMenu("Gameplay"))
             {
+                if (ImGui::BeginMenu("Chaos (TESTING)"))
+                {
+                    UIWidgets::EnhancementCheckbox("Scuffed Link", "gScuffedLink");
+                    UIWidgets::EnhancementCheckbox("Thicc Link", "gThiccLink");
+                    UIWidgets::EnhancementCheckbox("Rupee Challenge", "gExplodingRupeeChallenge");
+                    UIWidgets::EnhancementCheckbox("Space Trip", "gTripToSpace");
+                    UIWidgets::EnhancementCheckbox("Cow Ritual", "gCowRitual");
+                    UIWidgets::EnhancementCheckbox("Flip Link", "gFlipLink");
+                    UIWidgets::EnhancementCheckbox("No Start Button", "gNoStart");
+                    UIWidgets::EnhancementCheckbox("Back to Title Screen", "gBackToTitle");
+                    UIWidgets::EnhancementCheckbox("Flashbang", "gFlashbang");
+                    ImGui::EndMenu();
+                };
                 UIWidgets::EnhancementCheckbox("Chaos Mode", "gChaosEnabled");
                 UIWidgets::Tooltip("Toggles Chaos mode");
                 if (ImGui::BeginMenu("Time Savers"))

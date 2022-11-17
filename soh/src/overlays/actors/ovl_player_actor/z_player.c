@@ -10900,6 +10900,30 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     s32 pad;
 
     static s16 redoTimer = 0;
+    static s16 titleTimer = 0;
+    
+    static s16 flashTimer = 0;
+
+    if (CVar_GetS32("gFlashbang", 0)) {
+        if (flashTimer == 0) {
+            Audio_PlayActorSound2(&this->actor, NA_SE_IT_EXPLOSION_LIGHT);
+            play->envCtx.fillScreen = true;
+            play->envCtx.screenFillColor[0] = 255;
+            play->envCtx.screenFillColor[1] = 255;
+            play->envCtx.screenFillColor[2] = 255;
+            play->envCtx.screenFillColor[3] = 0;
+        }
+        if (flashTimer < 60) {
+            play->envCtx.screenFillColor[3] = CLAMP_MAX(play->envCtx.screenFillColor[3] + 15, 255);
+        } else if (flashTimer <= 120) {
+            CVar_SetS32("gFlashbang", 0);
+        }
+        flashTimer++;
+    } else {
+        play->envCtx.fillScreen = false;
+        play->envCtx.screenFillColor[3] = 0;
+        flashTimer = 0;
+    }
 
     if (CVar_GetS32("gRedoRando", 0)) {
         if (redoTimer == 0) {
@@ -10937,6 +10961,40 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     }
     else {
         redoTimer = 0;
+    }
+
+    if (CVar_GetS32("gBackToTitle", 0)) {
+        if (titleTimer == 0) {
+            // Play ReDead scream SFX
+            Audio_PlaySoundGeneral(NA_SE_VO_ST_DAMAGE, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+            // Freeze player in place and disable inputs
+            this->stateFlags2 |= PLAYER_STATE2_PAUSE_MOST_UPDATING;
+        } else if (titleTimer == 25) {
+            // Reset screen color
+            D_801614B0.r = 0;
+            D_801614B0.g = 0;
+            D_801614B0.b = 0;
+            D_801614B0.a = 0;
+            // Reset the game
+            titleTimer = 0;
+            play->state.running = false;
+            CVar_SetS32("gBackToTitle", 0);
+            this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            SET_NEXT_GAMESTATE(&play->state, Opening_Init, OpeningContext);
+            return;
+        } else if (titleTimer < 25) {
+            // Turn screen red
+            if (D_801614B0.r < 255) {
+                D_801614B0.r += 15;
+            }
+            D_801614B0.g = 0;
+            D_801614B0.b = 0;
+            D_801614B0.a = 255;
+        }
+        titleTimer++;
+    }
+    else {
+        titleTimer = 0;
     }
 
     sControlInput = input;
@@ -11036,15 +11094,46 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                                        vtx[3].z, 0, cowYaw[3], 0, 0);
             cow[4] = (EnCow*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COW, vtx[4].x, this->actor.world.pos.y,
                                        vtx[4].z, 0, cowYaw[4], 0, 0);
+
+            for (i = 0; i < 5; i++) {
+                // Persistent across rooms
+                cow[i]->actor.room = -1;
+                if (cow[i]->actor.child != NULL) {
+                    Actor_Kill(cow[i]->actor.child);
+                }
+            }
+            ritualFlame->actor.room = -1;
             cowRitual = true;
+        } else {
+            Vec3f origin = this->actor.world.pos;
+            Vec3f vtx[5];
+            s16 cowYaw[5];
+
+            vtx[0].x = origin.x + 100.0f;
+            vtx[0].z = origin.z;
+            cowYaw[0] = DEGF_TO_BINANG(0.0f);
+
+            for (i = 1; i < 5; i++) {
+                vtx[i].x = origin.x + (vtx[i - 1].x - origin.x) * Math_CosS(DEGF_TO_BINANG(72.0f)) -
+                           (vtx[i - 1].z - origin.z) * Math_SinS(DEGF_TO_BINANG(72.0f));
+                vtx[i].z = origin.z + (vtx[i - 1].x - origin.x) * Math_SinS(DEGF_TO_BINANG(72.0f)) +
+                           (vtx[i - 1].z - origin.z) * Math_CosS(DEGF_TO_BINANG(72.0f));
+
+                cowYaw[i] = cowYaw[i - 1] - DEGF_TO_BINANG(72.0f);
+            }
+
+            ritualFlame->actor.world.pos = this->actor.world.pos;
+            for (i = 0; i < 5; i++) {
+                cow[i]->actor.world.pos.x = vtx[i].x;
+                cow[i]->actor.world.pos.y = this->actor.world.pos.y;
+                cow[i]->actor.world.pos.z = vtx[i].z;
+                cow[i]->actor.world.rot.z = cowYaw[i];
+            }
         }
     } else {
         if (cowRitual) {
             for (i = 0; i < 5; i++) {
                 if (cow[i] != NULL) {
-                    if (cow[i]->actor.child != NULL) {
-                        Actor_Kill(cow[i]->actor.child);
-                    }
                     Actor_Kill(cow[i]);
                     cow[i] = NULL;
                 }
@@ -11123,6 +11212,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
     static f32 j = 0;
     static Vec3f rupeeOrigin = { 0 };
+    static u8 rupeeStartTimer = 0;
 
     if (CVar_GetS32("gExplodingRupeeChallenge", 0)) {
         if (explodeRupee == NULL) {
@@ -11131,13 +11221,31 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                             this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 1);
             explodeRupee->room = -1;
             rupeeOrigin = this->actor.world.pos;
+            Audio_PlayActorSound2(&this->actor, NA_SE_SY_START_SHOT);
+            rupeeStartTimer = 40;
         } else {
+            if (rupeeStartTimer != 0) {
+                // freeze Link in place
+                this->stateFlags2 |= PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            } else {
+                // unfreeze Link
+                this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
+            }
             if (this->damageEffect == PLAYER_DMGEFFECT_KNOCKBACK) {
+                // HALF HEART, BABY!!!
+                if (gSaveContext.health < 8) {
+                    gSaveContext.health = 8;
+                } else {
+                    gSaveContext.health = 0;
+                }
+                Player_SetupInvincibilityNoDamageFlash(this, -20);
                 func_80078884(NA_SE_SY_ERROR);
                 CVar_SetS32("gExplodingRupeeChallenge", 0);
+                rupeeStartTimer = 0;
             } else if (Math_Vec3f_DistXZ(&rupeeOrigin, &this->actor.world.pos) >= 160.0f) {
                 Audio_PlayFanfare(NA_BGM_SMALL_ITEM_GET | 0x900);
                 CVar_SetS32("gExplodingRupeeChallenge", 0);
+                rupeeStartTimer = 0;
             }
             explodeRupee->world.pos.x = 150.0f * Math_CosF(j) + rupeeOrigin.x;
             explodeRupee->world.pos.z = 150.0f * Math_SinF(j) + rupeeOrigin.z;
@@ -11148,6 +11256,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                 j = DEGF_TO_RADF(0.0f);
             }
         }
+        DECR(rupeeStartTimer);
     }
     else {
         if (explodeRupee != NULL) {
@@ -11187,6 +11296,13 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             this->actor.gravity = 1.0f;
             Player_SetupReturnToStandStill(this, play);
             Player_SpawnExplosion(play, this);
+            // JUST ONE HEART, BABY!!!
+            if (gSaveContext.health < 16) {
+                gSaveContext.health = 16;
+            } else {
+                gSaveContext.health = 0;
+            }
+            Player_SetupInvincibilityNoDamageFlash(this, -20);
         }
         // If player hits a ceiling, go back to normal gameplay
         else if (this->actor.bgCheckFlags & (1 << 4)) {
@@ -11374,7 +11490,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                 }
                 break;
         }
-    } else if (!CVar_GetS32("gRedoRando", 0)) {
+    } else if (!CVar_GetS32("gRedoRando", 0) && !CVar_GetS32("gBackToTitle", 0)) {
         D_801614B0.r = 0;
         D_801614B0.g = 0;
         D_801614B0.b = 0;
@@ -12028,9 +12144,7 @@ void Player_Draw(Actor* thisx, PlayState* play2) {
             lod = 1;
         }
 
-        if (CVar_GetS32("gScuffedLink", 0)) {
-            lod = 1;
-        } else if (CVar_GetS32("gDisableLOD", 0) != 0) {
+        if (CVar_GetS32("gDisableLOD", 0) != 0) {
             lod = 0;
         }
 

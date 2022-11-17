@@ -233,6 +233,10 @@ void PadMgr_ProcessInputs(PadMgr* padMgr) {
                     input->cur.button &= ~(BTN_Z);
                 }
 
+                if (CVar_GetS32("gNoStart", 0)) {
+                    input->cur.button &= ~(BTN_START);
+                }
+
                 if (chaosEffectReverseControls) {
                     if (input->cur.stick_x == -128) {
                         input->cur.stick_x = 127;
