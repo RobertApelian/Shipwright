@@ -9,6 +9,7 @@
 #include <variables.h>
 #undef Polygon
 
+#include "../OTRGlobals.h"
 #include "debugconsole.h"
 
 #include <algorithm>
@@ -180,10 +181,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TAKE_AMMO(0x84, ITEM_BOW),
 	CMD_TAKE_AMMO(0x85, ITEM_SLINGSHOT),
 
-	// You can carry 50 chus if you can carry bombs, 0 otherwise
-	CMD_ONE_SHOT(0xC0, PL_BYTES(sizeof(uint32_t)), { 
+	// You can carry 50 chus if you have bomb bag when chus are not in logic, or have found chus previously with chus in logic
+	CMD_ONE_SHOT(0xC0, PL_BYTES(sizeof(uint32_t)), {
 		uint32_t amt = Read<uint32_t>(payload, 0);
-		auto cap = CUR_CAPACITY(UPG_BOMB_BAG) > 0 ? 50 : 0;
+		size_t cap = 50;
+		bool bombchusInLogic = OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOMBCHUS_IN_LOGIC);
+		if ((bombchusInLogic && INV_CONTENT(ITEM_BOMBCHU) == ITEM_NONE) ||
+			(!bombchusInLogic && CUR_CAPACITY(UPG_BOMB_BAG) == 0)) {
+			cap = 0;
+		}
 		AMMO(ITEM_BOMBCHU) = s_add(AMMO(ITEM_BOMBCHU), amt, cap);
 	}),
 	CMD_GIVE_AMMO(0xC1, ITEM_STICK, UPG_STICKS),
