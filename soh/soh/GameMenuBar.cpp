@@ -796,7 +796,7 @@ namespace GameMenuBar {
                     UIWidgets::EnhancementCheckbox("Cow Ritual", "gCowRitual");
                     UIWidgets::EnhancementCheckbox("Flip Link", "gFlipLink");
                     UIWidgets::EnhancementCheckbox("No Start Button", "gNoStart");
-                    UIWidgets::EnhancementCheckbox("Back to Title Screen", "gBackToTitle");
+                    UIWidgets::EnhancementCheckbox("Back to Home", "gBackToHome");
                     UIWidgets::EnhancementCheckbox("Flashbang", "gFlashbang");
                     ImGui::EndMenu();
                 };

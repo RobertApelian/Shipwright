@@ -10963,7 +10963,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         redoTimer = 0;
     }
 
-    if (CVar_GetS32("gBackToTitle", 0)) {
+    if (CVar_GetS32("gBackToHome", 0)) {
         if (titleTimer == 0) {
             // Play ReDead scream SFX
             Audio_PlaySoundGeneral(NA_SE_VO_ST_DAMAGE, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
@@ -10978,9 +10978,8 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             // Reset the game
             titleTimer = 0;
             play->state.running = false;
-            CVar_SetS32("gBackToTitle", 0);
             this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
-            SET_NEXT_GAMESTATE(&play->state, Opening_Init, OpeningContext);
+            SET_NEXT_GAMESTATE(&play->state, FileChoose_Init, FileChooseContext);
             return;
         } else if (titleTimer < 25) {
             // Turn screen red
