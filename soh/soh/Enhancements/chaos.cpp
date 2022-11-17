@@ -9,6 +9,9 @@
 #include <variables.h>
 #undef Polygon
 
+#include "../OTRGlobals.h"
+#include "debugconsole.h"
+
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -59,8 +62,8 @@ static std::map<uint8_t, CommandCreator> kCommands {
 			CR_ONE_SHOT({ toggle_age(); }))),
 
 	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
-	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 2.f, 2.f, 2.f); }),
-	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.5f, 0.5f, 0.5f); }),
+	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 1.5f, 1.5f, 1.5f); }),
+	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
 
 	CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
 	CMD_TIMED_BOOL_CVAR(0x07, "gChaosNoHud"),
@@ -139,29 +142,36 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// Gravity (- down, + up)
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_gravity_modifier++; },
-                [&]() { g_gravity_modifier--; })),
+                [&]() { g_gravity_modifier += 3; },
+                [&]() { g_gravity_modifier -= 3; })),
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_gravity_modifier--; },
-                [&]() { g_gravity_modifier++; })),
+                [&]() { g_gravity_modifier -= 3; },
+                [&]() { g_gravity_modifier += 3; })),
 
 	// Climb speed
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_climb_speed_modifier++; },
-                [&]() { g_climb_speed_modifier--; })),
+                [&]() { g_climb_speed_modifier += 3; },
+                [&]() { g_climb_speed_modifier -= 3; })),
 
 	// HS Length 
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_hookshot_length_modifier++; },
-                [&]() { g_hookshot_length_modifier--; })),
+                [&]() { g_hookshot_length_modifier += 3; },
+                [&]() { g_hookshot_length_modifier -= 3; })),
 
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSpawnExplosion"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRestrainLink"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gTripToSpace"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRedoRando"),
+
+	// Paper link
+	CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+		CR_ONE_SHOT_TIMED(
+			[&]() { chaosEffectPaperLink = 1; },
+			[&]() { chaosEffectPaperLink = 0; chaosEffectResetLinkScale = 1; })),
+
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
 	CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
@@ -171,10 +181,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TAKE_AMMO(0x84, ITEM_BOW),
 	CMD_TAKE_AMMO(0x85, ITEM_SLINGSHOT),
 
-	// You can carry 50 chus if you can carry bombs, 0 otherwise
-	CMD_ONE_SHOT(0xC0, PL_BYTES(sizeof(uint32_t)), { 
+	// You can carry 50 chus if you have bomb bag when chus are not in logic, or have found chus previously with chus in logic
+	CMD_ONE_SHOT(0xC0, PL_BYTES(sizeof(uint32_t)), {
 		uint32_t amt = Read<uint32_t>(payload, 0);
-		auto cap = CUR_CAPACITY(UPG_BOMB_BAG) > 0 ? 50 : 0;
+		size_t cap = 50;
+		bool bombchusInLogic = OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOMBCHUS_IN_LOGIC);
+		if ((bombchusInLogic && INV_CONTENT(ITEM_BOMBCHU) == ITEM_NONE) ||
+			(!bombchusInLogic && CUR_CAPACITY(UPG_BOMB_BAG) == 0)) {
+			cap = 0;
+		}
 		AMMO(ITEM_BOMBCHU) = s_add(AMMO(ITEM_BOMBCHU), amt, cap);
 	}),
 	CMD_GIVE_AMMO(0xC1, ITEM_STICK, UPG_STICKS),
