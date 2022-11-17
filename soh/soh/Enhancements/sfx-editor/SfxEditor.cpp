@@ -357,3 +357,28 @@ void InitSfxEditor() {
     //Draw the bar in the menu.
     SohImGui::AddWindow("Enhancements", "SFX Editor", DrawSfxEditor);
 }
+
+void RandomizeAllSfx() {
+    std::vector<u16> types = { SEQ_BGM_WORLD, SEQ_BGM_EVENT, SEQ_BGM_BATTLE, SEQ_OCARINA, SEQ_FANFARE, SEQ_INSTRUMENT, SEQ_SFX };
+
+    for (auto type : types) {
+        std::vector<u16> values;
+        for (const auto& [value, seqData] : sequenceMap) {
+            if (std::get<2>(seqData) == type) {
+                values.push_back(value);
+            }
+        }
+        Shuffle(values);
+        for (const auto& [defaultValue, seqData] : sequenceMap) {
+            const auto& [name, sfxKey, seqType] = seqData;
+            const std::string cvarKey = "gSfxEditor_" + sfxKey;
+            if (seqType == type) {
+                const int randomValue = values.back();
+                CVar_SetS32(cvarKey.c_str(), randomValue);
+                values.pop_back();
+            }
+        }
+    }
+
+    SohImGui::RequestCvarSaveOnNextTick();
+}

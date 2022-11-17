@@ -1,6 +1,7 @@
 #pragma once
 
 void InitSfxEditor();
+void RandomizeAllSfx();
 
 #define INSTRUMENT_OFFSET 0x81
 

@@ -11,6 +11,8 @@
 
 #include "../OTRGlobals.h"
 #include "debugconsole.h"
+#include "sfx-editor/SfxEditor.h"
+#include "cosmetics/CosmeticsEditor.h"
 
 #include <algorithm>
 #include <functional>
@@ -171,6 +173,9 @@ static std::map<uint8_t, CommandCreator> kCommands {
 		CR_ONE_SHOT_TIMED(
 			[&]() { chaosEffectPaperLink = 1; },
 			[&]() { chaosEffectPaperLink = 0; chaosEffectResetLinkScale = 1; })),
+
+	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { RandomizeAllSfx(); }),
+	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { RandomizeAllCosmetics(); }),
 
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
