@@ -105,7 +105,7 @@ static std::map<uint8_t, CommandCreator> kCommands {
 
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableFPSView"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gForceNormalArrows"),
-	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableLedgeClimb"),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableLedges"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFloorIsLava"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gExplodingRolls"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFreezingRolls"),
@@ -316,7 +316,7 @@ extern "C" {
 		CVar_SetS32("gEnemyHealthBar", 0);
 		CVar_SetS32("gDisableFPSView", 0);
 		CVar_SetS32("gForceNormalArrows", 0);
-		CVar_SetS32("gDisableLedgeClimb", 0);
+		CVar_SetS32("gDisableLedges", 0);
 		CVar_SetS32("gFloorIsLava", 0);
 		CVar_SetS32("gExplodingRolls", 0);
 		CVar_SetS32("gFreezingRolls", 0);

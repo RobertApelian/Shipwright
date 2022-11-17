@@ -4281,7 +4281,7 @@ s32 Player_SetupWallJumpBehavior(Player* this, PlayState* play) {
         }
 
         // Chaos
-        if (CVar_GetS32("gDisableLedgeClimb", 0)) {
+        if (CVar_GetS32("gDisableLedges", 0)) {
             canJumpToLedge = 0;
         }
 
@@ -5102,6 +5102,11 @@ void Player_SetupMidairBehavior(Player* this, PlayState* play) {
                     return;
                 }
 
+                if (CVar_GetS32("gDisableLedges", 0)) {
+                    Player_PlayAnimLoop(play, this, &gPlayerAnim_link_normal_landing_wait);
+                    return;
+                }
+                
                 if ((sFloorProperty == 9) || (sPlayerYDistToFloor <= this->ageProperties->unk_34) ||
                     !Player_SetupGrabLedgeInsteadOfFalling(this, play)) {
                     Player_PlayAnimLoop(play, this, &gPlayerAnim_link_normal_landing_wait);
@@ -10902,10 +10907,11 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     static s16 redoTimer = 0;
     static s16 titleTimer = 0;
     
-    static s16 flashTimer = 0;
+    #define FLASH_TIME 120
+    static s16 flashTimer = FLASH_TIME;
 
     if (CVar_GetS32("gFlashbang", 0)) {
-        if (flashTimer == 0) {
+        if (flashTimer == FLASH_TIME) {
             Audio_PlayActorSound2(&this->actor, NA_SE_IT_EXPLOSION_LIGHT);
             play->envCtx.fillScreen = true;
             play->envCtx.screenFillColor[0] = 255;
@@ -10913,16 +10919,18 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             play->envCtx.screenFillColor[2] = 255;
             play->envCtx.screenFillColor[3] = 0;
         }
-        if (flashTimer < 60) {
-            play->envCtx.screenFillColor[3] = CLAMP_MAX(play->envCtx.screenFillColor[3] + 15, 255);
-        } else if (flashTimer <= 120) {
-            CVar_SetS32("gFlashbang", 0);
+        if (flashTimer > (FLASH_TIME / 2)) {
+            play->envCtx.screenFillColor[3] = CLAMP_MAX(play->envCtx.screenFillColor[3] + 15, 220);
         }
-        flashTimer++;
+        DECR(flashTimer);
+        // Reset flashbang if timer reaches zero, OR 1% chance to do another flashbang
+        if (flashTimer == 0 || Rand_ZeroOne() < 0.01f) {
+            flashTimer = FLASH_TIME;
+        }
     } else {
         play->envCtx.fillScreen = false;
         play->envCtx.screenFillColor[3] = 0;
-        flashTimer = 0;
+        flashTimer = FLASH_TIME;
     }
 
     if (CVar_GetS32("gRedoRando", 0)) {

@@ -798,6 +798,7 @@ namespace GameMenuBar {
                     UIWidgets::EnhancementCheckbox("No Start Button", "gNoStart");
                     UIWidgets::EnhancementCheckbox("Back to Home", "gBackToHome");
                     UIWidgets::EnhancementCheckbox("Flashbang", "gFlashbang");
+                    UIWidgets::EnhancementCheckbox("Disable Ledges", "gDisableLedges");
                     ImGui::EndMenu();
                 };
                 UIWidgets::EnhancementCheckbox("Chaos Mode", "gChaosEnabled");
