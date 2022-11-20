@@ -186,7 +186,7 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gPogoStick"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSunsSong"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
-	CMD_ONE_SHOT_CVAR(CMD_ID++, "gButtonSwap"),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gButtonSwap"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRandoMagic"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoStrength"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoWater"),

@@ -10965,8 +10965,43 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     }
 
     if (CVar_GetS32("gSunsSong", 0)) {
-        gSaveContext.sunsSongState = SUNSSONG_START;
-        CVar_SetS32("gSunsSong", 0);
+        switch (play->sceneNum) {
+            case SCENE_YDAN:
+            case SCENE_YDAN_BOSS:
+            case SCENE_DDAN:
+            case SCENE_DDAN_BOSS:
+            case SCENE_BDAN:
+            case SCENE_BDAN_BOSS:
+            case SCENE_BMORI1:
+            case SCENE_MORIBOSSROOM:
+            case SCENE_HIDAN:
+            case SCENE_FIRE_BS:
+            case SCENE_MIZUSIN:
+            case SCENE_MIZUSIN_BS:
+            case SCENE_JYASINZOU:
+            case SCENE_JYASINBOSS:
+            case SCENE_HAKADAN:
+            case SCENE_HAKADAN_BS:
+            case SCENE_HAKADANCH:
+            case SCENE_ICE_DOUKUTO:
+            case SCENE_GANON:
+            case SCENE_GANON_BOSS:
+            case SCENE_GANON_FINAL:
+            case SCENE_MEN:
+            case SCENE_GERUDOWAY:
+            case SCENE_GANONTIKA:
+            case SCENE_GANON_SONOGO:
+            case SCENE_GANON_DEMO:
+            case SCENE_GANONTIKA_SONOGO:
+            case SCENE_TAKARAYA:
+                CVar_SetS32("gSunsSong", 0);
+                break;
+            
+            default:
+                gSaveContext.sunsSongState = SUNSSONG_START;
+                CVar_SetS32("gSunsSong", 0);
+                break;
+        }
     }
 
     static s16 redoTimer = 0;
@@ -11686,8 +11721,10 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
 
         if (!(this->skelAnime.moveFlags & 0x80)) {
-            if (CVar_GetS32("gSlipperyFloor", 0) || ((this->actor.bgCheckFlags & 1) && (((sFloorSpecialProperty == 5) && (this->currentBoots != PLAYER_BOOTS_IRON)) ||
-                ((this->currentBoots == PLAYER_BOOTS_HOVER))) &&
+            if (CVar_GetS32("gSlipperyFloor", 0) ||
+                ((this->actor.bgCheckFlags & 1) &&
+                 (((sFloorSpecialProperty == 5) && (this->currentBoots != PLAYER_BOOTS_IRON)) ||
+                  ((this->currentBoots == PLAYER_BOOTS_HOVER))) &&
                  !(this->stateFlags1 & (PLAYER_STATE1_SWIMMING | PLAYER_STATE1_IN_CUTSCENE)))) {
                 f32 sp70 = this->linearVelocity;
                 s16 sp6E = this->currentYaw;
