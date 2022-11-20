@@ -5573,7 +5573,7 @@ s32 Player_SetupJumpSlashOrRoll(Player* this, PlayState* play) {
                         Player_SetupJump(this, &gPlayerAnim_link_normal_jump, REG(69) / 100.0f, play);
                     } else {
                         if (CVar_GetS32("gForwardJump", 0)) {
-                            Player_SetupBackflipOrSidehop(this, play, relativeStickInput);
+                            Player_SetupBackflipOrSidehop(this, play, 0);
                         }
                         else {
                             Player_SetupRolling(this, play);
@@ -5658,6 +5658,10 @@ void Player_ClearLookAndAttention(Player* this, PlayState* play) {
 s32 Player_SetupRollOrPutAway(Player* this, PlayState* play) {
     if (CVar_GetS32("gSonicRoll", 0)) {
         Player_SetupRolling(this, play);
+    } else if (CVar_GetS32("gPogoStick", 0)) {
+        // Hopping
+        Player_SetupJump(this, &gPlayerAnim_link_normal_jump, REG(69) / 100.0f, play);
+        Player_SetupBackflipOrSidehop(this, play, 0);
     } else if (!Player_SetupStartUnfriendlyZTargeting(this) && (D_808535E0 == 0) &&
                !(this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) && CHECK_BTN_ALL(sControlInput->press.button, BTN_A)) {
         if (Player_CanRoll(this, play)) {
@@ -5844,7 +5848,7 @@ s32 Player_SetupDefaultSpawnBehavior(PlayState* play, Player* this, f32 arg2) {
 
     posY = this->actor.world.pos.y;
     if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z, &posY,
-                             &waterbox) != 0) {
+                             &waterbox) != 0 && !CVar_GetS32("gNoWater", 0)) {
         posY -= this->actor.world.pos.y;
         if (this->ageProperties->unk_24 <= posY) {
             Player_SetActionFunc(play, this, Player_SpawnSwimming, 0);
@@ -6069,6 +6073,9 @@ void Player_RiseFromDive(PlayState* play, Player* this) {
 }
 
 void func_8083D36C(PlayState* play, Player* this) {
+    if (CVar_GetS32("gNoWater", 0)) {
+        return;
+    }
     if ((this->currentBoots != PLAYER_BOOTS_IRON) || !(this->actor.bgCheckFlags & 1)) {
         Player_ResetAttributesAndHeldActor(play, this);
 
@@ -10904,6 +10911,64 @@ void Player_SpawnExplosion(PlayState* play, Player* this) {
 void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     s32 pad;
 
+    if (CVar_GetS32("gForceUnequip", 0)) {
+        Player_UnequipItem(play, this);
+        for (s32 i = 1; i < ARRAY_COUNT(gSaveContext.equips.buttonItems); i++) {
+            gSaveContext.equips.buttonItems[i] = ITEM_NONE;
+        }
+        CVar_SetS32("gForceUnequip", 0);
+    }
+
+    if (CVar_GetS32("gShuffleItems", 0)) {
+        u8 items[3] = { ITEM_NONE };
+        u8 originalItems[3] = { ITEM_NONE };
+        u8 unshuffledItems =  0;
+        s32 i;
+
+        for (i = 0; i < 3; i++) {
+            originalItems[i] = gSaveContext.equips.buttonItems[i + 1];
+        }
+
+        for (i = 0; i < 3; i++) {
+            items[i] = gSaveContext.equips.buttonItems[i + 1];
+        }
+        for (i = ARRAY_COUNT(items) - 1; i > 0; i--) {
+            // Pick a random index from 0 to i
+            int j = Rand_Next() % (i + 1);
+
+            int temp = items[i];
+            items[i] = items[j];
+            items[j] = temp;
+        }
+        for (i = 0; i < 3; i++) {
+            gSaveContext.equips.buttonItems[i + 1] = items[i];
+            if (items[i] == originalItems[i]) {
+                unshuffledItems++;
+            }
+        }
+        
+        Player_UnequipItem(play, this);
+        // Never allow the items to remain in the exact same order!
+        if (unshuffledItems < 3) {
+            CVar_SetS32("gShuffleItems", 0);
+        }
+    }
+
+    if (CVar_GetS32("gRandoMagic", 0) && gSaveContext.magicLevel > 0) {
+        // Randomize magic based on max
+        if (gSaveContext.doubleMagic) {
+            gSaveContext.magic = 0x60 * Rand_ZeroOne();
+        } else {
+            gSaveContext.magic = 0x30 * Rand_ZeroOne();
+        }
+        CVar_SetS32("gRandoMagic", 0);
+    }
+
+    if (CVar_GetS32("gSunsSong", 0)) {
+        gSaveContext.sunsSongState = SUNSSONG_START;
+        CVar_SetS32("gSunsSong", 0);
+    }
+
     static s16 redoTimer = 0;
     static s16 titleTimer = 0;
     
@@ -13376,6 +13441,11 @@ void Player_UpdateSwimIdle(Player* this, PlayState* play) {
     f32 sp34;
     s16 sp32;
 
+    if (CVar_GetS32("gNoWater", 0)) {
+        Player_SetupReturnToStandStill(this, play);
+        return;
+    }
+
     Player_LoopAnimContinuously(play, this, &gPlayerAnim_link_swimer_swim_wait);
     func_8084B000(this);
 
@@ -13433,6 +13503,11 @@ void Player_Swim(Player* this, PlayState* play) {
     f32 sp34;
     s16 sp32;
     s16 temp;
+
+    if (CVar_GetS32("gNoWater", 0)) {
+        Player_SetupReturnToStandStill(this, play);
+        return;
+    }
 
     this->stateFlags2 |= PLAYER_STATE2_DISABLE_MOVE_ROTATION_WHILE_Z_TARGETING;
 

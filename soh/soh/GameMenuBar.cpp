@@ -790,15 +790,15 @@ namespace GameMenuBar {
                 if (ImGui::BeginMenu("Chaos (TESTING)"))
                 {
                     UIWidgets::EnhancementCheckbox("Scuffed Link", "gScuffedLink");
-                    UIWidgets::EnhancementCheckbox("Thicc Link", "gThiccLink");
-                    UIWidgets::EnhancementCheckbox("Rupee Challenge", "gExplodingRupeeChallenge");
-                    UIWidgets::EnhancementCheckbox("Space Trip", "gTripToSpace");
-                    UIWidgets::EnhancementCheckbox("Cow Ritual", "gCowRitual");
-                    UIWidgets::EnhancementCheckbox("Flip Link", "gFlipLink");
-                    UIWidgets::EnhancementCheckbox("No Start Button", "gNoStart");
-                    UIWidgets::EnhancementCheckbox("Back to Home", "gBackToHome");
-                    UIWidgets::EnhancementCheckbox("Flashbang", "gFlashbang");
-                    UIWidgets::EnhancementCheckbox("Disable Ledges", "gDisableLedges");
+                    UIWidgets::EnhancementCheckbox("Pogo Stick", "gPogoStick");
+                    UIWidgets::EnhancementCheckbox("Force Sun's Song", "gSunsSong");
+                    UIWidgets::EnhancementCheckbox("Force A Press", "gPressA");
+                    UIWidgets::EnhancementCheckbox("Swap All Buttons", "gButtonSwap");
+                    UIWidgets::EnhancementCheckbox("Randomize Magic", "gRandoMagic");
+                    UIWidgets::EnhancementCheckbox("Force No Strength", "gNoStrength");
+                    UIWidgets::EnhancementCheckbox("Removes All Water", "gNoWater");
+                    UIWidgets::EnhancementCheckbox("Force Unequip Current Item", "gForceUnequip");
+                    UIWidgets::EnhancementCheckbox("Shuffle Equipped Items", "gShuffleItems");
                     ImGui::EndMenu();
                 };
                 UIWidgets::EnhancementCheckbox("Chaos Mode", "gChaosEnabled");

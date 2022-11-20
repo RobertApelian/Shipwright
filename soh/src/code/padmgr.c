@@ -237,6 +237,53 @@ void PadMgr_ProcessInputs(PadMgr* padMgr) {
                     input->cur.button &= ~(BTN_START);
                 }
 
+                static u8 aliasGenerated = false;
+
+                if (CVar_GetS32("gButtonSwap", 0)) {
+                    // Create array to alias buttons
+                    static u8 alias[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+
+                    if (!aliasGenerated) {
+                        // Shuffle the array
+                        for (int i = ARRAY_COUNT(alias) - 1; i > 0; i--) {
+                            // Pick a random index from 0 to i
+                            int j = Rand_Next() % (i + 1);
+
+                            int temp = alias[i];
+                            alias[i] = alias[j];
+                            alias[j] = temp;
+                        }
+
+                        aliasGenerated = true;
+                    }
+                    
+                    u8 originalInputs[16] = { 0 };
+                    s32 i;
+                    
+                    // Store original inputs in array
+                    for (i = 0; i < 16; i++) {
+                        originalInputs[i] = CHECK_BTN_ALL(input->cur.button, (1 << i));
+                    }
+
+                    // Clear all input bits
+                    input->cur.button &= 0;
+
+                    // Set input bits based on original input array indices equal to 1 (except for modifier btns)
+                    for (i = 0; i < 16; i++) {
+                        // Check if original button is on, if so set to aliased button bit instead
+                        if (originalInputs[i]) {
+                            input->cur.button |= (1 << alias[i]);
+                        }
+                    }
+                } else {
+                    aliasGenerated = false;
+                }
+
+                if (CVar_GetS32("gPressA", 0)) {
+                    input->cur.button |= (BTN_A);
+                    CVar_SetS32("gPressA", 0);
+                }
+
                 if (chaosEffectReverseControls) {
                     if (input->cur.stick_x == -128) {
                         input->cur.stick_x = 127;

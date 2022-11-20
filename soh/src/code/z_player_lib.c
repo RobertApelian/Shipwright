@@ -489,6 +489,10 @@ s32 Player_IsBurningStickInRange(PlayState* play, Vec3f* pos, f32 xzRange, f32 y
 s32 Player_GetStrength(void) {
     s32 strengthUpgrade = CUR_UPG_VALUE(UPG_STRENGTH);
 
+    if (CVar_GetS32("gNoStrength", 0)) {
+        return PLAYER_STR_NONE;
+    }
+
     if (CVar_GetS32("gTimelessEquipment", 0) || LINK_IS_ADULT) {
         return strengthUpgrade;
     } else if (strengthUpgrade != 0) {
@@ -962,14 +966,30 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
         static f32 scuffScales[PLAYER_LIMB_MAX] = { 0.0f };
         static u8 i = 0;
 
-        if (CVar_GetS32("gScuffedLink", 0)) {
-            if (i < PLAYER_LIMB_MAX) {
-                scuffScales[limbIndex] = (Rand_ZeroOne() + 0.01f) * 2.0f;
-                i++;
+        if (CVar_GetS32("gPogoStick", 0)) {
+            switch (limbIndex) {
+                case PLAYER_LIMB_R_FOOT:
+                case PLAYER_LIMB_R_THIGH:
+                case PLAYER_LIMB_R_SHIN:
+                case PLAYER_LIMB_R_SHOULDER:
+                case PLAYER_LIMB_R_FOREARM:
+                case PLAYER_LIMB_R_HAND:
+                case PLAYER_LIMB_L_SHOULDER:
+                case PLAYER_LIMB_L_FOREARM:
+                case PLAYER_LIMB_L_HAND:
+                    Matrix_Scale(0.0f, 0.0f, 0.0f, MTXMODE_APPLY);
+                
             }
-            Matrix_Scale(scuffScales[limbIndex], scuffScales[limbIndex], scuffScales[limbIndex], MTXMODE_APPLY);
         } else {
-            i = 0;
+            if (CVar_GetS32("gScuffedLink", 0)) {
+                if (i < PLAYER_LIMB_MAX) {
+                    scuffScales[limbIndex] = (Rand_ZeroOne() + 0.01f) * 2.0f;
+                    i++;
+                }
+                Matrix_Scale(scuffScales[limbIndex], scuffScales[limbIndex], scuffScales[limbIndex], MTXMODE_APPLY);
+            } else {
+                i = 0;
+            }
         }
 
         if (CVar_GetS32("gThiccLink", 0)) {
