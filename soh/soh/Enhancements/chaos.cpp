@@ -148,8 +148,8 @@ static std::map<uint8_t, CommandCreator> kCommands {
                 [&]() { g_gravity_modifier -= 3; })),
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 			CR_ONE_SHOT_TIMED(
-                [&]() { g_gravity_modifier -= 3; },
-                [&]() { g_gravity_modifier += 3; })),
+                [&]() { g_gravity_modifier -= 4; },
+                [&]() { g_gravity_modifier += 4; })),
 
 	// Climb speed
     CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
@@ -183,6 +183,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFlashbang"),
 	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { RandomizeAllSfx(); }),
 	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { RandomizeAllCosmetics(); }),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gPogoStick"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSunsSong"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gButtonSwap"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRandoMagic"),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoStrength"),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoWater"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gForceUnequip"),
+	CMD_ONE_SHOT_CVAR(CMD_ID++, "gShuffleItems"),
 
 	CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
 	CMD_TAKE_AMMO(0x81, ITEM_STICK),
@@ -366,6 +375,9 @@ extern "C" {
 		CVar_SetS32("gFlipLink", 0);
 		CVar_SetS32("gNoStart", 0);
 		CVar_SetS32("gFlashbang", 0);
+		CVar_SetS32("gPogoStick", 0);
+		CVar_SetS32("gNoStrength", 0);
+		CVar_SetS32("gNoWater", 0);
 	}
 
 	void Chaos_Init() {
