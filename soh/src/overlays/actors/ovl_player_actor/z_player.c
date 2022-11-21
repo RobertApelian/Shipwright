@@ -11723,8 +11723,8 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         if (!(this->skelAnime.moveFlags & 0x80)) {
             if (CVar_GetS32("gSlipperyFloor", 0) ||
                 ((this->actor.bgCheckFlags & 1) &&
-                 (((sFloorSpecialProperty == 5) && (this->currentBoots != PLAYER_BOOTS_IRON)) ||
-                  ((this->currentBoots == PLAYER_BOOTS_HOVER))) &&
+                 (sFloorSpecialProperty == 5) && (this->currentBoots != PLAYER_BOOTS_IRON)) ||
+                  ((this->currentBoots == PLAYER_BOOTS_HOVER) &&
                  !(this->stateFlags1 & (PLAYER_STATE1_SWIMMING | PLAYER_STATE1_IN_CUTSCENE)))) {
                 f32 sp70 = this->linearVelocity;
                 s16 sp6E = this->currentYaw;
