@@ -85,7 +85,7 @@ void ArmsHook_Wait(ArmsHook* this, PlayState* play) {
     if (this->actor.parent == NULL) {
         Player* player = GET_PLAYER(play);
         // get correct timer length for hookshot or longshot
-        s32 length = (player->heldItemActionParam == PLAYER_AP_HOOKSHOT) ? 13 : 26;
+        s32 length = (player->heldItemAction == PLAYER_IA_HOOKSHOT) ? 13 : 26;
 
         if (CVar_GetS32("gHookshotLengthRemove", 0)) {
             length = length * (1.0f - CVar_GetS32("gHookshotLengthRemove", 0) * 0.05f);
@@ -125,7 +125,7 @@ s32 ArmsHook_CheckForCancel(ArmsHook* this) {
     Player* player = (Player*)this->actor.parent;
 
     if (Player_HoldsHookshot(player)) {
-        if ((player->itemActionParam != player->heldItemActionParam) || (player->actor.flags & ACTOR_FLAG_8) ||
+        if ((player->itemAction != player->heldItemAction) || (player->actor.flags & ACTOR_FLAG_8) ||
             ((player->stateFlags1 & 0x4000080))) {
             this->timer = 0;
             ArmsHook_DetachHookFromActor(this);
@@ -261,6 +261,10 @@ void ArmsHook_Shoot(ArmsHook* this, PlayState* play) {
         sp60.x = this->unk_1F4.x - (this->unk_1E8.x - this->unk_1F4.x);
         sp60.y = this->unk_1F4.y - (this->unk_1E8.y - this->unk_1F4.y);
         sp60.z = this->unk_1F4.z - (this->unk_1E8.z - this->unk_1F4.z);
+        u16 buttonsToCheck = BTN_A | BTN_B | BTN_R | BTN_CUP | BTN_CLEFT | BTN_CRIGHT | BTN_CDOWN;
+        if (CVar_GetS32("gDpadEquips", 0) != 0) {
+            buttonsToCheck |= BTN_DUP | BTN_DDOWN | BTN_DLEFT | BTN_DRIGHT;
+        }
         if (BgCheck_EntityLineTest1(&play->colCtx, &sp60, &this->unk_1E8, &sp78, &poly, true, true, true, true,
                                     &bgId) &&
             !func_8002F9EC(play, &this->actor, poly, bgId, &sp78)) {
@@ -285,8 +289,7 @@ void ArmsHook_Shoot(ArmsHook* this, PlayState* play) {
                 Audio_PlaySoundGeneral(NA_SE_IT_HOOKSHOT_REFLECT, &this->actor.projectedPos, 4, &D_801333E0,
                                        &D_801333E0, &D_801333E8);
             }
-        } else if (CHECK_BTN_ANY(play->state.input[0].press.button,
-                                 (BTN_A | BTN_B | BTN_R | BTN_CUP | BTN_CLEFT | BTN_CRIGHT | BTN_CDOWN))) {
+        } else if (CHECK_BTN_ANY(play->state.input[0].press.button, (buttonsToCheck))) {
             this->timer = 0;
         }
     }
@@ -324,7 +327,7 @@ void ArmsHook_Draw(Actor* thisx, PlayState* play) {
         }
 
         func_80090480(play, &this->collider, &this->hookInfo, &sp6C, &sp60);
-        func_80093D18(play->state.gfxCtx);
+        Gfx_SetupDL_25Opa(play->state.gfxCtx);
         gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
                   G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(POLY_OPA_DISP++, gLinkAdultHookshotTipDL);

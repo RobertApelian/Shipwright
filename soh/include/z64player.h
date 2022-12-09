@@ -2,6 +2,7 @@
 #define Z64PLAYER_H
 
 #include "z64actor.h"
+#include "alignment.h"
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
 
 struct Player;
@@ -64,84 +65,85 @@ typedef enum {
 } PlayerMask;
 
 typedef enum {
-    /* 0x00 */ PLAYER_AP_NONE,
-    /* 0x01 */ PLAYER_AP_LAST_USED,
-    /* 0x02 */ PLAYER_AP_FISHING_POLE,
-    /* 0x03 */ PLAYER_AP_SWORD_MASTER,
-    /* 0x04 */ PLAYER_AP_SWORD_KOKIRI,
-    /* 0x05 */ PLAYER_AP_SWORD_BGS,
-    /* 0x06 */ PLAYER_AP_STICK,
-    /* 0x07 */ PLAYER_AP_HAMMER,
-    /* 0x08 */ PLAYER_AP_BOW,
-    /* 0x09 */ PLAYER_AP_BOW_FIRE,
-    /* 0x0A */ PLAYER_AP_BOW_ICE,
-    /* 0x0B */ PLAYER_AP_BOW_LIGHT,
-    /* 0x0C */ PLAYER_AP_BOW_0C,
-    /* 0x0D */ PLAYER_AP_BOW_0D,
-    /* 0x0E */ PLAYER_AP_BOW_0E,
-    /* 0x0F */ PLAYER_AP_SLINGSHOT,
-    /* 0x10 */ PLAYER_AP_HOOKSHOT,
-    /* 0x11 */ PLAYER_AP_LONGSHOT,
-    /* 0x12 */ PLAYER_AP_BOMB,
-    /* 0x13 */ PLAYER_AP_BOMBCHU,
-    /* 0x14 */ PLAYER_AP_BOOMERANG,
-    /* 0x15 */ PLAYER_AP_MAGIC_SPELL_15,
-    /* 0x16 */ PLAYER_AP_MAGIC_SPELL_16,
-    /* 0x17 */ PLAYER_AP_MAGIC_SPELL_17,
-    /* 0x18 */ PLAYER_AP_FARORES_WIND,
-    /* 0x19 */ PLAYER_AP_NAYRUS_LOVE,
-    /* 0x1A */ PLAYER_AP_DINS_FIRE,
-    /* 0x1B */ PLAYER_AP_NUT,
-    /* 0x1C */ PLAYER_AP_OCARINA_FAIRY,
-    /* 0x1D */ PLAYER_AP_OCARINA_TIME,
-    /* 0x1E */ PLAYER_AP_BOTTLE,
-    /* 0x1F */ PLAYER_AP_BOTTLE_FISH,
-    /* 0x20 */ PLAYER_AP_BOTTLE_FIRE,
-    /* 0x21 */ PLAYER_AP_BOTTLE_BUG,
-    /* 0x22 */ PLAYER_AP_BOTTLE_POE,
-    /* 0x23 */ PLAYER_AP_BOTTLE_BIG_POE,
-    /* 0x24 */ PLAYER_AP_BOTTLE_LETTER,
-    /* 0x25 */ PLAYER_AP_BOTTLE_POTION_RED,
-    /* 0x26 */ PLAYER_AP_BOTTLE_POTION_BLUE,
-    /* 0x27 */ PLAYER_AP_BOTTLE_POTION_GREEN,
-    /* 0x28 */ PLAYER_AP_BOTTLE_MILK,
-    /* 0x29 */ PLAYER_AP_BOTTLE_MILK_HALF,
-    /* 0x2A */ PLAYER_AP_BOTTLE_FAIRY,
-    /* 0x2B */ PLAYER_AP_LETTER_ZELDA,
-    /* 0x2C */ PLAYER_AP_WEIRD_EGG,
-    /* 0x2D */ PLAYER_AP_CHICKEN,
-    /* 0x2E */ PLAYER_AP_BEAN,
-    /* 0x2F */ PLAYER_AP_POCKET_EGG,
-    /* 0x30 */ PLAYER_AP_POCKET_CUCCO,
-    /* 0x31 */ PLAYER_AP_COJIRO,
-    /* 0x32 */ PLAYER_AP_ODD_MUSHROOM,
-    /* 0x33 */ PLAYER_AP_ODD_POTION,
-    /* 0x34 */ PLAYER_AP_SAW,
-    /* 0x35 */ PLAYER_AP_SWORD_BROKEN,
-    /* 0x36 */ PLAYER_AP_PRESCRIPTION,
-    /* 0x37 */ PLAYER_AP_FROG,
-    /* 0x38 */ PLAYER_AP_EYEDROPS,
-    /* 0x39 */ PLAYER_AP_CLAIM_CHECK,
-    /* 0x3A */ PLAYER_AP_MASK_KEATON,
-    /* 0x3B */ PLAYER_AP_MASK_SKULL,
-    /* 0x3C */ PLAYER_AP_MASK_SPOOKY,
-    /* 0x3D */ PLAYER_AP_MASK_BUNNY,
-    /* 0x3E */ PLAYER_AP_MASK_GORON,
-    /* 0x3F */ PLAYER_AP_MASK_ZORA,
-    /* 0x40 */ PLAYER_AP_MASK_GERUDO,
-    /* 0x41 */ PLAYER_AP_MASK_TRUTH,
-    /* 0x42 */ PLAYER_AP_LENS,
-    /* 0x43 */ PLAYER_AP_SHIELD_DEKU,
-    /* 0x44 */ PLAYER_AP_SHIELD_HYLIAN,
-    /* 0x45 */ PLAYER_AP_SHIELD_MIRROR,
-    /* 0x46 */ PLAYER_AP_TUNIC_KOKIRI,
-    /* 0x47 */ PLAYER_AP_TUNIC_GORON,
-    /* 0x48 */ PLAYER_AP_TUNIC_ZORA,
-    /* 0x49 */ PLAYER_AP_BOOTS_KOKIRI,
-    /* 0x4A */ PLAYER_AP_BOOTS_IRON,
-    /* 0x4B */ PLAYER_AP_BOOTS_HOVER,
-    /* 0x4C */ PLAYER_AP_MAX
-} PlayerActionParam;
+    /* 0x00 */ PLAYER_IA_NONE,
+    /* 0x01 */ PLAYER_IA_LAST_USED,
+    /* 0x02 */ PLAYER_IA_FISHING_POLE,
+    /* 0x03 */ PLAYER_IA_SWORD_MASTER,
+    /* 0x04 */ PLAYER_IA_SWORD_KOKIRI,
+    /* 0x05 */ PLAYER_IA_SWORD_BGS,
+    /* 0x06 */ PLAYER_IA_STICK,
+    /* 0x07 */ PLAYER_IA_HAMMER,
+    /* 0x08 */ PLAYER_IA_BOW,
+    /* 0x09 */ PLAYER_IA_BOW_FIRE,
+    /* 0x0A */ PLAYER_IA_BOW_ICE,
+    /* 0x0B */ PLAYER_IA_BOW_LIGHT,
+    /* 0x0C */ PLAYER_IA_BOW_0C,
+    /* 0x0D */ PLAYER_IA_BOW_0D,
+    /* 0x0E */ PLAYER_IA_BOW_0E,
+    /* 0x0F */ PLAYER_IA_SLINGSHOT,
+    /* 0x10 */ PLAYER_IA_HOOKSHOT,
+    /* 0x11 */ PLAYER_IA_LONGSHOT,
+    /* 0x12 */ PLAYER_IA_BOMB,
+    /* 0x13 */ PLAYER_IA_BOMBCHU,
+    /* 0x14 */ PLAYER_IA_BOOMERANG,
+    /* 0x15 */ PLAYER_IA_MAGIC_SPELL_15,
+    /* 0x16 */ PLAYER_IA_MAGIC_SPELL_16,
+    /* 0x17 */ PLAYER_IA_MAGIC_SPELL_17,
+    /* 0x18 */ PLAYER_IA_FARORES_WIND,
+    /* 0x19 */ PLAYER_IA_NAYRUS_LOVE,
+    /* 0x1A */ PLAYER_IA_DINS_FIRE,
+    /* 0x1B */ PLAYER_IA_NUT,
+    /* 0x1C */ PLAYER_IA_OCARINA_FAIRY,
+    /* 0x1D */ PLAYER_IA_OCARINA_TIME,
+    /* 0x1E */ PLAYER_IA_BOTTLE,
+    /* 0x1F */ PLAYER_IA_BOTTLE_FISH,
+    /* 0x20 */ PLAYER_IA_BOTTLE_FIRE,
+    /* 0x21 */ PLAYER_IA_BOTTLE_BUG,
+    /* 0x22 */ PLAYER_IA_BOTTLE_POE,
+    /* 0x23 */ PLAYER_IA_BOTTLE_BIG_POE,
+    /* 0x24 */ PLAYER_IA_BOTTLE_LETTER,
+    /* 0x25 */ PLAYER_IA_BOTTLE_POTION_RED,
+    /* 0x26 */ PLAYER_IA_BOTTLE_POTION_BLUE,
+    /* 0x27 */ PLAYER_IA_BOTTLE_POTION_GREEN,
+    /* 0x28 */ PLAYER_IA_BOTTLE_MILK,
+    /* 0x29 */ PLAYER_IA_BOTTLE_MILK_HALF,
+    /* 0x2A */ PLAYER_IA_BOTTLE_FAIRY,
+    /* 0x2B */ PLAYER_IA_LETTER_ZELDA,
+    /* 0x2C */ PLAYER_IA_WEIRD_EGG,
+    /* 0x2D */ PLAYER_IA_CHICKEN,
+    /* 0x2E */ PLAYER_IA_BEAN,
+    /* 0x2F */ PLAYER_IA_POCKET_EGG,
+    /* 0x30 */ PLAYER_IA_POCKET_CUCCO,
+    /* 0x31 */ PLAYER_IA_COJIRO,
+    /* 0x32 */ PLAYER_IA_ODD_MUSHROOM,
+    /* 0x33 */ PLAYER_IA_ODD_POTION,
+    /* 0x34 */ PLAYER_IA_SAW,
+    /* 0x35 */ PLAYER_IA_SWORD_BROKEN,
+    /* 0x36 */ PLAYER_IA_PRESCRIPTION,
+    /* 0x37 */ PLAYER_IA_FROG,
+    /* 0x38 */ PLAYER_IA_EYEDROPS,
+    /* 0x39 */ PLAYER_IA_CLAIM_CHECK,
+    /* 0x3A */ PLAYER_IA_MASK_KEATON,
+    /* 0x3B */ PLAYER_IA_MASK_SKULL,
+    /* 0x3C */ PLAYER_IA_MASK_SPOOKY,
+    /* 0x3D */ PLAYER_IA_MASK_BUNNY,
+    /* 0x3E */ PLAYER_IA_MASK_GORON,
+    /* 0x3F */ PLAYER_IA_MASK_ZORA,
+    /* 0x40 */ PLAYER_IA_MASK_GERUDO,
+    /* 0x41 */ PLAYER_IA_MASK_TRUTH,
+    /* 0x42 */ PLAYER_IA_LENS,
+    // Upstream TODO: Document why these entries were added
+    /* 0x43 */ PLAYER_IA_SHIELD_DEKU,
+    /* 0x44 */ PLAYER_IA_SHIELD_HYLIAN,
+    /* 0x45 */ PLAYER_IA_SHIELD_MIRROR,
+    /* 0x46 */ PLAYER_IA_TUNIC_KOKIRI,
+    /* 0x47 */ PLAYER_IA_TUNIC_GORON,
+    /* 0x48 */ PLAYER_IA_TUNIC_ZORA,
+    /* 0x49 */ PLAYER_IA_BOOTS_KOKIRI,
+    /* 0x4A */ PLAYER_IA_BOOTS_IRON,
+    /* 0x4B */ PLAYER_IA_BOOTS_HOVER,
+    /* 0x4C */ PLAYER_IA_MAX
+} PlayerItemAction;
 
 typedef enum {
     /* 0x00 */ PLAYER_LIMB_NONE,
@@ -170,26 +172,58 @@ typedef enum {
 } PlayerLimb;
 
 typedef enum {
-    /*  0 */ PLAYER_BODYPART_WAIST,      // PLAYER_LIMB_WAIST
-    /*  1 */ PLAYER_BODYPART_R_THIGH,    // PLAYER_LIMB_R_THIGH
-    /*  2 */ PLAYER_BODYPART_R_SHIN,     // PLAYER_LIMB_R_SHIN
-    /*  3 */ PLAYER_BODYPART_R_FOOT,     // PLAYER_LIMB_R_FOOT
-    /*  4 */ PLAYER_BODYPART_L_THIGH,    // PLAYER_LIMB_L_THIGH
-    /*  5 */ PLAYER_BODYPART_L_SHIN,     // PLAYER_LIMB_L_SHIN
-    /*  6 */ PLAYER_BODYPART_L_FOOT,     // PLAYER_LIMB_L_FOOT
-    /*  7 */ PLAYER_BODYPART_HEAD,       // PLAYER_LIMB_HEAD
-    /*  8 */ PLAYER_BODYPART_HAT,        // PLAYER_LIMB_HAT
-    /*  9 */ PLAYER_BODYPART_COLLAR,     // PLAYER_LIMB_COLLAR
-    /* 10 */ PLAYER_BODYPART_L_SHOULDER, // PLAYER_LIMB_L_SHOULDER
-    /* 11 */ PLAYER_BODYPART_L_FOREARM,  // PLAYER_LIMB_L_FOREARM
-    /* 12 */ PLAYER_BODYPART_L_HAND,     // PLAYER_LIMB_L_HAND
-    /* 13 */ PLAYER_BODYPART_R_SHOULDER, // PLAYER_LIMB_R_SHOULDER
-    /* 14 */ PLAYER_BODYPART_R_FOREARM,  // PLAYER_LIMB_R_FOREARM
-    /* 15 */ PLAYER_BODYPART_R_HAND,     // PLAYER_LIMB_R_HAND
-    /* 16 */ PLAYER_BODYPART_SHEATH,     // PLAYER_LIMB_SHEATH
-    /* 17 */ PLAYER_BODYPART_TORSO,      // PLAYER_LIMB_TORSO
-    /* 18 */ PLAYER_BODYPART_MAX
+    /* 0x00 */ PLAYER_BODYPART_WAIST,      // PLAYER_LIMB_WAIST
+    /* 0x01 */ PLAYER_BODYPART_R_THIGH,    // PLAYER_LIMB_R_THIGH
+    /* 0x02 */ PLAYER_BODYPART_R_SHIN,     // PLAYER_LIMB_R_SHIN
+    /* 0x03 */ PLAYER_BODYPART_R_FOOT,     // PLAYER_LIMB_R_FOOT
+    /* 0x04 */ PLAYER_BODYPART_L_THIGH,    // PLAYER_LIMB_L_THIGH
+    /* 0x05 */ PLAYER_BODYPART_L_SHIN,     // PLAYER_LIMB_L_SHIN
+    /* 0x06 */ PLAYER_BODYPART_L_FOOT,     // PLAYER_LIMB_L_FOOT
+    /* 0x07 */ PLAYER_BODYPART_HEAD,       // PLAYER_LIMB_HEAD
+    /* 0x08 */ PLAYER_BODYPART_HAT,        // PLAYER_LIMB_HAT
+    /* 0x09 */ PLAYER_BODYPART_COLLAR,     // PLAYER_LIMB_COLLAR
+    /* 0x0A */ PLAYER_BODYPART_L_SHOULDER, // PLAYER_LIMB_L_SHOULDER
+    /* 0x0B */ PLAYER_BODYPART_L_FOREARM,  // PLAYER_LIMB_L_FOREARM
+    /* 0x0C */ PLAYER_BODYPART_L_HAND,     // PLAYER_LIMB_L_HAND
+    /* 0x0D */ PLAYER_BODYPART_R_SHOULDER, // PLAYER_LIMB_R_SHOULDER
+    /* 0x0E */ PLAYER_BODYPART_R_FOREARM,  // PLAYER_LIMB_R_FOREARM
+    /* 0x0F */ PLAYER_BODYPART_R_HAND,     // PLAYER_LIMB_R_HAND
+    /* 0x10 */ PLAYER_BODYPART_SHEATH,     // PLAYER_LIMB_SHEATH
+    /* 0x11 */ PLAYER_BODYPART_TORSO,      // PLAYER_LIMB_TORSO
+    /* 0x12 */ PLAYER_BODYPART_MAX
 } PlayerBodyPart;
+
+typedef enum {
+    /*  0 */ PLAYER_MWA_FORWARD_SLASH_1H,
+    /*  1 */ PLAYER_MWA_FORWARD_SLASH_2H,
+    /*  2 */ PLAYER_MWA_FORWARD_COMBO_1H,
+    /*  3 */ PLAYER_MWA_FORWARD_COMBO_2H,
+    /*  4 */ PLAYER_MWA_RIGHT_SLASH_1H,
+    /*  5 */ PLAYER_MWA_RIGHT_SLASH_2H,
+    /*  6 */ PLAYER_MWA_RIGHT_COMBO_1H,
+    /*  7 */ PLAYER_MWA_RIGHT_COMBO_2H,
+    /*  8 */ PLAYER_MWA_LEFT_SLASH_1H,
+    /*  9 */ PLAYER_MWA_LEFT_SLASH_2H,
+    /* 10 */ PLAYER_MWA_LEFT_COMBO_1H,
+    /* 11 */ PLAYER_MWA_LEFT_COMBO_2H,
+    /* 12 */ PLAYER_MWA_STAB_1H,
+    /* 13 */ PLAYER_MWA_STAB_2H,
+    /* 14 */ PLAYER_MWA_STAB_COMBO_1H,
+    /* 15 */ PLAYER_MWA_STAB_COMBO_2H,
+    /* 16 */ PLAYER_MWA_FLIPSLASH_START,
+    /* 17 */ PLAYER_MWA_JUMPSLASH_START,
+    /* 18 */ PLAYER_MWA_FLIPSLASH_FINISH,
+    /* 19 */ PLAYER_MWA_JUMPSLASH_FINISH,
+    /* 20 */ PLAYER_MWA_BACKSLASH_RIGHT,
+    /* 21 */ PLAYER_MWA_BACKSLASH_LEFT,
+    /* 22 */ PLAYER_MWA_HAMMER_FORWARD,
+    /* 23 */ PLAYER_MWA_HAMMER_SIDE,
+    /* 24 */ PLAYER_MWA_SPIN_ATTACK_1H,
+    /* 25 */ PLAYER_MWA_SPIN_ATTACK_2H,
+    /* 26 */ PLAYER_MWA_BIG_SPIN_1H,
+    /* 27 */ PLAYER_MWA_BIG_SPIN_2H,
+    /* 28 */ PLAYER_MWA_MAX
+} PlayerMeleeWeaponAnimation;
 
 typedef enum {
     /* -1 */ PLAYER_DOORTYPE_AJAR = -1,
@@ -200,122 +234,63 @@ typedef enum {
 } PlayerDoorType;
 
 typedef enum {
-    /*  0 */ PLAYER_MODELGROUP_0, // unused (except with the `Player_OverrideLimbDrawPause` bug)
-    /*  1 */ PLAYER_MODELGROUP_CHILD_HYLIAN_SHIELD, // kokiri/master sword, shield not in hand
-    /*  2 */ PLAYER_MODELGROUP_SWORD, // kokiri/master sword and possibly shield
-    /*  3 */ PLAYER_MODELGROUP_DEFAULT, // non-specific models, for items that don't have particular link models
-    /*  4 */ PLAYER_MODELGROUP_4, // unused, same as PLAYER_MODELGROUP_DEFAULT
-    /*  5 */ PLAYER_MODELGROUP_BGS, // biggoron sword
-    /*  6 */ PLAYER_MODELGROUP_BOW_SLINGSHOT, // bow/slingshot
-    /*  7 */ PLAYER_MODELGROUP_EXPLOSIVES, // bombs, bombchus, same as PLAYER_MODELGROUP_DEFAULT
-    /*  8 */ PLAYER_MODELGROUP_BOOMERANG,
-    /*  9 */ PLAYER_MODELGROUP_HOOKSHOT,
-    /* 10 */ PLAYER_MODELGROUP_10, // stick/fishing pole (which are drawn separately)
-    /* 11 */ PLAYER_MODELGROUP_HAMMER,
-    /* 12 */ PLAYER_MODELGROUP_OCARINA, // ocarina
-    /* 13 */ PLAYER_MODELGROUP_OOT, // ocarina of time
-    /* 14 */ PLAYER_MODELGROUP_BOTTLE, // bottles (drawn separately)
-    /* 15 */ PLAYER_MODELGROUP_15, // "last used"
-    /* 16 */ PLAYER_MODELGROUP_MAX
+    /* 0x00 */ PLAYER_MODELGROUP_0, // unused (except with the `Player_OverrideLimbDrawPause` bug)
+    /* 0x01 */ PLAYER_MODELGROUP_CHILD_HYLIAN_SHIELD, // kokiri/master sword, shield not in hand
+    /* 0x02 */ PLAYER_MODELGROUP_SWORD, // kokiri/master sword and possibly shield
+    /* 0x03 */ PLAYER_MODELGROUP_DEFAULT, // non-specific models, for items that don't have particular link models
+    /* 0x04 */ PLAYER_MODELGROUP_4, // unused, same as PLAYER_MODELGROUP_DEFAULT
+    /* 0x05 */ PLAYER_MODELGROUP_BGS, // biggoron sword
+    /* 0x06 */ PLAYER_MODELGROUP_BOW_SLINGSHOT, // bow/slingshot
+    /* 0x07 */ PLAYER_MODELGROUP_EXPLOSIVES, // bombs, bombchus, same as PLAYER_MODELGROUP_DEFAULT
+    /* 0x08 */ PLAYER_MODELGROUP_BOOMERANG,
+    /* 0x09 */ PLAYER_MODELGROUP_HOOKSHOT,
+    /* 0x0A */ PLAYER_MODELGROUP_10, // stick/fishing pole (which are drawn separately)
+    /* 0x0B */ PLAYER_MODELGROUP_HAMMER,
+    /* 0x0C */ PLAYER_MODELGROUP_OCARINA, // ocarina
+    /* 0x0D */ PLAYER_MODELGROUP_OOT, // ocarina of time
+    /* 0x0E */ PLAYER_MODELGROUP_BOTTLE, // bottles (drawn separately)
+    /* 0x0F */ PLAYER_MODELGROUP_15, // "last used"
+    /* 0x10 */ PLAYER_MODELGROUP_MAX
 } PlayerModelGroup;
 
 typedef enum {
-    /* 0 */ PLAYER_MODELGROUPENTRY_ANIM,
-    /* 1 */ PLAYER_MODELGROUPENTRY_LEFT_HAND,
-    /* 2 */ PLAYER_MODELGROUPENTRY_RIGHT_HAND,
-    /* 3 */ PLAYER_MODELGROUPENTRY_SHEATH,
-    /* 4 */ PLAYER_MODELGROUPENTRY_WAIST,
-    /* 5 */ PLAYER_MODELGROUPENTRY_MAX
+    /* 0x00 */ PLAYER_MODELGROUPENTRY_ANIM,
+    /* 0x01 */ PLAYER_MODELGROUPENTRY_LEFT_HAND,
+    /* 0x02 */ PLAYER_MODELGROUPENTRY_RIGHT_HAND,
+    /* 0x03 */ PLAYER_MODELGROUPENTRY_SHEATH,
+    /* 0x04 */ PLAYER_MODELGROUPENTRY_WAIST,
+    /* 0x05 */ PLAYER_MODELGROUPENTRY_MAX
 } PlayerModelGroupEntry;
 
 typedef enum {
     // left hand
-    /*  0 */ PLAYER_MODELTYPE_LH_OPEN, // empty open hand
-    /*  1 */ PLAYER_MODELTYPE_LH_CLOSED, // empty closed hand
-    /*  2 */ PLAYER_MODELTYPE_LH_SWORD, // holding kokiri/master sword
-    /*  3 */ PLAYER_MODELTYPE_3, // unused, same as PLAYER_MODELTYPE_LH_SWORD
-    /*  4 */ PLAYER_MODELTYPE_LH_BGS, // holding bgs/broken giant knife (child: master sword)
-    /*  5 */ PLAYER_MODELTYPE_LH_HAMMER, // holding hammer (child: empty hand)
-    /*  6 */ PLAYER_MODELTYPE_LH_BOOMERANG, // holding boomerang (adult: empty hand)
-    /*  7 */ PLAYER_MODELTYPE_LH_BOTTLE, // holding bottle (bottle drawn separately)
+    /* 0x00 */ PLAYER_MODELTYPE_LH_OPEN, // empty open hand
+    /* 0x01 */ PLAYER_MODELTYPE_LH_CLOSED, // empty closed hand
+    /* 0x02 */ PLAYER_MODELTYPE_LH_SWORD, // holding kokiri/master sword
+    /* 0x03 */ PLAYER_MODELTYPE_LH_SWORD_2, // unused, same as PLAYER_MODELTYPE_LH_SWORD
+    /* 0x04 */ PLAYER_MODELTYPE_LH_BGS, // holding bgs/broken giant knife (child: master sword)
+    /* 0x05 */ PLAYER_MODELTYPE_LH_HAMMER, // holding hammer (child: empty hand)
+    /* 0x06 */ PLAYER_MODELTYPE_LH_BOOMERANG, // holding boomerang (adult: empty hand)
+    /* 0x07 */ PLAYER_MODELTYPE_LH_BOTTLE, // holding bottle (bottle drawn separately)
     // right hand
-    /*  8 */ PLAYER_MODELTYPE_RH_OPEN, // empty open hand
-    /*  9 */ PLAYER_MODELTYPE_RH_CLOSED, // empty closed hand
-    /* 10 */ PLAYER_MODELTYPE_RH_SHIELD, // holding a shield (including no shield)
-    /* 11 */ PLAYER_MODELTYPE_RH_BOW_SLINGSHOT, // holding bow/slingshot
-    /* 12 */ PLAYER_MODELTYPE_12, // unused, same as PLAYER_MODELTYPE_RH_BOW_SLINGSHOT
-    /* 13 */ PLAYER_MODELTYPE_RH_OCARINA, // holding ocarina (child: fairy ocarina, adult: OoT)
-    /* 14 */ PLAYER_MODELTYPE_RH_OOT, // holding OoT
-    /* 15 */ PLAYER_MODELTYPE_RH_HOOKSHOT, // holding hookshot (child: empty hand)
+    /* 0x08 */ PLAYER_MODELTYPE_RH_OPEN, // empty open hand
+    /* 0x09 */ PLAYER_MODELTYPE_RH_CLOSED, // empty closed hand
+    /* 0x0A */ PLAYER_MODELTYPE_RH_SHIELD, // holding a shield (including no shield)
+    /* 0x0B */ PLAYER_MODELTYPE_RH_BOW_SLINGSHOT, // holding bow/slingshot
+    /* 0x0C */ PLAYER_MODELTYPE_RH_BOW_SLINGSHOT_2, // unused, same as PLAYER_MODELTYPE_RH_BOW_SLINGSHOT
+    /* 0x0D */ PLAYER_MODELTYPE_RH_OCARINA, // holding ocarina (child: fairy ocarina, adult: OoT)
+    /* 0x0E */ PLAYER_MODELTYPE_RH_OOT, // holding OoT
+    /* 0x0F */ PLAYER_MODELTYPE_RH_HOOKSHOT, // holding hookshot (child: empty hand)
     // sheath
-    /* 16 */ PLAYER_MODELTYPE_SHEATH_16, // sheathed kokiri/master sword?
-    /* 17 */ PLAYER_MODELTYPE_SHEATH_17, // empty sheath?
-    /* 18 */ PLAYER_MODELTYPE_SHEATH_18, // sword sheathed and shield on back?
-    /* 19 */ PLAYER_MODELTYPE_SHEATH_19, // empty sheath and shield on back?
+    /* 0x10 */ PLAYER_MODELTYPE_SHEATH_16, // sheathed kokiri/master sword?
+    /* 0x11 */ PLAYER_MODELTYPE_SHEATH_17, // empty sheath?
+    /* 0x12 */ PLAYER_MODELTYPE_SHEATH_18, // sword sheathed and shield on back?
+    /* 0x13 */ PLAYER_MODELTYPE_SHEATH_19, // empty sheath and shield on back?
     // waist
-    /* 20 */ PLAYER_MODELTYPE_WAIST,
-    /* 21 */ PLAYER_MODELTYPE_MAX,
+    /* 0x14 */ PLAYER_MODELTYPE_WAIST,
+    /* 0x15 */ PLAYER_MODELTYPE_MAX,
     /* 0xFF */ PLAYER_MODELTYPE_RH_FF = 0xFF // disable shield collider, cutscene-specific
 } PlayerModelType;
-
-typedef enum {
-    /* 0 */ PLAYER_ANIMTYPE_DEFAULT,
-    /* 1 */ PLAYER_ANIMTYPE_HOLDING_ONE_HAND_WEAPON,
-    /* 2 */ PLAYER_ANIMTYPE_HOLDING_SHIELD,
-    /* 3 */ PLAYER_ANIMTYPE_HOLDING_TWO_HAND_WEAPON,
-    /* 4 */ PLAYER_ANIMTYPE_HOLDING_ITEM_IN_LEFT_HAND,
-    /* 5 */ PLAYER_ANIMTYPE_USED_EXPLOSIVE,
-    /* 6 */ PLAYER_ANIMTYPE_MAX
-} PlayerAnimType;
-
-typedef enum {
-    /*  0 */ PLAYER_ANIMGROUP_STANDING_STILL,
-    /*  1 */ PLAYER_ANIMGROUP_WALKING,
-    /*  2 */ PLAYER_ANIMGROUP_RUNNING,
-    /*  3 */ PLAYER_ANIMGROUP_RUNNING_DAMAGED,
-    /*  4 */ PLAYER_ANIMGROUP_IRON_BOOTS,
-    /*  5 */ PLAYER_ANIMGROUP_FIGHTING_LEFT_OF_ENEMY,
-    /*  6 */ PLAYER_ANIMGROUP_FIGHTING_RIGHT_OF_ENEMY,
-    /*  7 */ PLAYER_ANIMGROUP_START_FIGHTING,
-    /*  8 */ PLAYER_ANIMGROUP_8,
-    /*  9 */ PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_LEFT,
-    /* 10 */ PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_LEFT,
-    /* 11 */ PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_RIGHT,
-    /* 12 */ PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_RIGHT,
-    /* 13 */ PLAYER_ANIMGROUP_HOLDING_OBJECT,
-    /* 14 */ PLAYER_ANIMGROUP_TALL_JUMP_LANDING,
-    /* 15 */ PLAYER_ANIMGROUP_SHORT_JUMP_LANDING,
-    /* 16 */ PLAYER_ANIMGROUP_ROLLING,
-    /* 17 */ PLAYER_ANIMGROUP_ROLL_BONKING,
-    /* 18 */ PLAYER_ANIMGROUP_END_WALK_ON_LEFT_FOOT,
-    /* 19 */ PLAYER_ANIMGROUP_END_WALK_ON_RIGHT_FOOT,
-    /* 20 */ PLAYER_ANIMGROUP_START_DEFENDING,
-    /* 21 */ PLAYER_ANIMGROUP_DEFENDING,
-    /* 22 */ PLAYER_ANIMGROUP_END_DEFENDING,
-    /* 23 */ PLAYER_ANIMGROUP_END_SIDEWALKING,
-    /* 24 */ PLAYER_ANIMGROUP_SIDEWALKING_LEFT,
-    /* 25 */ PLAYER_ANIMGROUP_SIDEWALKING_RIGHT,
-    /* 26 */ PLAYER_ANIMGROUP_SHUFFLE_TURN,
-    /* 27 */ PLAYER_ANIMGROUP_END_FIGHTING_LEFT_OF_ENEMY,
-    /* 28 */ PLAYER_ANIMGROUP_END_FIGHTING_RIGHT_OF_ENEMY,
-    /* 29 */ PLAYER_ANIMGROUP_THROWING_OBJECT,
-    /* 30 */ PLAYER_ANIMGROUP_PUTTING_DOWN_OBJECT,
-    /* 31 */ PLAYER_ANIMGROUP_BACKWALKING,
-    /* 32 */ PLAYER_ANIMGROUP_START_CHECKING_OR_SPEAKING,
-    /* 33 */ PLAYER_ANIMGROUP_CHECKING_OR_SPEAKING,
-    /* 34 */ PLAYER_ANIMGROUP_END_CHECKING_OR_SPEAKING,
-    /* 35 */ PLAYER_ANIMGROUP_END_PULL_OBJECT,
-    /* 36 */ PLAYER_ANIMGROUP_PULL_OBJECT,
-    /* 37 */ PLAYER_ANIMGROUP_PUSH_OBJECT,
-    /* 38 */ PLAYER_ANIMGROUP_KNOCKED_FROM_CLIMBING,
-    /* 39 */ PLAYER_ANIMGROUP_HANGING_FROM_LEDGE,
-    /* 40 */ PLAYER_ANIMGROUP_CLIMBING_IDLE,
-    /* 41 */ PLAYER_ANIMGROUP_CLIMBING,
-    /* 42 */ PLAYER_ANIMGROUP_SLIDING_DOWN_SLOPE,
-    /* 43 */ PLAYER_ANIMGROUP_END_SLIDING_DOWN_SLOPE,
-    /* 44 */ PLAYER_ANIMGROUP_RELAX,
-    /* 45 */ PLAYER_ANIMGROUP_MAX
-} PlayerAnimGroup;
 
 typedef enum {
     /* 0x00 */ PLAYER_ATTENTIONMODE_NONE,
@@ -323,7 +298,7 @@ typedef enum {
     /* 0x02 */ PLAYER_ATTENTIONMODE_AIMING,
     /* 0x03 */ PLAYER_ATTENTIONMODE_CUTSCENE,
     /* 0x04 */ PLAYER_ATTENTIONMODE_ITEM_CUTSCENE,
-    /* 0x05*/ PLAYER_ATTENTIONMODE_MAX
+    /* 0x05 */ PLAYER_ATTENTIONMODE_MAX
 } PlayerAttentionMode;
 
 typedef enum {
@@ -570,6 +545,65 @@ typedef enum {
     /*  1 */ PLAYER_ACTIONINTERRUPT_BY_MOVEMENT
 } PlayerActionInterruptResult;
 
+typedef enum {
+    /* 0x00 */ PLAYER_ANIMTYPE_DEFAULT,
+    /* 0x01 */ PLAYER_ANIMTYPE_HOLDING_ONE_HAND_WEAPON,
+    /* 0x02 */ PLAYER_ANIMTYPE_HOLDING_SHIELD,
+    /* 0x03 */ PLAYER_ANIMTYPE_HOLDING_TWO_HAND_WEAPON,
+    /* 0x04 */ PLAYER_ANIMTYPE_HOLDING_ITEM_IN_LEFT_HAND,
+    /* 0x05 */ PLAYER_ANIMTYPE_USED_EXPLOSIVE,
+    /* 0x06 */ PLAYER_ANIMTYPE_MAX
+} PlayerAnimType;
+
+typedef enum {
+    /* 0x00 */ PLAYER_ANIMGROUP_STANDING_STILL,
+    /* 0x01 */ PLAYER_ANIMGROUP_WALKING,
+    /* 0x02 */ PLAYER_ANIMGROUP_RUNNING,
+    /* 0x03 */ PLAYER_ANIMGROUP_RUNNING_DAMAGED,
+    /* 0x04 */ PLAYER_ANIMGROUP_IRON_BOOTS,
+    /* 0x05 */ PLAYER_ANIMGROUP_FIGHTING_LEFT_OF_ENEMY,
+    /* 0x06 */ PLAYER_ANIMGROUP_FIGHTING_RIGHT_OF_ENEMY,
+    /* 0x07 */ PLAYER_ANIMGROUP_START_FIGHTING,
+    /* 0x08 */ PLAYER_ANIMGROUP_8,
+    /* 0x09 */ PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_LEFT,
+    /* 0x0A */ PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_LEFT,
+    /* 0x0B */ PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_RIGHT,
+    /* 0x0C */ PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_RIGHT,
+    /* 0x0D */ PLAYER_ANIMGROUP_HOLDING_OBJECT,
+    /* 0x0E */ PLAYER_ANIMGROUP_TALL_JUMP_LANDING,
+    /* 0x0F */ PLAYER_ANIMGROUP_SHORT_JUMP_LANDING,
+    /* 0x10 */ PLAYER_ANIMGROUP_ROLLING,
+    /* 0x11 */ PLAYER_ANIMGROUP_ROLL_BONKING,
+    /* 0x12 */ PLAYER_ANIMGROUP_END_WALK_ON_LEFT_FOOT,
+    /* 0x13 */ PLAYER_ANIMGROUP_END_WALK_ON_RIGHT_FOOT,
+    /* 0x14 */ PLAYER_ANIMGROUP_START_DEFENDING,
+    /* 0x15 */ PLAYER_ANIMGROUP_DEFENDING,
+    /* 0x16 */ PLAYER_ANIMGROUP_END_DEFENDING,
+    /* 0x17 */ PLAYER_ANIMGROUP_END_SIDEWALKING,
+    /* 0x18 */ PLAYER_ANIMGROUP_SIDEWALKING_LEFT,
+    /* 0x19 */ PLAYER_ANIMGROUP_SIDEWALKING_RIGHT,
+    /* 0x1A */ PLAYER_ANIMGROUP_SHUFFLE_TURN,
+    /* 0x1B */ PLAYER_ANIMGROUP_END_FIGHTING_LEFT_OF_ENEMY,
+    /* 0x1C */ PLAYER_ANIMGROUP_END_FIGHTING_RIGHT_OF_ENEMY,
+    /* 0x1D */ PLAYER_ANIMGROUP_THROWING_OBJECT,
+    /* 0x1E */ PLAYER_ANIMGROUP_PUTTING_DOWN_OBJECT,
+    /* 0x1F */ PLAYER_ANIMGROUP_BACKWALKING,
+    /* 0x20 */ PLAYER_ANIMGROUP_START_CHECKING_OR_SPEAKING,
+    /* 0x21 */ PLAYER_ANIMGROUP_CHECKING_OR_SPEAKING,
+    /* 0x22 */ PLAYER_ANIMGROUP_END_CHECKING_OR_SPEAKING,
+    /* 0x23 */ PLAYER_ANIMGROUP_END_PULL_OBJECT,
+    /* 0x24 */ PLAYER_ANIMGROUP_PULL_OBJECT,
+    /* 0x25 */ PLAYER_ANIMGROUP_PUSH_OBJECT,
+    /* 0x26 */ PLAYER_ANIMGROUP_KNOCKED_FROM_CLIMBING,
+    /* 0x27 */ PLAYER_ANIMGROUP_HANGING_FROM_LEDGE,
+    /* 0x28 */ PLAYER_ANIMGROUP_CLIMBING_IDLE,
+    /* 0x29 */ PLAYER_ANIMGROUP_CLIMBING,
+    /* 0x2A */ PLAYER_ANIMGROUP_SLIDING_DOWN_SLOPE,
+    /* 0x2B */ PLAYER_ANIMGROUP_END_SLIDING_DOWN_SLOPE,
+    /* 0x2C */ PLAYER_ANIMGROUP_RELAX,
+    /* 0x2D */ PLAYER_ANIMGROUP_MAX
+} PlayerAnimGroup;
+
 #define PLAYER_ANIMSFXFLAGS_0 (1 << 11) // 0x0800
 #define PLAYER_ANIMSFXFLAGS_1 (1 << 12) // 0x1000
 #define PLAYER_ANIMSFXFLAGS_2 (1 << 13) // 0x2000
@@ -600,7 +634,8 @@ typedef enum {
 #define PLAYER_BOTTLEDRINKEFFECT_FILL_MAGIC (1 << 1)
 #define PLAYER_BOTTLEDRINKEFFECT_HEAL_WEAK (1 << 2)
 
-#define PLAYER_LIMB_BUF_COUNT PLAYER_LIMB_MAX + 2 // 2 extra entries in limb buffers?
+#define LIMB_BUF_COUNT(limbCount) ((ALIGN16((limbCount) * sizeof(Vec3s)) + sizeof(Vec3s) - 1) / sizeof(Vec3s))
+#define PLAYER_LIMB_BUF_COUNT LIMB_BUF_COUNT(PLAYER_LIMB_MAX)
 
 typedef struct {
     /* 0x00 */ f32 unk_00;
@@ -644,6 +679,9 @@ typedef struct {
     /* 0x10 */ Vec3f base;
 } WeaponInfo; // size = 0x1C
 
+// #region SOH [General]
+// Supporting pendingFlag
+// Upstream TODO: Rename these to be more obviously SoH specific
 typedef enum {
     FLAG_NONE,
     FLAG_SCENE_SWITCH,
@@ -658,6 +696,8 @@ typedef struct {
     /* 0x00 */ s32 flagID;     // which flag to set when Player_SetPendingFlag is called
     /* 0x04 */ FlagType flagType;  // type of flag to set when Player_SetPendingFlag is called
 } PendingFlag; // size = 0x06
+// #endregion
+
 #define PLAYER_STATE1_EXITING_SCENE (1 << 0)
 #define PLAYER_STATE1_SWINGING_BOTTLE (1 << 1)
 #define PLAYER_STATE1_END_HOOKSHOT_MOVE (1 << 2)
@@ -707,9 +747,9 @@ typedef struct {
 #define PLAYER_STATE2_USING_SWITCH_Z_TARGETING (1 << 13)
 #define PLAYER_STATE2_FROZEN_IN_ICE (1 << 14)
 #define PLAYER_STATE2_PAUSE_MOST_UPDATING (1 << 15)
-#define PLAYER_STATE2_CAN_ENTER_CRAWLSPACE (1 << 16)
+#define PLAYER_STATE2_CAN_ENTER_CRAWLSPACE (1 << 16) // Turns on the "Enter On A" DoAction
 #define PLAYER_STATE2_RELEASING_SPIN_ATTACK (1 << 17)
-#define PLAYER_STATE2_INSIDE_CRAWLSPACE (1 << 18)
+#define PLAYER_STATE2_INSIDE_CRAWLSPACE (1 << 18) // Crawling through a crawlspace
 #define PLAYER_STATE2_BACKFLIPPING_OR_SIDEHOPPING (1 << 19)
 #define PLAYER_STATE2_NAVI_IS_ACTIVE (1 << 20)
 #define PLAYER_STATE2_NAVI_REQUESTING_TALK (1 << 21)
@@ -730,7 +770,7 @@ typedef struct {
 #define PLAYER_STATE3_ENDING_MELEE_ATTACK (1 << 3)
 #define PLAYER_STATE3_CHECKING_FLOOR_AND_WATER_COLLISION (1 << 4)
 #define PLAYER_STATE3_FORCE_PULL_OCARINA (1 << 5)
-#define PLAYER_STATE3_RESTORE_NAYRUS_LOVE (1 << 6)
+#define PLAYER_STATE3_RESTORE_NAYRUS_LOVE (1 << 6) // Set by ocarina effects actors when destroyed to signal Nayru's Love may be restored (see `ACTOROVL_ALLOC_ABSOLUTE`)
 #define PLAYER_STATE3_MOVING_ALONG_HOOKSHOT_PATH (1 << 7)
 
 typedef void (*PlayerActionFunc)(struct Player*, struct PlayState*);
@@ -740,14 +780,14 @@ typedef void (*PlayerMiniCsFunc)(struct PlayState*, struct Player*);
 typedef struct Player {
     /* 0x0000 */ Actor      actor;
     /* 0x014C */ s8         currentTunic; // current tunic from `PlayerTunic`
-    /* 0x014D */ s8         currentSwordItem; // current sword Item ID
+    /* 0x014D */ s8         currentSwordItemId;
     /* 0x014E */ s8         currentShield; // current shield from `PlayerShield`
     /* 0x014F */ s8         currentBoots; // current boots from `PlayerBoots`
     /* 0x0150 */ s8         heldItemButton; // Button index for the item currently used
-    /* 0x0151 */ s8         heldItemActionParam; // Action param for the item currently used
+    /* 0x0151 */ s8         heldItemAction; // Item action for the item currently used
     /* 0x0152 */ u8         heldItemId; // Item id for the item currently used
     /* 0x0153 */ s8         prevBoots; // previous boots from `PlayerBoots`
-    /* 0x0154 */ s8         itemActionParam; // the difference between this and heldItemActionParam is unclear
+    /* 0x0154 */ s8         itemAction; // the difference between this and heldItemAction is unclear
     /* 0x0155 */ char       unk_155[0x003];
     /* 0x0158 */ u8         modelGroup;
     /* 0x0159 */ u8         nextModelGroup;
@@ -757,78 +797,78 @@ typedef struct Player {
     /* 0x015D */ u8         rightHandType;
     /* 0x015E */ u8         sheathType;
     /* 0x015F */ u8         currentMask; // current mask equipped from `PlayerMask`
-    /* 0x0160 */ Gfx** rightHandDLists;
-    /* 0x0164 */ Gfx** leftHandDLists;
-    /* 0x0168 */ Gfx** sheathDLists;
-    /* 0x016C */ Gfx** waistDLists;
+    /* 0x0160 */ Gfx**      rightHandDLists;
+    /* 0x0164 */ Gfx**      leftHandDLists;
+    /* 0x0168 */ Gfx**      sheathDLists;
+    /* 0x016C */ Gfx**      waistDLists;
     /* 0x0170 */ u8         giObjectLoading;
     /* 0x0174 */ DmaRequest giObjectDmaRequest;
     /* 0x0194 */ OSMesgQueue giObjectLoadQueue;
     /* 0x01AC */ OSMesg     giObjectLoadMsg;
-    /* 0x01B0 */ void* giObjectSegment; // also used for title card textures
+    /* 0x01B0 */ void*      giObjectSegment; // also used for title card textures
     /* 0x01B4 */ SkelAnime  skelAnime;
     /* 0x01F8 */ Vec3s      jointTable[PLAYER_LIMB_BUF_COUNT];
     /* 0x0288 */ Vec3s      morphTable[PLAYER_LIMB_BUF_COUNT];
     /* 0x0318 */ Vec3s      blendTable[PLAYER_LIMB_BUF_COUNT];
     /* 0x03A8 */ s16        unk_3A8[2];
-    /* 0x03AC */ Actor* heldActor;
+    /* 0x03AC */ Actor*     heldActor;
     /* 0x03B0 */ Vec3f      leftHandPos;
     /* 0x03BC */ Vec3s      leftHandRot;
-    /* 0x03C4 */ Actor* pushPullActor;
+    /* 0x03C4 */ Actor*     pushPullActor;
     /* 0x03C8 */ Vec3f      hookshotHeldPos;
     /* 0x03D4 */ char       unk_3D4[0x058];
     /* 0x042C */ s8         doorType;
     /* 0x042D */ s8         doorDirection;
     /* 0x042E */ s16        doorTimer;
-    /* 0x0430 */ Actor* doorActor;
-    /* 0x0434 */ s16        getItemId;
+    /* 0x0430 */ Actor*     doorActor;
+    /* 0x0434 */ s16        getItemId; // Upstream TODO: Document why this is s16 while it's s8 upstream
     /* 0x0436 */ u16        getItemDirection;
-    /* 0x0438 */ Actor* interactRangeActor;
+    /* 0x0438 */ Actor*     interactRangeActor;
     /* 0x043C */ s8         mountSide;
     /* 0x043D */ char       unk_43D[0x003];
-    /* 0x0440 */ Actor* rideActor;
+    /* 0x0440 */ Actor*     rideActor;
     /* 0x0444 */ u8         csMode;
     /* 0x0445 */ u8         prevCsMode;
     /* 0x0446 */ u8         csAction;
     /* 0x0447 */ u8         csDoorType;
-    /* 0x0448 */ Actor* csTargetActor;
+    /* 0x0448 */ Actor*     csTargetActor;
     /* 0x044C */ char       unk_44C[0x004];
     /* 0x0450 */ Vec3f      csStartPos;
     /* 0x045C */ Vec3f      csEndPos;
     /* 0x0468 */ char       unk_468[0x002];
-    /* 0x046A */ s16        unk_46A;
+    /* 0x046A */ s16        doorBgCamIndex;
     /* 0x046C */ s16        subCamId;
     /* 0x046E */ char       unk_46E[0x02A];
     /* 0x0498 */ ColliderCylinder cylinder;
-    /* 0x04E4 */ ColliderQuad swordQuads[2];
+    /* 0x04E4 */ ColliderQuad meleeWeaponQuads[2];
     /* 0x05E4 */ ColliderQuad shieldQuad;
-    /* 0x0664 */ Actor* targetActor;
+    /* 0x0664 */ Actor*     targetActor;
     /* 0x0668 */ char       unk_668[0x004];
     /* 0x066C */ s32        targetSwitchTimer;
-    /* 0x0670 */ s32        swordEffectIndex;
+    /* 0x0670 */ s32        meleeWeaponEffectIndex;
     /* 0x0674 */ PlayerActionFunc actionFunc;
     /* 0x0678 */ PlayerAgeProperties* ageProperties;
     /* 0x067C */ u32        stateFlags1;
     /* 0x0680 */ u32        stateFlags2;
-    /* 0x0684 */ Actor* forcedTargetActor;
-    /* 0x0688 */ Actor* boomerangActor;
-    /* 0x068C */ Actor* naviActor;
+    /* 0x0684 */ Actor*     forcedTargetActor;
+    /* 0x0688 */ Actor*     boomerangActor;
+    /* 0x068C */ Actor*     naviActor;
     /* 0x0690 */ s16        naviTextId;
     /* 0x0692 */ u8         stateFlags3;
     /* 0x0693 */ s8         exchangeItemId;
-    /* 0x0694 */ Actor* talkActor;
+    /* 0x0694 */ Actor*     talkActor;
     /* 0x0698 */ f32        talkActorDistance;
     /* 0x069C */ char       unk_69C[0x004];
     /* 0x06A0 */ f32        stoneOfAgonyRumbleTimer;
     /* 0x06A4 */ f32        stoneOfAgonyActorDistSq;
-    /* 0x06A8 */ Actor* ocarinaActor;
+    /* 0x06A8 */ Actor*     ocarinaActor;
     /* 0x06AC */ s8         idleCounter;
     /* 0x06AD */ u8         attentionMode;
     /* 0x06AE */ u16        lookFlags;
     /* 0x06B0 */ s16        upperBodyYawOffset;
     /* 0x06B2 */ char       unk_6B4[0x004];
     /* 0x06B6 */ Vec3s      headRot;
-    /* 0x06BC */ Vec3s upperBodyRot;    
+    /* 0x06BC */ Vec3s      upperBodyRot;
     /* 0x06C2 */ s16        shapePitchOffset;
     /* 0x06C4 */ f32        shapeOffsetY;
     /* 0x06C8 */ SkelAnime  skelAnimeUpper;
@@ -843,7 +883,7 @@ typedef struct Player {
     /* 0x083C */ s16        currentYaw;
     /* 0x083E */ s16        targetYaw;
     /* 0x0840 */ u16        unk_840;
-    /* 0x0842 */ s8         swordAnimation;
+    /* 0x0842 */ s8         meleeWeaponAnimation;
     /* 0x0843 */ s8         swordState;
     /* 0x0844 */ s8         comboTimer;
     /* 0x0845 */ u8         slashCounter;
@@ -887,14 +927,14 @@ typedef struct Player {
     /* 0x08A2 */ s16        damageYaw;
     /* 0x08A4 */ f32        knockbackVelXZ;
     /* 0x08A8 */ f32        knockbackVelY;
-    /* 0x08AC */ f32        pushedSpeed;
-    /* 0x08B0 */ s16        pushedYaw;
-    /* 0x08B4 */ WeaponInfo swordInfo[3];
-    /* 0x0908 */ Vec3f      bodyPartsPos[18];
+    /* 0x08AC */ f32        pushedSpeed; // Pushing player, examples include water currents, floor conveyors, climbing sloped surfaces
+    /* 0x08B0 */ s16        pushedYaw; // Yaw direction of player being pushed
+    /* 0x08B4 */ WeaponInfo meleeWeaponInfo[3];
+    /* 0x0908 */ Vec3f      bodyPartsPos[PLAYER_BODYPART_MAX];
     /* 0x09E0 */ MtxF       mf_9E0;
     /* 0x0A20 */ MtxF       shieldMf;
     /* 0x0A60 */ u8         isBurning;
-    /* 0x0A61 */ u8         flameTimers[18]; // one flame per body part
+    /* 0x0A61 */ u8         flameTimers[PLAYER_BODYPART_MAX]; // one flame per body part
     /* 0x0A73 */ u8         fpsItemShotTimer;
     /* 0x0A74 */ PlayerMiniCsFunc miniCsFunc;
     /* 0x0A78 */ s8         invincibilityTimer; // prevents damage when nonzero (positive = visible, counts towards zero each frame)
@@ -908,9 +948,15 @@ typedef struct Player {
     /* 0x0A86 */ s8         voidRespawnCounter;
     /* 0x0A87 */ u8         deathTimer;
     /* 0x0A88 */ Vec3f      prevWaistPos; // previous body part 0 position
-    /* 0x0A95 */ PendingFlag pendingFlag;
-    /* 0x0AA1 */ u8         boomerangQuickRecall; // Has the player pressed the boomerang button while it's in the air still?
-    /* 0x0AA2 */ GetItemEntry getItemEntry;
-} Player; // size = 0xAAA
+    // #region SOH [General]
+    // Upstream TODO: Rename these to be more obviously SoH specific
+    /*        */ PendingFlag pendingFlag;
+    /*        */ GetItemEntry getItemEntry;
+    // #endregion
+    // #region SOH [Enhancements]
+    // Upstream TODO: Rename this to make it more obvious it is apart of an enhancement
+    /*        */ u8         boomerangQuickRecall; // Has the player pressed the boomerang button while it's in the air still?
+    // #endregion
+} Player; // size = 0xA94
 
 #endif
