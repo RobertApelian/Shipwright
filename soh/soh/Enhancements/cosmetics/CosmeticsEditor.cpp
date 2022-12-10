@@ -1763,18 +1763,12 @@ void InitCosmeticsEditor() {
 }
 
 void RandomizeAllCosmetics() {
-    CVar_SetS32("gHudColors", 2);
-    CVar_SetS32("gUseNaviCol", 1);
-    CVar_SetS32("gUseKeeseCol", 1);
-    CVar_SetS32("gUseDogsCol", 1);
-    CVar_SetS32("gUseTunicsCol", 1);
-    CVar_SetS32("gUseMirrorShieldColors", 1);
-    CVar_SetS32("gUseGauntletsCol", 1);
-    CVar_SetS32("gUseArrowsCol", 1);
-    CVar_SetS32("gUseSpellsCol", 1);
-    CVar_SetS32("gUseChargedCol", 1);
-    CVar_SetS32("gUseTrailsCol", 1);
-    CVar_SetS32("gCCparated", 1);
-    GetRandomColorRGB(Everything_Section, SECTION_SIZE(Everything_Section));
+    for (auto& [id, cosmeticOption] : cosmeticOptions) {
+        if (!CVar_GetS32(cosmeticOption.lockedCvar, 0)) {
+            RandomizeColor(cosmeticOption);
+        }
+    }
+
+    SohImGui::RequestCvarSaveOnNextTick();
     ApplyOrResetCustomGfxPatches();
 }

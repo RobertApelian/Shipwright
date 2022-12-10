@@ -29,7 +29,8 @@ void spawn_on_link(int16_t id, int16_t params) {
                 player->actor.shape.rot.x,
                 player->actor.shape.rot.y,
                 player->actor.shape.rot.z,
-                params);
+                params,
+                false);
 }
 
 #define DIST_FROM_PLAYER 100.f
@@ -49,7 +50,8 @@ void spawn_n(int16_t id, int16_t params, int32_t n) {
                 player->actor.shape.rot.x,
                 player->actor.shape.rot.y,
                 player->actor.shape.rot.z,
-                params);
+                params,
+                false);
         }
     }
 	if (id == 0x113) {
@@ -63,7 +65,7 @@ bool link_is_ready() {
 
     if ((player->targetSwitchTimer & 0xFCAC2485) == 0 &&
         (player->actor.bgCheckFlags & 0x0001) &&
-        (player->swordEffectIndex & 0x000C0000) == 0 &&
+        (player->meleeWeaponEffectIndex & 0x000C0000) == 0 &&
         //TODO: Figure this one out 
         //(z64_event_state_1 & 0x20) == 0 &&
         (gPlayState->cameraPtrs[1] == 0)) {

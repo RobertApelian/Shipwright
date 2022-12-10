@@ -10894,7 +10894,7 @@ void Player_SetupSwim(PlayState* play, Player* this, s16 yaw);
 
 void Player_SpawnExplosion(PlayState* play, Player* this) {
     EnBom* bomb = (EnBom*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_BOM, this->actor.world.pos.x,
-                               this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 6, BOMB_BODY);
+                               this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 6, BOMB_BODY, false);
     if (bomb != NULL) {
         bomb->timer = 0;
     }
@@ -10957,7 +10957,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
     if (CVar_GetS32("gRandoMagic", 0) && gSaveContext.magicLevel > 0) {
         // Randomize magic based on max
-        if (gSaveContext.doubleMagic) {
+        if (gSaveContext.isDoubleMagicAcquired) {
             gSaveContext.magic = 0x60 * Rand_ZeroOne();
         } else {
             gSaveContext.magic = 0x30 * Rand_ZeroOne();
@@ -11126,20 +11126,20 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         if (!inJail) {
             jail[0] = (BgSpot15Saku*)Actor_Spawn(&play->actorCtx, play, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
-                                               this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1);
+                                               this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1, false);
             jail[1] = (BgSpot15Saku*)Actor_Spawn(
                 &play->actorCtx, play, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x - PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
-                                               this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1);
+                                               this->actor.world.pos.z, 0, DEGF_TO_BINANG(90.0f), 0, 1, false);
             jail[2] = (BgSpot15Saku*)Actor_Spawn(&play->actorCtx, play, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x, this->actor.world.pos.y - 1,
-                                               this->actor.world.pos.z + PLAYER_JAIL_DIST, 0, 0, 0, 1);
+                                               this->actor.world.pos.z + PLAYER_JAIL_DIST, 0, 0, 0, 1, false);
             jail[3] = (BgSpot15Saku*)Actor_Spawn(&play->actorCtx, play, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x, this->actor.world.pos.y - 1,
-                                               this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 1);
+                                               this->actor.world.pos.z - PLAYER_JAIL_DIST, 0, 0, 0, 1, false);
             jailFloor = (EnAObj*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_A_OBJ, this->actor.world.pos.x,
                                          this->actor.world.pos.y - PLAYER_JAIL_FLOOR_DIST - 1, this->actor.world.pos.z,
-                                         0, 0, 0, 5);
+                                         0, 0, 0, 5, false);
             for (i = 0; i < 4; i++) {
                 jail[i]->dyna.actor.room = -1;
             }
@@ -11191,17 +11191,17 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
             ritualFlame =
                 (EnLight*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_LIGHT, this->actor.world.pos.x,
-                                      this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0);
+                                      this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0, false);
             cow[0] = (EnCow*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COW, vtx[0].x, this->actor.world.pos.y,
-                                       vtx[0].z, 0, cowYaw[0], 0, 0);
+                                       vtx[0].z, 0, cowYaw[0], 0, 0, false);
             cow[1] = (EnCow*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COW, vtx[1].x, this->actor.world.pos.y,
-                                       vtx[1].z, 0, cowYaw[1], 0, 0);
+                                       vtx[1].z, 0, cowYaw[1], 0, 0, false);
             cow[2] = (EnCow*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COW, vtx[2].x, this->actor.world.pos.y,
-                                       vtx[2].z, 0, cowYaw[2], 0, 0);
+                                       vtx[2].z, 0, cowYaw[2], 0, 0, false);
             cow[3] = (EnCow*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COW, vtx[3].x, this->actor.world.pos.y,
-                                       vtx[3].z, 0, cowYaw[3], 0, 0);
+                                       vtx[3].z, 0, cowYaw[3], 0, 0, false);
             cow[4] = (EnCow*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_COW, vtx[4].x, this->actor.world.pos.y,
-                                       vtx[4].z, 0, cowYaw[4], 0, 0);
+                                       vtx[4].z, 0, cowYaw[4], 0, 0, false);
 
             for (i = 0; i < 5; i++) {
                 // Persistent across rooms
@@ -11258,7 +11258,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         if (!fireRocksFalling) {
             fireRockSpawner =
                 (EnEncount2*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_ENCOUNT2, this->actor.world.pos.x,
-                                         this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0);
+                                         this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 0, false);
             fireRockSpawner->actor.room = -1;
             fireRocksFalling = true;
         } else if (fireRockSpawner != NULL) {
@@ -11290,7 +11290,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             attackCuccoPos.z = ((Rand_ZeroOne() - 0.5f) * viewZ) + play->view.eye.z;
             attackCucco[cuccoAtkNum] =
                 (EnAttackNiw*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_ATTACK_NIW, attackCuccoPos.x,
-                                          attackCuccoPos.y, attackCuccoPos.z, 0, 0, 0, 0);
+                                          attackCuccoPos.y, attackCuccoPos.z, 0, 0, 0, 0, false);
 
             attackCucco[cuccoAtkNum]->actor.room = -1;
 
@@ -11326,7 +11326,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         if (explodeRupee == NULL) {
             explodeRupee =
                 Actor_Spawn(&play->actorCtx, play, ACTOR_EN_EX_RUPPY, this->actor.world.pos.x + 150.0f,
-                            this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 1);
+                            this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, 1, false);
             explodeRupee->room = -1;
             rupeeOrigin = this->actor.world.pos;
             Audio_PlayActorSound2(&this->actor, NA_SE_SY_START_SHOT);

@@ -3756,7 +3756,7 @@ void Interface_DrawEnemyHealthBar(PlayState* play) {
 
     if (healthBarX > -8 && healthBarY > 0) {
         // Setup DL for overlay disp
-        func_80094520(play->state.gfxCtx);
+        Gfx_SetupDL_39Overlay(play->state.gfxCtx);
 
         gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255,
                         CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
