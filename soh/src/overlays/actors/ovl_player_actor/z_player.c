@@ -5606,6 +5606,13 @@ s32 Player_SetupJumpSlashOrRoll(Player* this, PlayState* play) {
             }
         } else {
             Player_SetupBackflipOrSidehop(this, play, relativeStickInput);
+            if (relativeStickInput == 1 || relativeStickInput == 3) {
+                gSaveContext.sohStats.count[COUNT_SIDEHOPS]++;
+            }
+            if (relativeStickInput == 2) {
+                gSaveContext.sohStats.count[COUNT_BACKFLIPS]++;
+            }
+            
             return 1;
         }
     }
