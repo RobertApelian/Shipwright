@@ -291,6 +291,7 @@ namespace GameMenuBar {
             UIWidgets::Spacer(0);
 
             if (ImGui::BeginMenu("Languages")) {
+                UIWidgets::PaddedEnhancementCheckbox("Translate Title Screen", "gTitleScreenTranslation");
                 UIWidgets::EnhancementRadioButton("English", "gLanguages", LANGUAGE_ENG);
                 UIWidgets::EnhancementRadioButton("German", "gLanguages", LANGUAGE_GER);
                 UIWidgets::EnhancementRadioButton("French", "gLanguages", LANGUAGE_FRA);
@@ -382,6 +383,9 @@ namespace GameMenuBar {
                     UIWidgets::PaddedEnhancementCheckbox("Skip Magic Arrow Equip Animation", "gSkipArrowAnimation", true, false);
                     UIWidgets::PaddedEnhancementCheckbox("Skip save confirmation", "gSkipSaveConfirmation", true, false);
                     UIWidgets::Tooltip("Skip the \"Game saved.\" confirmation screen");
+                    UIWidgets::PaddedEnhancementCheckbox("Exit Market at Night", "gMarketSneak", true, false);
+                    UIWidgets::Tooltip("Allows exiting Hyrule Castle Market Town to Hyrule Field at night by speaking "
+                    "to the guard next to the gate.");
                     ImGui::EndMenu();
                 }
 
@@ -563,9 +567,9 @@ namespace GameMenuBar {
                         UIWidgets::Tooltip("Turn on/off changes to the shooting gallery behavior");
                         bool disabled = !CVar_GetS32("gCustomizeShootingGallery", 0);
                         const char* disabledTooltip = "This option is disabled because \"Customize Behavior\" is turned off";
-                        UIWidgets::EnhancementCheckbox("Instant Win", "gInstantShootingGalleryWin", disabled, disabledTooltip);
+                        UIWidgets::PaddedEnhancementCheckbox("Instant Win", "gInstantShootingGalleryWin", true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("Skips the shooting gallery minigame");
-                        UIWidgets::EnhancementCheckbox("No Rupee Randomization", "gConstantAdultGallery", disabled, disabledTooltip);
+                        UIWidgets::PaddedEnhancementCheckbox("No Rupee Randomization", "gConstantAdultGallery", true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("Forces the rupee order to not be randomized as adult, making it the same as chlid");
                         UIWidgets::PaddedEnhancementSliderInt("Child Starting Ammunition: %d", "##cShootingGalleryAmmunition", "gChildShootingGalleryAmmunition", 10, 30, "", 15, false, true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("The ammunition at the start of the shooting gallery minigame as a child");
@@ -581,9 +585,9 @@ namespace GameMenuBar {
                         UIWidgets::Tooltip("Turn on/off changes to the bombchu bowling behavior");
                         bool disabled = CVar_GetS32("gCustomizeBombchuBowling", 0) == 0;
                         const char* disabledTooltip = "This option is disabled because \"Customize Behavior\" is turned off";
-                        UIWidgets::EnhancementCheckbox("Remove Small Cucco", "gBombchuBowlingNoSmallCucco", disabled, disabledTooltip);
+                        UIWidgets::PaddedEnhancementCheckbox("Remove Small Cucco", "gBombchuBowlingNoSmallCucco", true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("Prevents the small cucco from appearing in the bombchu bowling minigame");
-                        UIWidgets::EnhancementCheckbox("Remove Big Cucco", "gBombchuBowlingNoBigCucco", disabled, disabledTooltip);
+                        UIWidgets::PaddedEnhancementCheckbox("Remove Big Cucco", "gBombchuBowlingNoBigCucco", true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("Prevents the big cucco from appearing in the bombchu bowling minigame");
                         UIWidgets::PaddedEnhancementSliderInt("Bombchu Count: %d", "##cBombchuBowlingAmmunition", "gBombchuBowlingAmmunition", 3, 20, "", 10, false, true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("The number of bombchus available at the start of the bombchu bowling minigame");
@@ -597,7 +601,7 @@ namespace GameMenuBar {
                         UIWidgets::Tooltip("Turn on/off changes to the fishing behavior");
                         bool disabled = !CVar_GetS32("gCustomizeFishing", 0);
                         const char* disabledTooltip = "This option is disabled because \"Customize Behavior\" is turned off";
-                        UIWidgets::EnhancementCheckbox("Instant Fishing", "gInstantFishing", disabled, disabledTooltip);
+                        UIWidgets::PaddedEnhancementCheckbox("Instant Fishing", "gInstantFishing", true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("All fish will be caught instantly");
                         UIWidgets::PaddedEnhancementCheckbox("Guarantee Bite", "gGuaranteeFishingBite", true, false, disabled, disabledTooltip);
                         UIWidgets::Tooltip("When a line is stable, guarantee bite. Otherwise use default logic");
@@ -1214,6 +1218,22 @@ namespace GameMenuBar {
                 CVar_SetS32("gItemTrackerSettingsEnabled", !currentValue);
                 SohImGui::RequestCvarSaveOnNextTick();
                 SohImGui::EnableWindow("Item Tracker Settings", CVar_GetS32("gItemTrackerSettingsEnabled", 0));
+            }
+            ImGui::Dummy(ImVec2(0.0f, 0.0f));
+            if (ImGui::Button(GetWindowButtonText("Check Tracker", CVar_GetS32("gCheckTrackerEnabled", 0)).c_str(), buttonSize))
+            {
+                bool currentValue = CVar_GetS32("gCheckTrackerEnabled", 0);
+                CVar_SetS32("gCheckTrackerEnabled", !currentValue);
+                SohImGui::RequestCvarSaveOnNextTick();
+                SohImGui::EnableWindow("Check Tracker", CVar_GetS32("gCheckTrackerEnabled", 0));
+            }
+            ImGui::Dummy(ImVec2(0.0f, 0.0f));
+            if (ImGui::Button(GetWindowButtonText("Check Tracker Settings", CVar_GetS32("gCheckTrackerSettingsEnabled", 0)).c_str(), buttonSize))
+            {
+                bool currentValue = CVar_GetS32("gCheckTrackerSettingsEnabled", 0);
+                CVar_SetS32("gCheckTrackerSettingsEnabled", !currentValue);
+                SohImGui::RequestCvarSaveOnNextTick();
+                SohImGui::EnableWindow("Check Tracker Settings", CVar_GetS32("gCheckTrackerSettingsEnabled", 0));
             }
             ImGui::PopStyleVar(3);
             ImGui::PopStyleColor(1);
