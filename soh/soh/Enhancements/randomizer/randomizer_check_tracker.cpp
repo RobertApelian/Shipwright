@@ -478,14 +478,23 @@ bool IsVisibleInCheckTracker(RandomizerCheckObject rcObj) {
             rcObj.vOrMQ == RCVORMQ_VANILLA && !OTRGlobals::Instance->gRandomizer->masterQuestDungeons.contains(rcObj.sceneId)
         ) &&
         (rcObj.rcType != RCTYPE_SHOP                || showShops) &&
-        (rcObj.rcType != RCTYPE_SCRUB               || showScrubs) &&
+        (rcObj.rcType != RCTYPE_SCRUB ||
+         showScrubs || 
+         rcObj.rc == RC_LW_DEKU_SCRUB_NEAR_BRIDGE || // The 3 scrubs that are always randomized
+         rcObj.rc == RC_HF_DEKU_SCRUB_GROTTO ||
+         rcObj.rc == RC_LW_DEKU_SCRUB_GROTTO_FRONT
+        ) &&
         (rcObj.rcType != RCTYPE_MERCHANT            || showMerchants) &&
         (rcObj.rcType != RCTYPE_SKULL_TOKEN ||
             (showOverworldTokens && RandomizerCheckObjects::AreaIsOverworld(rcObj.rcArea)) ||
             (showDungeonTokens && RandomizerCheckObjects::AreaIsDungeon(rcObj.rcArea))
         ) &&
         (rcObj.rcType != RCTYPE_COW                 || showCows) &&
-        (rcObj.rcType != RCTYPE_ADULT_TRADE         || showAdultTrade) &&
+        (rcObj.rcType != RCTYPE_ADULT_TRADE ||
+         showAdultTrade ||
+         rcObj.rc == RC_KAK_ANJU_AS_ADULT ||  // adult trade checks that are always shuffled
+         rcObj.rc == RC_DMT_TRADE_CLAIM_CHECK // even when shuffle adult trade is off
+        ) &&
         (rcObj.rc != RC_KF_KOKIRI_SWORD_CHEST       || showKokiriSword) &&
         (rcObj.rc != RC_ZR_MAGIC_BEAN_SALESMAN      || showBeans) &&
         (rcObj.rc != RC_HC_MALON_EGG                || showWeirdEgg) &&
@@ -732,8 +741,9 @@ bool HasItemBeenCollected(RandomizerCheckObject obj) {
             return gSaveContext.highScores[HS_POE_POINTS] >= 1000;
         case SpoilerCollectionCheckType::SPOILER_CHK_GRAVEDIGGER:
             // Gravedigger has a fix in place that means one of two save locations. Check both.
-            return (gSaveContext.itemGetInf[1] & 0x1000) ||
-                   CVar_GetS32("gGravediggingTourFix", 0) && gSaveContext.sceneFlags[scene].collect & (1 << flag);
+            return (gSaveContext.itemGetInf[1] & 0x1000) || // vanilla flag
+                   ((gSaveContext.n64ddFlag || CVar_GetS32("gGravediggingTourFix", 0)) &&
+                        gSaveContext.sceneFlags[scene].collect & (1 << flag)); // rando/fix flag
         default:
             return false;
     }
@@ -901,8 +911,8 @@ void ImGuiDrawTwoColorPickerSection(const char* text, const char* cvarMainName, 
             ImGui::TableNextColumn();
             ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
             if (UIWidgets::EnhancementColor("Check", cvarMainName,
-                ImVec4(main_color.r / 255.0f, main_color.g / 255.0f, main_color.b / 255.0f, main_color.a / 255.0f),
-                ImVec4(main_default_color.r / 255.0f, main_default_color.g / 255.0f, main_default_color.b / 255.0f, main_default_color.a / 255.0f)))
+                ImVec4(main_color.r, main_color.g, main_color.b, main_color.a),
+                ImVec4(main_default_color.r, main_default_color.g, main_default_color.b, main_default_color.a)))
             {
                 main_color = CVar_GetRGBA(cvarMainName, main_default_color);
             };
@@ -912,8 +922,8 @@ void ImGuiDrawTwoColorPickerSection(const char* text, const char* cvarMainName, 
             ImGui::AlignTextToFramePadding();
             ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
             if (UIWidgets::EnhancementColor("Details", cvarExtraName,
-                ImVec4(extra_color.r / 255.0f, extra_color.g / 255.0f, extra_color.b / 255.0f, extra_color.a / 255.0f),
-                ImVec4(extra_default_color.r / 255.0f, extra_default_color.g / 255.0f, extra_default_color.b / 255.0f, extra_default_color.a / 255.0f)))
+                ImVec4(extra_color.r, extra_color.g, extra_color.b, extra_color.a),
+                ImVec4(extra_default_color.r, extra_default_color.g, extra_default_color.b, extra_default_color.a)))
             {
                 extra_color = CVar_GetRGBA(cvarExtraName, extra_default_color);
             }
@@ -952,8 +962,8 @@ void DrawCheckTrackerOptions(bool& open) {
     ImGui::TableNextColumn();
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
     if (UIWidgets::EnhancementColor("BG Color", "gCheckTrackerBgColor",
-        ImVec4(Color_Background.r / 255.0f, Color_Background.g / 255.0f, Color_Background.b / 255.0f, Color_Background.a / 255.0f),
-        ImVec4(Color_Bg_Default.r / 255.0f, Color_Bg_Default.g / 255.0f, Color_Bg_Default.b / 255.0f, Color_Bg_Default.a / 255.0f),
+        ImVec4(Color_Background.r, Color_Background.g, Color_Background.b, Color_Background.a),
+        ImVec4(Color_Bg_Default.r, Color_Bg_Default.g, Color_Bg_Default.b, Color_Bg_Default.a),
         false, true))
     {
         Color_Background = CVar_GetRGBA("gCheckTrackerBgColor", Color_Bg_Default);
