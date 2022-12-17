@@ -1825,7 +1825,7 @@ s32 Player_IsAimingBoomerang(Player* this) {
 
 void Player_SetGetItemDrawIdPlusOne(Player* this, PlayState* play) {
     GetItemEntry giEntry;
-    if (this->getItemEntry.objectId == OBJECT_INVALID) {
+    if (this->getItemEntry.objectId == OBJECT_INVALID || (this->getItemId != this->getItemEntry.getItemId)) {
         giEntry = ItemTable_Retrieve(this->getItemId);
     }
     else {
@@ -13698,7 +13698,7 @@ s32 Player_SetupGetItemText(PlayState* play, Player* this) {
     }
 
     if (this->genericVar == 0) {
-        if (this->getItemEntry.objectId == OBJECT_INVALID) {
+        if (this->getItemEntry.objectId == OBJECT_INVALID || (this->getItemId != this->getItemEntry.getItemId)) {
             giEntry = ItemTable_Retrieve(this->getItemId);
         } else {
             giEntry = this->getItemEntry;
