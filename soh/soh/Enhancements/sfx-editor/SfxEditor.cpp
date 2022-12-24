@@ -465,7 +465,7 @@ void RandomizeAllSfx() {
     for (auto type : types) {
         std::vector<u16> values;
         for (const auto& [value, seqData] : sfxEditorSequenceMap) {
-            if (std::get<2>(seqData) == type) {
+            if (std::get<2>(seqData) & type) {
                 values.push_back(value);
             }
         }
@@ -473,7 +473,11 @@ void RandomizeAllSfx() {
         for (const auto& [defaultValue, seqData] : sfxEditorSequenceMap) {
             const auto& [name, sfxKey, seqType] = seqData;
             const std::string cvarKey = "gSfxEditor_" + sfxKey;
-            if (seqType == type) {
+            if (seqType & type) {
+                // Only save authentic sequence CVars
+                if (((seqType & SEQ_BGM_CUSTOM) || seqType == SEQ_FANFARE) && defaultValue >= MAX_AUTHENTIC_SEQID) {
+                    continue;
+                }
                 const int randomValue = values.back();
                 CVar_SetS32(cvarKey.c_str(), randomValue);
                 values.pop_back();
@@ -482,6 +486,7 @@ void RandomizeAllSfx() {
     }
 
     SohImGui::RequestCvarSaveOnNextTick();
+    ReplayCurrentBGM();
 }
 
 extern "C" void SfxEditor_AddSequence(char *otrPath, uint16_t seqNum) {
