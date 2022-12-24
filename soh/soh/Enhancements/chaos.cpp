@@ -24,8 +24,10 @@
 
 #if defined(__linux__)
 #include "chaos_linux.h"
-#elif !defined(__APPLE__)
+#elif !defined(__APPLE__) && !defined(__SWITCH__) && !defined(__WIIU__)
 #include "chaos_win.h"
+#else
+#include "chaos_dummy.h"
 #endif
 
 extern "C" {
