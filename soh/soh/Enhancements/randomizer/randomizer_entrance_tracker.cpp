@@ -38,6 +38,13 @@ static s16 lastEntranceIndex = -1;
 static s16 currentGrottoId = -1;
 static s16 lastSceneOrEntranceDetected = -1;
 
+#include <random>
+
+static std::mt19937 generator1;
+static std::mt19937 generator2;
+
+static uint32_t nums[10];
+
 static std::string spoilerEntranceGroupNames[] = {
     "Spawns/Warp Songs/Owls",
     "Kokiri Forest",
@@ -618,6 +625,10 @@ void DrawEntranceTracker(bool& open) {
         return;
     }
 
+    for (size_t i = 0; i < 10; i++) {
+        ImGui::Text("%d", nums[i]);
+    }
+
     // Begin tracker settings
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if (ImGui::TreeNode("Tracker Settings")) {
@@ -887,5 +898,12 @@ void DrawEntranceTracker(bool& open) {
 }
 
 void InitEntranceTracker() {
+    generator1 = std::mt19937{};
+    std::uniform_int_distribution<uint32_t> dist(0, 10);
+    
+    for (size_t i = 0; i < 10; i++) {
+        nums[i] = dist(generator1);
+    }
+
     SohImGui::AddWindow("Randomizer", "Entrance Tracker", DrawEntranceTracker, CVar_GetS32("gEntranceTrackerEnabled", 0) == 1);
 }
