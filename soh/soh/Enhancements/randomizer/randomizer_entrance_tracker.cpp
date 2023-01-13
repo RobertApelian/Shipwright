@@ -43,8 +43,10 @@ static s16 lastSceneOrEntranceDetected = -1;
 static std::mt19937 generator1;
 static std::mt19937 generator2;
 
-static uint32_t nums1[10];
-static uint32_t nums2[10];
+#define NUM_NUM 50
+
+static uint32_t nums1[NUM_NUM];
+static uint32_t nums2[NUM_NUM];
 
 static std::string spoilerEntranceGroupNames[] = {
     "Spawns/Warp Songs/Owls",
@@ -626,11 +628,20 @@ void DrawEntranceTracker(bool& open) {
         return;
     }
 
-    for (size_t i = 0; i < 10; i++) {
-        ImGui::Text("%d", nums1[i]);
-        ImGui::SameLine();
-        ImGui::Text("%d", nums2[i]);
+    if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
+
+        for (size_t i = 0; i < NUM_NUM; i++) {
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", nums1[i]);
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", nums2[i]);
+        }
+
+        ImGui::EndTable();
     }
+
+    ImGui::End();
+    return;
 
     // Begin tracker settings
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
@@ -906,7 +917,7 @@ void InitEntranceTracker() {
     std::uniform_int_distribution<uint32_t> dist1(0, 10);
     boost::random::uniform_int_distribution<uint32_t> dist2(0, 10);
     
-    for (size_t i = 0; i < 10; i++) {
+    for (size_t i = 0; i < NUM_NUM; i++) {
         nums1[i] = dist1(generator1);
         nums2[i] = dist2(generator2);
     }
