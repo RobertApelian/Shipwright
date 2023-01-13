@@ -1,16 +1,17 @@
 #include "random.hpp"
 
 #include <random>
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 
 static bool init = false;
-static std::mt19937 generator;
+static boost::random::mt19937 generator;
 
 //Initialize with seed specified
 void Random_Init(uint32_t seed) {
     init = true;
-    generator = std::mt19937{seed};
+    generator = boost::random::mt19937{seed};
 }
 
 //Returns a random integer in range [min, max-1]
