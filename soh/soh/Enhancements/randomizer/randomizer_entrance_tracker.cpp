@@ -3,7 +3,7 @@
 #include "../../OTRGlobals.h"
 #include <ImGuiImpl.h>
 #include "../../UIWidgets.hpp"
-
+#include <boost/random/uniform_int_distribution.hpp>
 
 #include <map>
 #include <string>
@@ -43,7 +43,8 @@ static s16 lastSceneOrEntranceDetected = -1;
 static std::mt19937 generator1;
 static std::mt19937 generator2;
 
-static uint32_t nums[10];
+static uint32_t nums1[10];
+static uint32_t nums2[10];
 
 static std::string spoilerEntranceGroupNames[] = {
     "Spawns/Warp Songs/Owls",
@@ -626,7 +627,9 @@ void DrawEntranceTracker(bool& open) {
     }
 
     for (size_t i = 0; i < 10; i++) {
-        ImGui::Text("%d", nums[i]);
+        ImGui::Text("%d", nums1[i]);
+        ImGui::SameLine();
+        ImGui::Text("%d", nums2[i]);
     }
 
     // Begin tracker settings
@@ -899,10 +902,13 @@ void DrawEntranceTracker(bool& open) {
 
 void InitEntranceTracker() {
     generator1 = std::mt19937{};
-    std::uniform_int_distribution<uint32_t> dist(0, 10);
+    generator2 = std::mt19937{};
+    std::uniform_int_distribution<uint32_t> dist1(0, 10);
+    boost::random::uniform_int_distribution<uint32_t> dist2(0, 10);
     
     for (size_t i = 0; i < 10; i++) {
-        nums[i] = dist(generator1);
+        nums1[i] = dist1(generator1);
+        nums2[i] = dist2(generator2);
     }
 
     SohImGui::AddWindow("Randomizer", "Entrance Tracker", DrawEntranceTracker, CVar_GetS32("gEntranceTrackerEnabled", 0) == 1);
