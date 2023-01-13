@@ -2643,7 +2643,7 @@ RandomizerCheck Randomizer::GetCheckFromRandomizerInf(RandomizerInf randomizerIn
 
 std::thread randoThread;
 
-void GenerateRandomizerImgui() {
+void GenerateRandomizerImgui(std::string seed = "") {
     CVar_SetS32("gRandoGenerating", 1);
     CVar_Save();
 
@@ -2791,7 +2791,7 @@ void GenerateRandomizerImgui() {
         excludedLocations.insert((RandomizerCheck)std::stoi(excludedLocationString));
     }
 
-    RandoMain::GenerateRando(cvarSettings, excludedLocations, seedInputBuffer);
+    RandoMain::GenerateRando(cvarSettings, excludedLocations, seed);
 
     memset(seedInputBuffer, 0, MAX_SEED_BUFFER_SIZE);
 
@@ -2800,6 +2800,14 @@ void GenerateRandomizerImgui() {
     CVar_Load();
 
     generated = 1;
+}
+
+bool GenerateRandomizer(std::string seed /*= ""*/) {
+    if (CVar_GetS32("gRandoGenerating", 0) == 0) {
+        randoThread = std::thread(&GenerateRandomizerImgui, seed);
+        return true;
+    }
+    return false;
 }
 
 void DrawRandoEditor(bool& open) {
@@ -2886,6 +2894,7 @@ void DrawRandoEditor(bool& open) {
 
     ImGui::Text("Seed");
     ImGui::InputText("##RandomizerSeed", seedInputBuffer, MAX_SEED_BUFFER_SIZE, ImGuiInputTextFlags_None);
+    // ImGui::InputText("##RandomizerSeed", seedInputBuffer, MAX_SEED_BUFFER_SIZE, ImGuiInputTextFlags_None);
     UIWidgets::Tooltip("Leaving this field blank will use a random seed value automatically");
 
     ImGui::SameLine();
@@ -2900,9 +2909,7 @@ void DrawRandoEditor(bool& open) {
 
     UIWidgets::Spacer(0);
     if (ImGui::Button("Generate Randomizer")) {
-        if (CVar_GetS32("gRandoGenerating", 0) == 0) {
-            randoThread = std::thread(&GenerateRandomizerImgui);
-        }
+        GenerateRandomizer(seedInputBuffer);
     }
 
     UIWidgets::Spacer(0);
