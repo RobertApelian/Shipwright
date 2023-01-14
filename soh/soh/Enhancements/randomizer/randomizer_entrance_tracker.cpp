@@ -4,6 +4,7 @@
 #include <ImGuiImpl.h>
 #include "../../UIWidgets.hpp"
 #include <boost/random/uniform_int_distribution.hpp>
+#include "3drando/random.hpp"
 
 #include <map>
 #include <string>
@@ -627,6 +628,9 @@ void DrawEntranceTracker(bool& open) {
         ImGui::End();
         return;
     }
+
+    ImGui::Text("Random first used: %d", RandomGetUsedCount(false));
+    ImGui::Text("Random second used: %d", RandomGetUsedCount(true));
 
     if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
 

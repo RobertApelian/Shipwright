@@ -751,6 +751,9 @@ const char* SpoilerLog_Write(int language) {
 
     jsonData["_version"] = (char*) gBuildVersion;
     jsonData["_seed"] = Settings::seed;
+    jsonData["_settingsStr"] = Settings::settingsStr;
+    jsonData["_randomCalls1"] = Settings::randomCalls[0];
+    jsonData["_randomCalls2"] = Settings::randomCalls[1];
 
     // Write Hash
     int index = 0;

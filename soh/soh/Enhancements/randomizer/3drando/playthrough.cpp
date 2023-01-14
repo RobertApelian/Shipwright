@@ -38,6 +38,10 @@ int Playthrough_Init(uint32_t seed, std::unordered_map<RandomizerSettingKey, uin
             }
         }
     }
+
+    Settings::settingsStr = settingsStr;
+    Settings::randomCalls[0] = RandomGetUsedCount(true);
+
     unsigned int finalHash = boost::hash<std::string>{}(std::to_string(Settings::seed) + settingsStr);
     Random_Init(finalHash);
     Settings::hash = std::to_string(finalHash);
@@ -55,6 +59,8 @@ int Playthrough_Init(uint32_t seed, std::unordered_map<RandomizerSettingKey, uin
 
     GenerateHash();
     WriteIngameSpoilerLog();
+
+    Settings::randomCalls[1] = RandomGetUsedCount(true);
 
     if (Settings::GenerateSpoilerLog) {
         // write logs
