@@ -4,6 +4,7 @@
 #include <ImGuiImpl.h>
 #include "../../UIWidgets.hpp"
 #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/container_hash/hash.hpp>
 #include "3drando/random.hpp"
 
 #include <map>
@@ -631,6 +632,14 @@ void DrawEntranceTracker(bool& open) {
 
     ImGui::Text("Random first used: %d", RandomGetUsedCount(false));
     ImGui::Text("Random second used: %d", RandomGetUsedCount(true));
+
+    std::string thing = "12345";
+    boost::hash<std::string> hasher;
+
+    ImGui::Text("std::hash(\"12345\") == %d", std::hash<std::string>{}(thing));
+    ImGui::Text("boost::hash(\"12345\") == %d", boost::hash<std::string>{}(thing));
+    ImGui::Text("hasher(\"12345\") == %d", hasher(thing));
+    ImGui::Text("boost::hash_value(\"12345\") == %d", boost::hash_value(thing));
 
     if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
 
