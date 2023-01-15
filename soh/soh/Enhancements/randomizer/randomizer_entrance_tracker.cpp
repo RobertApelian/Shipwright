@@ -656,6 +656,7 @@ void DrawEntranceTracker(bool& open) {
     ImGui::Text("boost::hash_value(\"12345\") == %" SSIZET_FMT, boost::hash_value(thing));
     ImGui::Text("boost::hash_value(seed with settingsStr) == %" SSIZET_FMT, boost::hash_value(thing + thing2));
     ImGui::Text("uint32 %" SUINT32_FMT, hash32);
+    ImGui::Text("uint32 %" SUINT32_FMT, hash32_2);
 
     if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
 

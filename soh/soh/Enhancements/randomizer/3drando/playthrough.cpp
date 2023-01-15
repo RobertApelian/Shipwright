@@ -42,9 +42,10 @@ int Playthrough_Init(uint32_t seed, std::unordered_map<RandomizerSettingKey, uin
     Settings::settingsStr = settingsStr;
     Settings::randomCalls[0] = RandomGetUsedCount(true);
 
-    unsigned int finalHash = boost::hash<std::string>{}(std::to_string(Settings::seed) + settingsStr);
-    Random_Init(finalHash);
-    Settings::hash = std::to_string(finalHash);
+    size_t finalHash = boost::hash<std::string>{}(std::to_string(Settings::seed) + settingsStr);
+    uint32_t finalHashTrunc = (uint32_t) finalHash;
+    Random_Init(finalHashTrunc);
+    Settings::hash = std::to_string(finalHashTrunc);
 
     Logic::UpdateHelpers();
 
