@@ -618,7 +618,7 @@ void InitEntranceTrackingData() {
 }
 
 #ifdef __WIN32__
-#define SSIZET_FMT "%Iu"
+#define SSIZET_FMT "Iu"
 #else
 #define SSIZET_FMT PRIu64
 #endif
@@ -644,9 +644,9 @@ void DrawEntranceTracker(bool& open) {
     boost::hash<std::string> hasher;
 
     ImGui::Text("std::hash(\"12345\") == %d", std::hash<std::string>{}(thing));
-    ImGui::Text("boost::hash(\"12345\") == " SSIZET_FMT, boost::hash<std::string>{}(thing));
-    ImGui::Text("hasher(\"12345\") == " SSIZET_FMT, hasher(thing));
-    ImGui::Text("boost::hash_value(\"12345\") == " SSIZET_FMT, boost::hash_value(thing));
+    ImGui::Text("boost::hash(\"12345\") == %" SSIZET_FMT, boost::hash<std::string>{}(thing));
+    ImGui::Text("hasher(\"12345\") == %" SSIZET_FMT, hasher(thing));
+    ImGui::Text("boost::hash_value(\"12345\") == %" SSIZET_FMT, boost::hash_value(thing));
 
     if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
 
