@@ -617,10 +617,10 @@ void InitEntranceTrackingData() {
     SortEntranceListByType(destListSortedByType, 1);
 }
 
-#if (defined(linux) || defined(__linux) || defined(__linux__))
-#define SSIZET_FMT "%zd"
-#else
+#ifdef __WIN32__
 #define SSIZET_FMT "%Iu"
+#else
+#define SSIZET_FMT PRIu64
 #endif
 
 
