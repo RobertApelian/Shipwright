@@ -659,4 +659,6 @@ namespace boost
 
 } // namespace boost
 
+#include <boost/container_hash/hash_32.hpp>
+
 #endif // #ifndef BOOST_FUNCTIONAL_HASH_HASH_HPP

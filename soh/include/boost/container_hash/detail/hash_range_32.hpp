@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#ifndef BOOST_HASH_DETAIL_HASH_RANGE_HPP
-#define BOOST_HASH_DETAIL_HASH_RANGE_HPP
+#ifndef BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
+#define BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
 
 #include <boost/container_hash/hash_fwd.hpp>
 #include <boost/type_traits/integral_constant.hpp>
@@ -19,44 +19,44 @@ namespace boost
 namespace hash_detail
 {
 
-template<class T> struct is_char_type: public boost::false_type {};
+// template<class T> struct is_char_type: public boost::false_type {};
 
 #if CHAR_BIT == 8
 
-template<> struct is_char_type<char>: public boost::true_type {};
-template<> struct is_char_type<signed char>: public boost::true_type {};
-template<> struct is_char_type<unsigned char>: public boost::true_type {};
+// template<> struct is_char_type<char>: public boost::true_type {};
+// template<> struct is_char_type<signed char>: public boost::true_type {};
+// template<> struct is_char_type<unsigned char>: public boost::true_type {};
 
 #if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
-template<> struct is_char_type<char8_t>: public boost::true_type {};
+// template<> struct is_char_type<char8_t>: public boost::true_type {};
 #endif
 
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
-template<> struct is_char_type<std::byte>: public boost::true_type {};
+// template<> struct is_char_type<std::byte>: public boost::true_type {};
 #endif
 
 #endif
 
-template<class It>
-inline typename boost::enable_if_<
-    !is_char_type<typename std::iterator_traits<It>::value_type>::value,
-std::size_t >::type
-    hash_range( std::size_t seed, It first, It last )
-{
-    for( ; first != last; ++first )
-    {
-        hash_combine<typename std::iterator_traits<It>::value_type>( seed, *first );
-    }
+// template<class It>
+// inline typename boost::enable_if_<
+//     !is_char_type<typename std::iterator_traits<It>::value_type>::value,
+// std::size_t >::type
+//     hash_range( std::size_t seed, It first, It last )
+// {
+//     for( ; first != last; ++first )
+//     {
+//         hash_combine<typename std::iterator_traits<It>::value_type>( seed, *first );
+//     }
 
-    return seed;
-}
+//     return seed;
+// }
 
 template<class It>
 inline typename boost::enable_if_<
     is_char_type<typename std::iterator_traits<It>::value_type>::value &&
     is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
 std::size_t>::type
-    hash_range( std::size_t seed, It first, It last )
+    hash_range_32( uint32_t seed, It first, It last )
 {
     std::size_t n = static_cast<std::size_t>( last - first );
 
@@ -71,7 +71,7 @@ std::size_t>::type
             static_cast<boost::uint32_t>( static_cast<unsigned char>( first[2] ) ) << 16 |
             static_cast<boost::uint32_t>( static_cast<unsigned char>( first[3] ) ) << 24;
 
-        hash_combine( seed, w );
+        hash_combine_32( seed, w );
     }
 
     {
@@ -110,66 +110,64 @@ std::size_t>::type
             break;
         }
 
-        hash_combine( seed, w );
+        hash_combine_32( seed, w );
     }
 
     return seed;
 }
 
-template<class It>
-inline typename boost::enable_if_<
-    is_char_type<typename std::iterator_traits<It>::value_type>::value &&
-    !is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
-std::size_t>::type
-    hash_range( std::size_t seed, It first, It last )
-{
-    for( ;; )
-    {
-        boost::uint32_t w = 0;
+// template<class It>
+// inline typename boost::enable_if_<
+//     is_char_type<typename std::iterator_traits<It>::value_type>::value &&
+//     !is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
+// std::size_t>::type
+//     hash_range( std::size_t seed, It first, It last )
+// {
+//     for( ;; )
+//     {
+//         boost::uint32_t w = 0;
 
-        if( first == last )
-        {
-            hash_combine( seed, w | 0x01u );
-            return seed;
-        }
+//         if( first == last )
+//         {
+//             hash_combine( seed, w | 0x01u );
+//             return seed;
+//         }
 
-        w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) );
-        ++first;
+//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) );
+//         ++first;
 
-        if( first == last )
-        {
-            hash_combine( seed, w | 0x0100u );
-            return seed;
-        }
+//         if( first == last )
+//         {
+//             hash_combine( seed, w | 0x0100u );
+//             return seed;
+//         }
 
-        w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 8;
-        ++first;
+//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 8;
+//         ++first;
 
-        if( first == last )
-        {
-            hash_combine( seed, w | 0x010000u );
-            return seed;
-        }
+//         if( first == last )
+//         {
+//             hash_combine( seed, w | 0x010000u );
+//             return seed;
+//         }
 
-        w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 16;
-        ++first;
+//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 16;
+//         ++first;
 
-        if( first == last )
-        {
-            hash_combine( seed, w | 0x01000000u );
-            return seed;
-        }
+//         if( first == last )
+//         {
+//             hash_combine( seed, w | 0x01000000u );
+//             return seed;
+//         }
 
-        w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 24;
-        ++first;
+//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 24;
+//         ++first;
 
-        hash_combine( seed, w );
-    }
-}
+//         hash_combine( seed, w );
+//     }
+// }
 
 } // namespace hash_detail
 } // namespace boost
 
-#include <boost/container_hash/detail/hash_range_32.hpp>
-
-#endif // #ifndef BOOST_HASH_DETAIL_HASH_RANGE_HPP
+#endif // #ifndef BOOST_HASH_DETAIL_HASH_RANGE_32_HPP

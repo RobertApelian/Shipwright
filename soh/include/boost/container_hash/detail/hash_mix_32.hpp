@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#ifndef BOOST_HASH_DETAIL_HASH_MIX_HPP
-#define BOOST_HASH_DETAIL_HASH_MIX_HPP
+#ifndef BOOST_HASH_DETAIL_HASH_MIX_32_HPP
+#define BOOST_HASH_DETAIL_HASH_MIX_32_HPP
 
 #include <boost/cstdint.hpp>
 #include <cstddef>
@@ -14,7 +14,7 @@ namespace boost
 namespace hash_detail
 {
 
-template<std::size_t Bits> struct hash_mix_impl;
+template<uint32_t Bits> struct hash_mix_impl_32;
 
 // hash_mix for 64 bit size_t
 //
@@ -64,28 +64,28 @@ template<std::size_t Bits> struct hash_mix_impl;
 //
 // (https://mostlymangling.blogspot.com/2019/12/stronger-better-morer-moremur-better.html)
 
-template<> struct hash_mix_impl<64>
-{
-    inline static boost::uint64_t fn( boost::uint64_t x )
-    {
-        boost::uint64_t const m = (boost::uint64_t(0xe9846af) << 32) + 0x9b1a615d;
+// template<> struct hash_mix_impl_32<64>
+// {
+//     inline static boost::uint64_t fn( boost::uint64_t x )
+//     {
+//         boost::uint64_t const m = (boost::uint64_t(0xe9846af) << 32) + 0x9b1a615d;
 
-        x ^= x >> 32;
-        x *= m;
-        x ^= x >> 32;
-        x *= m;
-        x ^= x >> 28;
+//         x ^= x >> 32;
+//         x *= m;
+//         x ^= x >> 32;
+//         x *= m;
+//         x ^= x >> 28;
 
-        return x;
-    }
-};
+//         return x;
+//     }
+// };
 
 // hash_mix for 32 bit size_t
 //
 // We use the "best xmxmx" implementation from
 // https://github.com/skeeto/hash-prospector/issues/19
 
-template<> struct hash_mix_impl<32>
+template<> struct hash_mix_impl_32<32>
 {
     inline static boost::uint32_t fn( boost::uint32_t x )
     {
@@ -102,14 +102,12 @@ template<> struct hash_mix_impl<32>
     }
 };
 
-inline std::size_t hash_mix( std::size_t v )
+inline uint32_t hash_mix_32( uint32_t v )
 {
-    return hash_mix_impl<sizeof(std::size_t) * CHAR_BIT>::fn( v );
+    return hash_mix_impl_32<32>::fn( v );
 }
 
 } // namespace hash_detail
 } // namespace boost
 
-#include <boost/container_hash/detail/hash_mix_32.hpp>
-
-#endif // #ifndef BOOST_HASH_DETAIL_HASH_MIX_HPP
+#endif // #ifndef BOOST_HASH_DETAIL_HASH_MIX_32_HPP
