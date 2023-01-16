@@ -10,62 +10,67 @@
 #ifndef BOOST_FUNCTIONAL_HASH_HASH_32_HPP
 #define BOOST_FUNCTIONAL_HASH_HASH_32_HPP
 
-#include <boost/container_hash/hash_fwd.hpp>
-#include <boost/container_hash/is_range.hpp>
-#include <boost/container_hash/is_contiguous_range.hpp>
-#include <boost/container_hash/is_unordered_range.hpp>
-#include <boost/container_hash/is_described_class.hpp>
-#include <boost/container_hash/detail/hash_tuple.hpp>
-#include <boost/container_hash/detail/hash_mix.hpp>
-#include <boost/container_hash/detail/hash_range.hpp>
-#include <boost/type_traits/is_enum.hpp>
-#include <boost/type_traits/is_integral.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/type_traits/is_signed.hpp>
-#include <boost/type_traits/is_unsigned.hpp>
-#include <boost/type_traits/make_unsigned.hpp>
-#include <boost/type_traits/enable_if.hpp>
-#include <boost/type_traits/conjunction.hpp>
-#include <boost/type_traits/is_union.hpp>
-#include <boost/describe/bases.hpp>
-#include <boost/describe/members.hpp>
-#include <boost/cstdint.hpp>
+#include <boost/container_hash/hash.hpp>
+#include <boost/container_hash/hash_fwd_32.hpp>
+#include <boost/container_hash/detail/hash_mix_32.hpp>
+#include <boost/container_hash/detail/hash_range_32.hpp>
 
-#if defined(BOOST_DESCRIBE_CXX14)
-# include <boost/mp11/algorithm.hpp>
-#endif
+// #include <boost/container_hash/hash_fwd.hpp>
+// #include <boost/container_hash/is_range.hpp>
+// #include <boost/container_hash/is_contiguous_range.hpp>
+// #include <boost/container_hash/is_unordered_range.hpp>
+// #include <boost/container_hash/is_described_class.hpp>
+// #include <boost/container_hash/detail/hash_tuple.hpp>
+// #include <boost/container_hash/detail/hash_mix.hpp>
+// #include <boost/container_hash/detail/hash_range.hpp>
+// #include <boost/type_traits/is_enum.hpp>
+// #include <boost/type_traits/is_integral.hpp>
+// #include <boost/type_traits/is_floating_point.hpp>
+// #include <boost/type_traits/is_signed.hpp>
+// #include <boost/type_traits/is_unsigned.hpp>
+// #include <boost/type_traits/make_unsigned.hpp>
+// #include <boost/type_traits/enable_if.hpp>
+// #include <boost/type_traits/conjunction.hpp>
+// #include <boost/type_traits/is_union.hpp>
+// #include <boost/describe/bases.hpp>
+// #include <boost/describe/members.hpp>
+// #include <boost/cstdint.hpp>
 
-#include <string>
-#include <iterator>
-#include <complex>
-#include <utility>
-#include <limits>
-#include <climits>
-#include <cstring>
+// #if defined(BOOST_DESCRIBE_CXX14)
+// # include <boost/mp11/algorithm.hpp>
+// #endif
 
-#if !defined(BOOST_NO_CXX11_SMART_PTR)
-# include <memory>
-#endif
+// #include <string>
+// #include <iterator>
+// #include <complex>
+// #include <utility>
+// #include <limits>
+// #include <climits>
+// #include <cstring>
 
-#if !defined(BOOST_NO_CXX11_HDR_TYPEINDEX)
-#include <typeindex>
-#endif
+// #if !defined(BOOST_NO_CXX11_SMART_PTR)
+// # include <memory>
+// #endif
 
-#if !defined(BOOST_NO_CXX11_HDR_SYSTEM_ERROR)
-#include <system_error>
-#endif
+// #if !defined(BOOST_NO_CXX11_HDR_TYPEINDEX)
+// #include <typeindex>
+// #endif
 
-#if !defined(BOOST_NO_CXX17_HDR_OPTIONAL)
-#include <optional>
-#endif
+// #if !defined(BOOST_NO_CXX11_HDR_SYSTEM_ERROR)
+// #include <system_error>
+// #endif
 
-#if !defined(BOOST_NO_CXX17_HDR_VARIANT)
-#include <variant>
-#endif
+// #if !defined(BOOST_NO_CXX17_HDR_OPTIONAL)
+// #include <optional>
+// #endif
 
-#if !defined(BOOST_NO_CXX17_HDR_STRING_VIEW)
-# include <string_view>
-#endif
+// #if !defined(BOOST_NO_CXX17_HDR_VARIANT)
+// #include <variant>
+// #endif
+
+// #if !defined(BOOST_NO_CXX17_HDR_STRING_VIEW)
+// # include <string_view>
+// #endif
 
 namespace boost
 {
@@ -76,89 +81,89 @@ namespace boost
 
     // integral types
 
-    // namespace hash_detail
-    // {
-    //     template<class T,
-    //         bool bigger_than_size_t = (sizeof(T) > sizeof(std::size_t)),
-    //         bool is_unsigned = boost::is_unsigned<T>::value,
-    //         std::size_t size_t_bits = sizeof(std::size_t) * CHAR_BIT,
-    //         std::size_t type_bits = sizeof(T) * CHAR_BIT>
-    //     struct hash_integral_impl;
+    namespace hash_detail
+    {
+        template<class T,
+            bool bigger_than_size_t = (sizeof(T) > sizeof(uint32_t)),
+            bool is_unsigned = boost::is_unsigned<T>::value,
+            std::size_t size_t_bits = sizeof(uint32_t) * CHAR_BIT,
+            std::size_t type_bits = sizeof(T) * CHAR_BIT>
+        struct hash_integral_impl_32;
 
-    //     template<class T, bool is_unsigned, std::size_t size_t_bits, std::size_t type_bits> struct hash_integral_impl<T, false, is_unsigned, size_t_bits, type_bits>
-    //     {
-    //         static std::size_t fn( T v )
-    //         {
-    //             return static_cast<std::size_t>( v );
-    //         }
-    //     };
+        template<class T, bool is_unsigned, std::size_t size_t_bits, std::size_t type_bits> struct hash_integral_impl_32<T, false, is_unsigned, size_t_bits, type_bits>
+        {
+            static uint32_t fn( T v )
+            {
+                return static_cast<uint32_t>( v );
+            }
+        };
 
-    //     template<class T, std::size_t size_t_bits, std::size_t type_bits> struct hash_integral_impl<T, true, false, size_t_bits, type_bits>
-    //     {
-    //         static std::size_t fn( T v )
-    //         {
-    //             typedef typename boost::make_unsigned<T>::type U;
+        template<class T, std::size_t size_t_bits, std::size_t type_bits> struct hash_integral_impl_32<T, true, false, size_t_bits, type_bits>
+        {
+            static uint32_t fn( T v )
+            {
+                typedef typename boost::make_unsigned<T>::type U;
 
-    //             if( v >= 0 )
-    //             {
-    //                 return hash_integral_impl<U>::fn( static_cast<U>( v ) );
-    //             }
-    //             else
-    //             {
-    //                 return ~hash_integral_impl<U>::fn( static_cast<U>( ~static_cast<U>( v ) ) );
-    //             }
-    //         }
-    //     };
+                if( v >= 0 )
+                {
+                    return hash_integral_impl_32<U>::fn( static_cast<U>( v ) );
+                }
+                else
+                {
+                    return ~hash_integral_impl_32<U>::fn( static_cast<U>( ~static_cast<U>( v ) ) );
+                }
+            }
+        };
 
-    //     template<class T> struct hash_integral_impl<T, true, true, 32, 64>
-    //     {
-    //         static std::size_t fn( T v )
-    //         {
-    //             std::size_t seed = 0;
+        template<class T> struct hash_integral_impl_32<T, true, true, 32, 64>
+        {
+            static uint32_t fn( T v )
+            {
+                uint32_t seed = 0;
 
-    //             seed = static_cast<std::size_t>( v >> 32 ) + hash_detail::hash_mix( seed );
-    //             seed = static_cast<std::size_t>( v ) + hash_detail::hash_mix( seed );
+                seed = static_cast<uint32_t>( v >> 32 ) + hash_detail::hash_mix_32( seed );
+                seed = static_cast<uint32_t>( v ) + hash_detail::hash_mix_32( seed );
 
-    //             return seed;
-    //         }
-    //     };
+                return seed;
+            }
+        };
 
-    //     template<class T> struct hash_integral_impl<T, true, true, 32, 128>
-    //     {
-    //         static std::size_t fn( T v )
-    //         {
-    //             std::size_t seed = 0;
+        template<class T> struct hash_integral_impl_32<T, true, true, 32, 128>
+        {
+            static uint32_t fn( T v )
+            {
+                uint32_t seed = 0;
 
-    //             seed = static_cast<std::size_t>( v >> 96 ) + hash_detail::hash_mix( seed );
-    //             seed = static_cast<std::size_t>( v >> 64 ) + hash_detail::hash_mix( seed );
-    //             seed = static_cast<std::size_t>( v >> 32 ) + hash_detail::hash_mix( seed );
-    //             seed = static_cast<std::size_t>( v ) + hash_detail::hash_mix( seed );
+                seed = static_cast<uint32_t>( v >> 96 ) + hash_detail::hash_mix_32( seed );
+                seed = static_cast<uint32_t>( v >> 64 ) + hash_detail::hash_mix_32( seed );
+                seed = static_cast<uint32_t>( v >> 32 ) + hash_detail::hash_mix_32( seed );
+                seed = static_cast<uint32_t>( v ) + hash_detail::hash_mix_32( seed );
 
-    //             return seed;
-    //         }
-    //     };
+                return seed;
+            }
+        };
 
-    //     template<class T> struct hash_integral_impl<T, true, true, 64, 128>
-    //     {
-    //         static std::size_t fn( T v )
-    //         {
-    //             std::size_t seed = 0;
+        // template<class T> struct hash_integral_impl_32<T, true, true, 64, 128>
+        // {
+        //     static uint32_t fn( T v )
+        //     {
+        //         uint32_t seed = 0;
 
-    //             seed = static_cast<std::size_t>( v >> 64 ) + hash_detail::hash_mix( seed );
-    //             seed = static_cast<std::size_t>( v ) + hash_detail::hash_mix( seed );
+        //         seed = static_cast<uint32_t>( v >> 64 ) + hash_detail::hash_mix_32( seed );
+        //         seed = static_cast<uint32_t>( v ) + hash_detail::hash_mix_32( seed );
 
-    //             return seed;
-    //         }
-    //     };
+        //         return seed;
+        //     }
+        // };
 
-    // } // namespace hash_detail
+    } // namespace hash_detail
 
-    // template <typename T>
-    // typename boost::enable_if_<boost::is_integral<T>::value, std::size_t>::type
-    //     hash_value( T v )
-    // {
-    //     return hash_detail::hash_integral_impl<T>::fn( v );
-    // }
+    template <typename T>
+    typename boost::enable_if_<boost::is_integral<T>::value, uint32_t>::type
+        hash_value_32( T v )
+    {
+        return hash_detail::hash_integral_impl_32<T>::fn( v );
+    }
 
     // enumeration types
 
@@ -343,7 +348,7 @@ namespace boost
     // contiguous ranges (string, vector, array)
 
     template <typename T>
-    typename boost::enable_if_<container_hash::is_contiguous_range<T>::value, std::size_t>::type
+    typename boost::enable_if_<container_hash::is_contiguous_range<T>::value, uint32_t>::type
         hash_value_32( T const& v )
     {
         return boost::hash_range_32( v.data(), v.data() + v.size() );
@@ -545,7 +550,7 @@ namespace boost
     template <class T>
     inline void hash_combine_32( uint32_t& seed, T const& v )
     {
-        seed = boost::hash_detail::hash_mix_32( seed + 0x9e3779b9 + boost::hash<T>()( v ) );
+        seed = boost::hash_detail::hash_mix_32( seed + 0x9e3779b9 + boost::hash_32<T>()( v ) );
     }
 
     //

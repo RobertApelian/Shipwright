@@ -6,7 +6,7 @@
 #ifndef BOOST_FUNCTIONAL_HASH_FWD_32_HPP
 #define BOOST_FUNCTIONAL_HASH_FWD_32_HPP
 
-#include <cstddef>
+#include <boost/container_hash/hash_fwd.hpp>
 
 namespace boost
 {

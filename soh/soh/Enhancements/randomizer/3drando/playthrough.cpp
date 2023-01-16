@@ -1,6 +1,6 @@
 #include "playthrough.hpp"
 
-#include <boost/container_hash/hash.hpp>
+#include <boost/container_hash/hash_32.hpp>
 #include "custom_messages.hpp"
 #include "fill.hpp"
 #include "location_access.hpp"

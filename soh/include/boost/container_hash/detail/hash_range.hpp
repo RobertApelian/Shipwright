@@ -170,6 +170,4 @@ std::size_t>::type
 } // namespace hash_detail
 } // namespace boost
 
-#include <boost/container_hash/detail/hash_range_32.hpp>
-
 #endif // #ifndef BOOST_HASH_DETAIL_HASH_RANGE_HPP

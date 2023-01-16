@@ -5,14 +5,17 @@
 #ifndef BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
 #define BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
 
-#include <boost/container_hash/hash_fwd.hpp>
-#include <boost/type_traits/integral_constant.hpp>
-#include <boost/type_traits/enable_if.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/cstdint.hpp>
-#include <cstddef>
-#include <climits>
-#include <iterator>
+#include <boost/container_hash/detail/hash_range.hpp>
+#include <boost/container_hash/hash_fwd_32.hpp>
+
+// #include <boost/container_hash/hash_fwd.hpp>
+// #include <boost/type_traits/integral_constant.hpp>
+// #include <boost/type_traits/enable_if.hpp>
+// #include <boost/type_traits/is_same.hpp>
+// #include <boost/cstdint.hpp>
+// #include <cstddef>
+// #include <climits>
+// #include <iterator>
 
 namespace boost
 {

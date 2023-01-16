@@ -5,9 +5,11 @@
 #ifndef BOOST_HASH_DETAIL_HASH_MIX_32_HPP
 #define BOOST_HASH_DETAIL_HASH_MIX_32_HPP
 
-#include <boost/cstdint.hpp>
-#include <cstddef>
-#include <climits>
+#include <boost/container_hash/detail/hash_mix.hpp>
+
+// #include <boost/cstdint.hpp>
+// #include <cstddef>
+// #include <climits>
 
 namespace boost
 {

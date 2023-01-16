@@ -33,6 +33,4 @@ template<class It> std::size_t hash_unordered_range( It, It );
 
 } // namespace boost
 
-#include <boost/container_hash/hash_fwd_32.hpp>
-
 #endif // #ifndef BOOST_FUNCTIONAL_HASH_FWD_HPP

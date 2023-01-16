@@ -110,6 +110,4 @@ inline std::size_t hash_mix( std::size_t v )
 } // namespace hash_detail
 } // namespace boost
 
-#include <boost/container_hash/detail/hash_mix_32.hpp>
-
 #endif // #ifndef BOOST_HASH_DETAIL_HASH_MIX_HPP
