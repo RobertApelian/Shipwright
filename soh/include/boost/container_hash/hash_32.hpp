@@ -14,6 +14,7 @@
 #include <boost/container_hash/hash_fwd_32.hpp>
 #include <boost/container_hash/detail/hash_mix_32.hpp>
 #include <boost/container_hash/detail/hash_range_32.hpp>
+#include <boost/container_hash/version.hpp>
 
 // #include <boost/container_hash/hash_fwd.hpp>
 // #include <boost/container_hash/is_range.hpp>
@@ -346,14 +347,21 @@ namespace boost
     // }
 
     // contiguous ranges (string, vector, array)
-
+#if BOOST_VERSION_HAS_HASH_RANGE
     template <typename T>
     typename boost::enable_if_<container_hash::is_contiguous_range<T>::value, uint32_t>::type
         hash_value_32( T const& v )
     {
         return boost::hash_range_32( v.data(), v.data() + v.size() );
     }
-
+#else
+    template <class Ch, class A>
+    inline uint32_t hash_value_32(
+        std::basic_string<Ch, std::BOOST_HASH_CHAR_TRAITS<Ch>, A> const& v)
+    {
+        return boost::hash_range_32( v.data(), v.data() + v.size() );
+    }
+#endif
     // unordered ranges (unordered_set, unordered_map)
 
     // template <typename T>
@@ -363,185 +371,185 @@ namespace boost
     //     return boost::hash_unordered_range( v.begin(), v.end() );
     // }
 
-#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && ( \
-    ( defined(_MSVC_STL_VERSION) && _MSVC_STL_VERSION < 142 ) || \
-    ( !defined(_MSVC_STL_VERSION) && defined(_CPPLIB_VER) && _CPPLIB_VER >= 520 ) )
+// #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && ( \
+//     ( defined(_MSVC_STL_VERSION) && _MSVC_STL_VERSION < 142 ) || \
+//     ( !defined(_MSVC_STL_VERSION) && defined(_CPPLIB_VER) && _CPPLIB_VER >= 520 ) )
 
-    // resolve ambiguity with unconstrained stdext::hash_value in <xhash> :-/
+//     resolve ambiguity with unconstrained stdext::hash_value in <xhash> :-/
 
-    // template<template<class...> class L, class... T>
-    // typename boost::enable_if_<container_hash::is_range<L<T...>>::value && !container_hash::is_contiguous_range<L<T...>>::value && !container_hash::is_unordered_range<L<T...>>::value, std::size_t>::type
-    //     hash_value( L<T...> const& v )
-    // {
-    //     return boost::hash_range( v.begin(), v.end() );
-    // }
+//     template<template<class...> class L, class... T>
+//     typename boost::enable_if_<container_hash::is_range<L<T...>>::value && !container_hash::is_contiguous_range<L<T...>>::value && !container_hash::is_unordered_range<L<T...>>::value, std::size_t>::type
+//         hash_value( L<T...> const& v )
+//     {
+//         return boost::hash_range( v.begin(), v.end() );
+//     }
 
-    // // contiguous ranges (string, vector, array)
+//     // contiguous ranges (string, vector, array)
 
-    // template<template<class...> class L, class... T>
-    // typename boost::enable_if_<container_hash::is_contiguous_range<L<T...>>::value, std::size_t>::type
-    //     hash_value( L<T...> const& v )
-    // {
-    //     return boost::hash_range( v.data(), v.data() + v.size() );
-    // }
+//     template<template<class...> class L, class... T>
+//     typename boost::enable_if_<container_hash::is_contiguous_range<L<T...>>::value, std::size_t>::type
+//         hash_value( L<T...> const& v )
+//     {
+//         return boost::hash_range( v.data(), v.data() + v.size() );
+//     }
 
-    // template<template<class, std::size_t> class L, class T, std::size_t N>
-    // typename boost::enable_if_<container_hash::is_contiguous_range<L<T, N>>::value, std::size_t>::type
-    //     hash_value( L<T, N> const& v )
-    // {
-    //     return boost::hash_range( v.data(), v.data() + v.size() );
-    // }
+//     template<template<class, std::size_t> class L, class T, std::size_t N>
+//     typename boost::enable_if_<container_hash::is_contiguous_range<L<T, N>>::value, std::size_t>::type
+//         hash_value( L<T, N> const& v )
+//     {
+//         return boost::hash_range( v.data(), v.data() + v.size() );
+//     }
 
-    // // unordered ranges (unordered_set, unordered_map)
+//     // unordered ranges (unordered_set, unordered_map)
 
-    // template<template<class...> class L, class... T>
-    // typename boost::enable_if_<container_hash::is_unordered_range<L<T...>>::value, std::size_t>::type
-    //     hash_value( L<T...> const& v )
-    // {
-    //     return boost::hash_unordered_range( v.begin(), v.end() );
-    // }
+//     template<template<class...> class L, class... T>
+//     typename boost::enable_if_<container_hash::is_unordered_range<L<T...>>::value, std::size_t>::type
+//         hash_value( L<T...> const& v )
+//     {
+//         return boost::hash_unordered_range( v.begin(), v.end() );
+//     }
 
-#endif
+// #endif
 
     // described classes
 
-#if defined(BOOST_DESCRIBE_CXX14)
+// #if defined(BOOST_DESCRIBE_CXX14)
 
-#if defined(_MSC_VER) && _MSC_VER == 1900
-# pragma warning(push)
-# pragma warning(disable: 4100) // unreferenced formal parameter
-#endif
+// #if defined(_MSC_VER) && _MSC_VER == 1900
+// # pragma warning(push)
+// # pragma warning(disable: 4100) // unreferenced formal parameter
+// #endif
 
-    // template <typename T>
-    // typename boost::enable_if_<container_hash::is_described_class<T>::value, std::size_t>::type
-    //     hash_value( T const& v )
-    // {
-    //     static_assert( !boost::is_union<T>::value, "described unions are not supported" );
+//     template <typename T>
+//     typename boost::enable_if_<container_hash::is_described_class<T>::value, std::size_t>::type
+//         hash_value( T const& v )
+//     {
+//         static_assert( !boost::is_union<T>::value, "described unions are not supported" );
 
-    //     std::size_t r = 0;
+//         std::size_t r = 0;
 
-    //     using Bd = describe::describe_bases<T, describe::mod_any_access>;
+//         using Bd = describe::describe_bases<T, describe::mod_any_access>;
 
-    //     mp11::mp_for_each<Bd>([&](auto D){
+//         mp11::mp_for_each<Bd>([&](auto D){
 
-    //         using B = typename decltype(D)::type;
-    //         boost::hash_combine( r, (B const&)v );
+//             using B = typename decltype(D)::type;
+//             boost::hash_combine( r, (B const&)v );
 
-    //     });
+//         });
 
-    //     using Md = describe::describe_members<T, describe::mod_any_access>;
+//         using Md = describe::describe_members<T, describe::mod_any_access>;
 
-    //     mp11::mp_for_each<Md>([&](auto D){
+//         mp11::mp_for_each<Md>([&](auto D){
 
-    //         boost::hash_combine( r, v.*D.pointer );
+//             boost::hash_combine( r, v.*D.pointer );
 
-    //     });
+//         });
 
-    //     return r;
-    // }
+//         return r;
+//     }
 
-#if defined(_MSC_VER) && _MSC_VER == 1900
-# pragma warning(pop)
-#endif
+// #if defined(_MSC_VER) && _MSC_VER == 1900
+// # pragma warning(pop)
+// #endif
 
-#endif
+// #endif
 
     // std::unique_ptr, std::shared_ptr
 
-#if !defined(BOOST_NO_CXX11_SMART_PTR)
+// #if !defined(BOOST_NO_CXX11_SMART_PTR)
 
-    // template <typename T>
-    // std::size_t hash_value( std::shared_ptr<T> const& x )
-    // {
-    //     return boost::hash_value( x.get() );
-    // }
+//     template <typename T>
+//     std::size_t hash_value( std::shared_ptr<T> const& x )
+//     {
+//         return boost::hash_value( x.get() );
+//     }
 
-    // template <typename T, typename Deleter>
-    // std::size_t hash_value( std::unique_ptr<T, Deleter> const& x )
-    // {
-    //     return boost::hash_value( x.get() );
-    // }
+//     template <typename T, typename Deleter>
+//     std::size_t hash_value( std::unique_ptr<T, Deleter> const& x )
+//     {
+//         return boost::hash_value( x.get() );
+//     }
 
-#endif
+// #endif
 
     // std::type_index
 
-#if !defined(BOOST_NO_CXX11_HDR_TYPEINDEX)
+// #if !defined(BOOST_NO_CXX11_HDR_TYPEINDEX)
 
-    // inline std::size_t hash_value( std::type_index const& v )
-    // {
-    //     return v.hash_code();
-    // }
+//     inline std::size_t hash_value( std::type_index const& v )
+//     {
+//         return v.hash_code();
+//     }
 
-#endif
+// #endif
 
     // std::error_code, std::error_condition
 
-#if !defined(BOOST_NO_CXX11_HDR_SYSTEM_ERROR)
+// #if !defined(BOOST_NO_CXX11_HDR_SYSTEM_ERROR)
 
-    // inline std::size_t hash_value( std::error_code const& v )
-    // {
-    //     std::size_t seed = 0;
+//     inline std::size_t hash_value( std::error_code const& v )
+//     {
+//         std::size_t seed = 0;
 
-    //     boost::hash_combine( seed, v.value() );
-    //     boost::hash_combine( seed, &v.category() );
+//         boost::hash_combine( seed, v.value() );
+//         boost::hash_combine( seed, &v.category() );
 
-    //     return seed;
-    // }
+//         return seed;
+//     }
 
-    // inline std::size_t hash_value( std::error_condition const& v )
-    // {
-    //     std::size_t seed = 0;
+//     inline std::size_t hash_value( std::error_condition const& v )
+//     {
+//         std::size_t seed = 0;
 
-    //     boost::hash_combine( seed, v.value() );
-    //     boost::hash_combine( seed, &v.category() );
+//         boost::hash_combine( seed, v.value() );
+//         boost::hash_combine( seed, &v.category() );
 
-    //     return seed;
-    // }
+//         return seed;
+//     }
 
-#endif
+// #endif
 
     // std::optional
 
-#if !defined(BOOST_NO_CXX17_HDR_OPTIONAL)
+// #if !defined(BOOST_NO_CXX17_HDR_OPTIONAL)
 
-    // template <typename T>
-    // std::size_t hash_value( std::optional<T> const& v )
-    // {
-    //     if( !v )
-    //     {
-    //         // Arbitray value for empty optional.
-    //         return 0x12345678;
-    //     }
-    //     else
-    //     {
-    //         return boost::hash<T>()(*v);
-    //     }
-    // }
+//     template <typename T>
+//     std::size_t hash_value( std::optional<T> const& v )
+//     {
+//         if( !v )
+//         {
+//             // Arbitray value for empty optional.
+//             return 0x12345678;
+//         }
+//         else
+//         {
+//             return boost::hash<T>()(*v);
+//         }
+//     }
 
-#endif
+// #endif
 
     // std::variant
 
-#if !defined(BOOST_NO_CXX17_HDR_VARIANT)
+// #if !defined(BOOST_NO_CXX17_HDR_VARIANT)
 
-    // inline std::size_t hash_value( std::monostate )
-    // {
-    //     return 0x87654321;
-    // }
+//     inline std::size_t hash_value( std::monostate )
+//     {
+//         return 0x87654321;
+//     }
 
-    // template <typename... Types>
-    // std::size_t hash_value( std::variant<Types...> const& v )
-    // {
-    //     std::size_t seed = 0;
+//     template <typename... Types>
+//     std::size_t hash_value( std::variant<Types...> const& v )
+//     {
+//         std::size_t seed = 0;
 
-    //     hash_combine( seed, v.index() );
-    //     std::visit( [&seed](auto&& x) { hash_combine(seed, x); }, v );
+//         hash_combine( seed, v.index() );
+//         std::visit( [&seed](auto&& x) { hash_combine(seed, x); }, v );
 
-    //     return seed;
-    // }
+//         return seed;
+//     }
 
-#endif
+// #endif
 
     //
     // boost::hash_combine
@@ -620,24 +628,24 @@ namespace boost
         }
     };
 
-#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && ( \
-    ( defined(_MSVC_STL_VERSION) && _MSVC_STL_VERSION < 142 ) || \
-    ( !defined(_MSVC_STL_VERSION) && defined(_CPPLIB_VER) && _CPPLIB_VER >= 520 ) )
+// #if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && ( \
+//     ( defined(_MSVC_STL_VERSION) && _MSVC_STL_VERSION < 142 ) || \
+//     ( !defined(_MSVC_STL_VERSION) && defined(_CPPLIB_VER) && _CPPLIB_VER >= 520 ) )
 
-    // Dinkumware has stdext::hash_value for basic_string in <xhash> :-/
+//     // Dinkumware has stdext::hash_value for basic_string in <xhash> :-/
 
-    // template<class E, class T, class A> struct hash< std::basic_string<E, T, A> >
-    // {
-    //     typedef std::basic_string<E, T, A> argument_type;
-    //     typedef std::size_t result_type;
+//     template<class E, class T, class A> struct hash< std::basic_string<E, T, A> >
+//     {
+//         typedef std::basic_string<E, T, A> argument_type;
+//         typedef std::size_t result_type;
 
-    //     std::size_t operator()( std::basic_string<E, T, A> const& val ) const
-    //     {
-    //         return boost::hash_value( val );
-    //     }
-    // };
+//         std::size_t operator()( std::basic_string<E, T, A> const& val ) const
+//         {
+//             return boost::hash_value( val );
+//         }
+//     };
 
-#endif
+// #endif
 
     // boost::unordered::hash_is_avalanching
 

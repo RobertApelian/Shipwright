@@ -5,40 +5,47 @@
 #ifndef BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
 #define BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
 
-#include <boost/container_hash/detail/hash_range.hpp>
 #include <boost/container_hash/hash_fwd_32.hpp>
+#include <boost/container_hash/version.hpp>
 
-// #include <boost/container_hash/hash_fwd.hpp>
-// #include <boost/type_traits/integral_constant.hpp>
-// #include <boost/type_traits/enable_if.hpp>
-// #include <boost/type_traits/is_same.hpp>
-// #include <boost/cstdint.hpp>
-// #include <cstddef>
-// #include <climits>
-// #include <iterator>
+#if BOOST_VERSION_HAS_HASH_RANGE
+#include <boost/container_hash/detail/hash_range.hpp>
+#else
+#include <boost/type_traits/integral_constant.hpp>
+#include <boost/type_traits/enable_if.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/cstdint.hpp>
+#include <cstddef>
+#include <climits>
+#include <iterator>
+#endif // #if BOOST_VERSION_HAS_HASH_RANGE
 
 namespace boost
 {
 namespace hash_detail
 {
 
-// template<class T> struct is_char_type: public boost::false_type {};
+#if !BOOST_VERSION_HAS_HASH_RANGE
+
+template<class T> struct is_char_type: public boost::false_type {};
 
 #if CHAR_BIT == 8
 
-// template<> struct is_char_type<char>: public boost::true_type {};
-// template<> struct is_char_type<signed char>: public boost::true_type {};
-// template<> struct is_char_type<unsigned char>: public boost::true_type {};
+template<> struct is_char_type<char>: public boost::true_type {};
+template<> struct is_char_type<signed char>: public boost::true_type {};
+template<> struct is_char_type<unsigned char>: public boost::true_type {};
 
 #if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
-// template<> struct is_char_type<char8_t>: public boost::true_type {};
+template<> struct is_char_type<char8_t>: public boost::true_type {};
 #endif
 
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
-// template<> struct is_char_type<std::byte>: public boost::true_type {};
+template<> struct is_char_type<std::byte>: public boost::true_type {};
 #endif
 
 #endif
+
+#endif // #if !BOOST_VERSION_HAS_HASH_RANGE
 
 // template<class It>
 // inline typename boost::enable_if_<
