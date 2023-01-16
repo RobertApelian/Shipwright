@@ -16,6 +16,19 @@
 #include <boost/container_hash/detail/hash_range_32.hpp>
 #include <boost/container_hash/version.hpp>
 
+#if !BOOST_VERSION_HAS_HASH_RANGE
+#include <boost/type_traits/is_unsigned.hpp>
+#include <boost/type_traits/make_unsigned.hpp>
+
+#if BOOST_WORKAROUND(__GNUC__, < 3) \
+    && !defined(__SGI_STL_PORT) && !defined(_STLPORT_VERSION)
+#define BOOST_HASH_CHAR_TRAITS string_char_traits
+#else
+#define BOOST_HASH_CHAR_TRAITS char_traits
+#endif
+
+#endif // #if !BOOST_VERSION_HAS_HASH_RANGE
+
 // #include <boost/container_hash/hash_fwd.hpp>
 // #include <boost/container_hash/is_range.hpp>
 // #include <boost/container_hash/is_contiguous_range.hpp>
@@ -671,5 +684,7 @@ namespace boost
 //     } // namespace unordered
 
 } // namespace boost
+
+#undef BOOST_HASH_CHAR_TRAITS
 
 #endif // #ifndef BOOST_FUNCTIONAL_HASH_HASH_32_HPP
