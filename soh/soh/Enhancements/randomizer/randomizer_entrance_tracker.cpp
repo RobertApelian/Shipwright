@@ -605,15 +605,6 @@ void InitEntranceTrackingData() {
     SortEntranceListByType(destListSortedByType, 1);
 }
 
-#ifdef __WIN32__
-#define SSIZET_FMT "Iu"
-#define SUINT32_FMT "u"
-#else
-#define SSIZET_FMT PRIu64
-#define SUINT32_FMT PRIu32
-#endif
-
-
 void DrawEntranceTracker(bool& open) {
     if (!open) {
         CVar_SetS32("gEntranceTrackerEnabled", 0);
