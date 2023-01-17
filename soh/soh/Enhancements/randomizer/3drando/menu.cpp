@@ -517,7 +517,7 @@ std::string GenerateRandomizer(std::unordered_map<RandomizerSettingKey, uint8_t>
     srand(time(NULL));
     // if a blank seed was entered, make a random one
     if (seedInput.empty()) {
-        Settings::seed = rand();
+        Settings::seed = rand() & 0xFFFFFFFF;
     } else if (seedInput.rfind("seed_testing_count", 0) == 0 && seedInput.length() > 18) {
         int count;
         try {
