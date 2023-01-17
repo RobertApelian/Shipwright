@@ -3,10 +3,6 @@
 #include "../../OTRGlobals.h"
 #include <ImGuiImpl.h>
 #include "../../UIWidgets.hpp"
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/container_hash/hash.hpp>
-#include <boost/container_hash/hash_32.hpp>
-#include "3drando/random.hpp"
 
 #include <map>
 #include <string>
@@ -40,16 +36,6 @@ static const EntranceOverride emptyOverride = {0};
 static s16 lastEntranceIndex = -1;
 static s16 currentGrottoId = -1;
 static s16 lastSceneOrEntranceDetected = -1;
-
-#include <random>
-
-static std::mt19937 generator1;
-static std::mt19937 generator2;
-
-#define NUM_NUM 50
-
-static uint32_t nums1[NUM_NUM];
-static uint32_t nums2[NUM_NUM];
 
 static std::string spoilerEntranceGroupNames[] = {
     "Spawns/Warp Songs/Owls",
@@ -640,32 +626,6 @@ void DrawEntranceTracker(bool& open) {
         return;
     }
 
-    ImGui::Text("Random first used: %d", RandomGetUsedCount(false));
-    ImGui::Text("Random second used: %d", RandomGetUsedCount(true));
-
-    std::string thing = "12345";
-    std::string thing2 = "OpenClosedOpenClosedNormalVanilla36981Off6AdultOnOffOffOffOffOffOffOnOffOffOffOffOffOffOffOnOn0OffRandomRandomRandomRandomRandomRandomRandomRandomRandomRandomRandomRandomEnd of dungeonsDungeon RewardSong locationsOffOffOffOffOffOffOffOffOffOffOffOffOffOwn DungeonOwn DungeonVanillaOwn DungeonVanilla6398100Off8OffOffOffOffOffOffOffOffOffDon't SkipDon't SkipDon't SkipDon't SkipOffSkipSkip107FastOffOff2: InstantDon't SkipOffOffGlitchlessOnOffIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeIncludeDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledOffOffOffOffOffOffOffOffOffOffOffOffOffOff10 Deku Sticks20 Deku NutsOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOffOff3OffOffOffOffOffOffOffOffOffOffOffNoNo0Need NothingClearBalancedYesYesYesx1DayAlways FastVanillaYesHideSelectBasicOffOffBalancedNormalNoDisabledDisabledAll DisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledDisabledVanillaOffOffOffOffOff";
-    boost::hash<std::string> hasher;
-    size_t hash = boost::hash_value(thing);
-    uint32_t hash32 = (uint32_t)hash;
-    size_t hash_1 = boost::hash_value_32(thing);
-    uint32_t hash32_1 = (uint32_t)hash_1;
-    size_t hash_2 = boost::hash_value_32(thing + thing2);
-    uint32_t hash32_2 = (uint32_t)hash_2;
-
-    uint32_t fun16 = boost::hash_value_32((uint16_t)12345);
-    uint32_t fun32 = boost::hash_value_32((uint16_t)12345);
-    uint32_t fun64 = boost::hash_value_32((uint64_t)12345);
-    uint32_t funs64 = boost::hash_value_32((int64_t)-12345);
-
-    ImGui::Text("std::hash(\"12345\") == %d", std::hash<std::string>{}(thing));
-    ImGui::Text("boost::hash(\"12345\") == %" SSIZET_FMT, boost::hash<std::string>{}(thing));
-    ImGui::Text("boost::hash__32(\"12345\") == %" SSIZET_FMT, boost::hash_32<std::string>{}(thing));
-    ImGui::Text("boost::hash_value_32(\"12345\" with settingsStr) == %" SSIZET_FMT, boost::hash_value_32(thing + thing2));
-    ImGui::Text("hash(\"12345\") -> uint32 %" SUINT32_FMT, hash32);
-    ImGui::Text("hash_32(\"12345\") -> uint32 %" SUINT32_FMT, hash32_1);
-    ImGui::Text("hash_32(\"12345\" with settingsStr) -> uint32 %" SUINT32_FMT, hash32_2);
-
     if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
 
         for (size_t i = 0; i < NUM_NUM; i++) {
@@ -950,15 +910,5 @@ void DrawEntranceTracker(bool& open) {
 }
 
 void InitEntranceTracker() {
-    generator1 = std::mt19937{};
-    generator2 = std::mt19937{};
-    std::uniform_int_distribution<uint32_t> dist1(0, 10);
-    boost::random::uniform_int_distribution<uint32_t> dist2(0, 10);
-    
-    for (size_t i = 0; i < NUM_NUM; i++) {
-        nums1[i] = dist1(generator1);
-        nums2[i] = dist2(generator2);
-    }
-
     SohImGui::AddWindow("Randomizer", "Entrance Tracker", DrawEntranceTracker, CVar_GetS32("gEntranceTrackerEnabled", 0) == 1);
 }

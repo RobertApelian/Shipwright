@@ -9,7 +9,6 @@
 void Random_Init(uint32_t seed);
 uint32_t Random(int min, int max);
 double RandomDouble();
-uint32_t RandomGetUsedCount(bool which);
 
 //Get a random element from a vector or array
 template <typename T>

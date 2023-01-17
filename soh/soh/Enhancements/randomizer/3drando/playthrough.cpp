@@ -39,13 +39,9 @@ int Playthrough_Init(uint32_t seed, std::unordered_map<RandomizerSettingKey, uin
         }
     }
 
-    Settings::settingsStr = settingsStr;
-    Settings::randomCalls[0] = RandomGetUsedCount(true);
-
-    size_t finalHash = boost::hash_32<std::string>{}(std::to_string(Settings::seed) + settingsStr);
-    uint32_t finalHashTrunc = (uint32_t) finalHash;
-    Random_Init(finalHashTrunc);
-    Settings::hash = std::to_string(finalHashTrunc);
+    uint32_t finalHash = boost::hash_32<std::string>{}(std::to_string(Settings::seed) + settingsStr);
+    Random_Init(finalHash);
+    Settings::hash = std::to_string(finalHash);
 
     Logic::UpdateHelpers();
 
@@ -60,8 +56,6 @@ int Playthrough_Init(uint32_t seed, std::unordered_map<RandomizerSettingKey, uin
 
     GenerateHash();
     WriteIngameSpoilerLog();
-
-    Settings::randomCalls[1] = RandomGetUsedCount(true);
 
     if (Settings::GenerateSpoilerLog) {
         // write logs

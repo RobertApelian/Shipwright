@@ -882,8 +882,6 @@ void UpdateSettings(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettin
   extern std::string version;
   extern std::array<uint8_t, 5> hashIconIndexes;
   extern std::string hash;
-  extern std::string settingsStr;
-  extern uint32_t randomCalls[2];
 
   extern bool skipChildZelda;
 
