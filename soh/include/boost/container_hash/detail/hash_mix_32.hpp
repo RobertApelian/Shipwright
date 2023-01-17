@@ -1,6 +1,4 @@
-// Copyright 2022 Peter Dimov
-// Distributed under the Boost Software License, Version 1.0.
-// https://www.boost.org/LICENSE_1_0.txt
+// 32 bit implementation based off of Boost hash
 
 #ifndef BOOST_HASH_DETAIL_HASH_MIX_32_HPP
 #define BOOST_HASH_DETAIL_HASH_MIX_32_HPP

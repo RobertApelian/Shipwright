@@ -1,6 +1,5 @@
-// Copyright 2022 Peter Dimov
-// Distributed under the Boost Software License, Version 1.0.
-// https://www.boost.org/LICENSE_1_0.txt
+// 32 bit implementation based off of Boost hash
+// Only implementing 32 bit version of char based ranges
 
 #ifndef BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
 #define BOOST_HASH_DETAIL_HASH_RANGE_32_HPP
@@ -46,20 +45,6 @@ template<> struct is_char_type<std::byte>: public boost::true_type {};
 #endif
 
 #endif // #if !BOOST_VERSION_HAS_HASH_RANGE
-
-// template<class It>
-// inline typename boost::enable_if_<
-//     !is_char_type<typename std::iterator_traits<It>::value_type>::value,
-// std::size_t >::type
-//     hash_range( std::size_t seed, It first, It last )
-// {
-//     for( ; first != last; ++first )
-//     {
-//         hash_combine<typename std::iterator_traits<It>::value_type>( seed, *first );
-//     }
-
-//     return seed;
-// }
 
 template<class It>
 inline typename boost::enable_if_<
@@ -125,57 +110,6 @@ std::size_t>::type
 
     return seed;
 }
-
-// template<class It>
-// inline typename boost::enable_if_<
-//     is_char_type<typename std::iterator_traits<It>::value_type>::value &&
-//     !is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
-// std::size_t>::type
-//     hash_range( std::size_t seed, It first, It last )
-// {
-//     for( ;; )
-//     {
-//         boost::uint32_t w = 0;
-
-//         if( first == last )
-//         {
-//             hash_combine( seed, w | 0x01u );
-//             return seed;
-//         }
-
-//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) );
-//         ++first;
-
-//         if( first == last )
-//         {
-//             hash_combine( seed, w | 0x0100u );
-//             return seed;
-//         }
-
-//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 8;
-//         ++first;
-
-//         if( first == last )
-//         {
-//             hash_combine( seed, w | 0x010000u );
-//             return seed;
-//         }
-
-//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 16;
-//         ++first;
-
-//         if( first == last )
-//         {
-//             hash_combine( seed, w | 0x01000000u );
-//             return seed;
-//         }
-
-//         w |= static_cast<boost::uint32_t>( static_cast<unsigned char>( *first ) ) << 24;
-//         ++first;
-
-//         hash_combine( seed, w );
-//     }
-// }
 
 } // namespace hash_detail
 } // namespace boost
