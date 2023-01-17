@@ -4,6 +4,7 @@
 #include <ImGuiImpl.h>
 #include "../../UIWidgets.hpp"
 
+
 #include <map>
 #include <string>
 #include <vector>
@@ -625,21 +626,6 @@ void DrawEntranceTracker(bool& open) {
         ImGui::End();
         return;
     }
-
-    if (ImGui::BeginTable("entranceTrackerSubSettings", 2, ImGuiTableFlags_BordersInner)) {
-
-        for (size_t i = 0; i < NUM_NUM; i++) {
-            ImGui::TableNextColumn();
-            ImGui::Text("%d", nums1[i]);
-            ImGui::TableNextColumn();
-            ImGui::Text("%d", nums2[i]);
-        }
-
-        ImGui::EndTable();
-    }
-
-    ImGui::End();
-    return;
 
     // Begin tracker settings
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);

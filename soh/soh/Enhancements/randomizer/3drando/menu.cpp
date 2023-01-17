@@ -33,7 +33,7 @@ void PrintTopScreen() {
     SPDLOG_DEBUG("            Select: Exit to Homebrew Menu\n");
     SPDLOG_DEBUG("                 Y: New Random Seed\n");
     SPDLOG_DEBUG("                 X: Input Custom Seed\n");
-    SPDLOG_DEBUG("\x1b[11;7HCurrent Seed: %d", Settings::seed);
+    SPDLOG_DEBUG("\x1b[11;7HCurrent Seed: %u", Settings::seed);
 }
 
 void MenuInit() {
