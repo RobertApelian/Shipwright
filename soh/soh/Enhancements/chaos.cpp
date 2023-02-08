@@ -1,5 +1,5 @@
 #include <ImGuiImpl.h>
-#include <Cvar.h>
+#include <libultraship/bridge.h>
 
 #include "chaos_commands.h"
 #include "chaos_commands_macros.h"
@@ -11,8 +11,9 @@
 
 #include "../OTRGlobals.h"
 #include "debugconsole.h"
-#include "sfx-editor/SfxEditor.h"
-#include "cosmetics/CosmeticsEditor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor.h"
+#include "soh/Enhancements/sfx-editor/SfxEditor.h"
+#include "soh/Enhancements/cosmetics/CosmeticsEditor.h"
 
 #include <algorithm>
 #include <functional>
@@ -62,7 +63,7 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// immediately try to equip F boots, and crash
 	CMD(0x02, PL_NONE(), 
 		CR_PRED(
-			[&]() { return g_link_is_ready_this_frame && !CVar_GetS32("gChaosForcedBoots", 0); },
+			[&]() { return g_link_is_ready_this_frame && !CVarGetInteger("gChaosForcedBoots", 0); },
 			CR_ONE_SHOT({ toggle_age(); }))),
 
 	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
@@ -175,16 +176,24 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// Paper link
 	CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 		CR_ONE_SHOT_TIMED(
-			[&]() { chaosEffectPaperLink = 1; },
-			[&]() { chaosEffectPaperLink = 0; chaosEffectResetLinkScale = 1; })),
+			[&]() {
+				GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
+				effect->parameter = GI_LINK_SIZE_PAPER;
+				GameInteractor::ApplyEffect(effect);
+			},
+			[&]() {
+				GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
+				effect->parameter = GI_LINK_SIZE_PAPER;
+				GameInteractor::RemoveEffect(effect);
+			})),
 
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gThiccLink"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFlipLink"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoStart"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gBackToHome"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFlashbang"),
-	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { RandomizeAllSfx(); }),
-	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { RandomizeAllCosmetics(); }),
+	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { SfxEditor_RandomizeAll(); }),
+	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { CosmeticsEditor_RandomizeAll(); }),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gPogoStick"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSunsSong"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
@@ -221,15 +230,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 
 	CMD(0xE2, PL_BYTES(sizeof(uint32_t)), 
 		CR_PRED(
-			[]() { return LINK_IS_ADULT && !CVar_GetS32("gChaosForcedBoots", 0); },
+			[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
 			CR_TIMED_CVAR("gChaosForcedBoots", 0, 2))),
 	CMD(0xE3, PL_BYTES(sizeof(uint32_t)), 
 		CR_PRED(
-			[]() { return LINK_IS_ADULT && !CVar_GetS32("gChaosForcedBoots", 0); },
+			[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
 			CR_TIMED_CVAR("gChaosForcedBoots", 0, 3))),
 	CMD(0xEF, PL_BYTES(sizeof(uint32_t)), 
 		CR_PRED(
-			[]() { return LINK_IS_CHILD && !CVar_GetS32("gChaosForcedBoots", 0); },
+			[]() { return LINK_IS_CHILD && !CVarGetInteger("gChaosForcedBoots", 0); },
 			CR_TIMED_CVAR("gChaosForcedBoots", 0, 0xF))),
 };
 
@@ -238,13 +247,13 @@ static CommandStorage g_command_storage;
 
 void Start() {
     PlatformStart();
-    // SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Enabled");
-    CVar_SetS32("gEnemyHealthBar", 1);
+    SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, "Chaos Mode Enabled");
+    CVarSetInteger("gEnemyHealthBar", 1);
 }
 
 void DisplayCommandMessage(const std::vector<uint8_t>& bytes, size_t start_index) {
 	std::string msg(bytes.begin() + start_index, bytes.end());
-    // SohImGui::overlay->TextDrawNotification(15.0f, true, msg.c_str());
+    SohImGui::GetGameOverlay()->TextDrawNotification(15.0f, true, msg.c_str());
 }
 
 void EnqueueCommand(const std::vector<uint8_t>& bytes) {
@@ -252,7 +261,7 @@ void EnqueueCommand(const std::vector<uint8_t>& bytes) {
 
 	auto it = kCommands.find(bytes[0]);
 	if (it == kCommands.end()) {
-		// SohImGui::overlay->TextDrawNotification(10.0f, true, "Unrecognized command");
+		SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, "Unrecognized command");
 		return;
 	}
 
@@ -269,11 +278,11 @@ bool ReadBytes(size_t num, std::vector<uint8_t>* buf) {
 void Stop() {
     PlatformStop();
     Chaos_ResetAll();
-    // SohImGui::overlay->TextDrawNotification(10.0f, true, "Chaos Mode Disabled");
+    SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, "Chaos Mode Disabled");
 }
 
 void EachFrameCallback() {
-	bool new_val = CVar_GetS32("gChaosEnabled", 0);
+	bool new_val = CVarGetInteger("gChaosEnabled", 0);
 	if (g_is_enabled && !new_val) {
 		// TODO: disable? close pipe?
 	}
@@ -296,9 +305,9 @@ void EachFrameCallback() {
 
 		if (!ReadBytes(bytes_to_read, &current_command_buffer)) {
 			std::string msg = "Error reading command, turning off Chaos Mode";
-			// SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
+			SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, msg.c_str());
             Stop();
-			CVar_SetS32("gChaosEnabled", 0);
+			CVarSetInteger("gChaosEnabled", 0);
 			g_is_enabled = false;
 			return;
 		}
@@ -316,81 +325,81 @@ void EachFrameCallback() {
 
 	apply_ongoing_effects();
 	uint32_t grav = std::clamp<int32_t>(g_gravity_modifier, -12, 9);
-	CVar_SetS32("gPlayerGravity", grav);
-	CVar_SetS32("gChaosClimbSpeed", std::clamp<uint32_t>(g_climb_speed_modifier, 0, 9));
-	CVar_SetS32("gHookshotLengthRemove", std::clamp<uint32_t>(g_hookshot_length_modifier, 0, 9));
+	CVarSetInteger("gPlayerGravity", grav);
+	CVarSetInteger("gChaosClimbSpeed", std::clamp<uint32_t>(g_climb_speed_modifier, 0, 9));
+	CVarSetInteger("gHookshotLengthRemove", std::clamp<uint32_t>(g_hookshot_length_modifier, 0, 9));
 }
 
 extern "C" {
 	void Chaos_ResetAll() {
-		CVar_SetS32("gChaosForcedBoots", 0);
-		CVar_SetS32("gChaosOHKO", 0);
-		CVar_SetS32("gChaosNoHud", 0);
-		CVar_SetS32("gChaosNoZ", 0);
-		CVar_SetS32("gChaosTurbo", 0);
-		CVar_SetS32("gChaosInvertControls", 0);
-		CVar_SetS32("gEnemyHealthBar", 0);
-		CVar_SetS32("gDisableFPSView", 0);
-		CVar_SetS32("gForceNormalArrows", 0);
-		CVar_SetS32("gDisableLedges", 0);
-		CVar_SetS32("gFloorIsLava", 0);
-		CVar_SetS32("gExplodingRolls", 0);
-		CVar_SetS32("gFreezingRolls", 0);
-		CVar_SetS32("gDisableTargeting", 0);
-		CVar_SetS32("gMegaLetterbox", 0);
-		CVar_SetS32("gDisableTurning", 0);
-		CVar_SetS32("gJailTime", 0);
-		CVar_SetS32("gOnHold", 0);
-		CVar_SetS32("gSonicRoll", 0);
-		CVar_SetS32("gNaviSpam", 0);
-		CVar_SetS32("gScuffedLink", 0);
-		CVar_SetS32("gRaveMode", 0);
-		CVar_SetS32("gInvisPlayer", 0);
-		CVar_SetS32("gSlipperyFloor", 0);
-		CVar_SetS32("gIceDamage", 0);
-		CVar_SetS32("gElectricDamage", 0);
-		CVar_SetS32("gKnockbackDamage", 0);
-		CVar_SetS32("gFireDamage", 0);
-		CVar_SetS32("gForwardJump", 0);
-		CVar_SetS32("gBigHead", 0);
-		CVar_SetS32("gTinyHead", 0);
-		CVar_SetS32("gDarkenArea", 0);
-		CVar_SetS32("gChaosSpin", 0);
-		CVar_SetS32("gDisableMeleeAttacks", 0);
-		CVar_SetS32("gDisableEnemyDraw", 0);
-		CVar_SetS32("gSandstorm", 0);
-		CVar_SetS32("gSinkingFloor", 0);
-		CVar_SetS32("gCowRitual", 0);
-		CVar_SetS32("gFireRockRain", 0);
-		CVar_SetS32("gCuccoAttack", 0);
-		CVar_SetS32("gExplodingRupeeChallenge", 0);
-		CVar_SetS32("gBanItemDropPickup", 0);
-		CVar_SetS32("gBrokenBombchus", 0);
-		CVar_SetS32("gAnnoyingGetItems", 0);
-		CVar_SetS32("gPlayerGravity", 0);
-		CVar_SetS32("gChaosClimbSpeed", 0);
-		CVar_SetS32("gHookshotLengthRemove", 0);
-		CVar_SetS32("gSpawnExplosion", 0);
-		CVar_SetS32("gRestrainLink", 0);
-		CVar_SetS32("gTripToSpace", 0);
-		CVar_SetS32("gThiccLink", 0);
-		CVar_SetS32("gFlipLink", 0);
-		CVar_SetS32("gNoStart", 0);
-		CVar_SetS32("gFlashbang", 0);
-		CVar_SetS32("gPogoStick", 0);
-		CVar_SetS32("gNoStrength", 0);
-		CVar_SetS32("gNoWater", 0);
+		CVarSetInteger("gChaosForcedBoots", 0);
+		CVarSetInteger("gChaosOHKO", 0);
+		CVarSetInteger("gChaosNoHud", 0);
+		CVarSetInteger("gChaosNoZ", 0);
+		CVarSetInteger("gChaosTurbo", 0);
+		CVarSetInteger("gChaosInvertControls", 0);
+		CVarSetInteger("gEnemyHealthBar", 0);
+		CVarSetInteger("gDisableFPSView", 0);
+		CVarSetInteger("gForceNormalArrows", 0);
+		CVarSetInteger("gDisableLedges", 0);
+		CVarSetInteger("gFloorIsLava", 0);
+		CVarSetInteger("gExplodingRolls", 0);
+		CVarSetInteger("gFreezingRolls", 0);
+		CVarSetInteger("gDisableTargeting", 0);
+		CVarSetInteger("gMegaLetterbox", 0);
+		CVarSetInteger("gDisableTurning", 0);
+		CVarSetInteger("gJailTime", 0);
+		CVarSetInteger("gOnHold", 0);
+		CVarSetInteger("gSonicRoll", 0);
+		CVarSetInteger("gNaviSpam", 0);
+		CVarSetInteger("gScuffedLink", 0);
+		CVarSetInteger("gRaveMode", 0);
+		CVarSetInteger("gInvisPlayer", 0);
+		CVarSetInteger("gSlipperyFloor", 0);
+		CVarSetInteger("gIceDamage", 0);
+		CVarSetInteger("gElectricDamage", 0);
+		CVarSetInteger("gKnockbackDamage", 0);
+		CVarSetInteger("gFireDamage", 0);
+		CVarSetInteger("gForwardJump", 0);
+		CVarSetInteger("gBigHead", 0);
+		CVarSetInteger("gTinyHead", 0);
+		CVarSetInteger("gDarkenArea", 0);
+		CVarSetInteger("gChaosSpin", 0);
+		CVarSetInteger("gDisableMeleeAttacks", 0);
+		CVarSetInteger("gDisableEnemyDraw", 0);
+		CVarSetInteger("gSandstorm", 0);
+		CVarSetInteger("gSinkingFloor", 0);
+		CVarSetInteger("gCowRitual", 0);
+		CVarSetInteger("gFireRockRain", 0);
+		CVarSetInteger("gCuccoAttack", 0);
+		CVarSetInteger("gExplodingRupeeChallenge", 0);
+		CVarSetInteger("gBanItemDropPickup", 0);
+		CVarSetInteger("gBrokenBombchus", 0);
+		CVarSetInteger("gAnnoyingGetItems", 0);
+		CVarSetInteger("gPlayerGravity", 0);
+		CVarSetInteger("gChaosClimbSpeed", 0);
+		CVarSetInteger("gHookshotLengthRemove", 0);
+		CVarSetInteger("gSpawnExplosion", 0);
+		CVarSetInteger("gRestrainLink", 0);
+		CVarSetInteger("gTripToSpace", 0);
+		CVarSetInteger("gThiccLink", 0);
+		CVarSetInteger("gFlipLink", 0);
+		CVarSetInteger("gNoStart", 0);
+		CVarSetInteger("gFlashbang", 0);
+		CVarSetInteger("gPogoStick", 0);
+		CVarSetInteger("gNoStrength", 0);
+		CVarSetInteger("gNoWater", 0);
 	}
 
 	void Chaos_Init() {
-  		CVar_RegisterS32("gChaosEnabled", 0);
+  		CVarRegisterInteger("gChaosEnabled", 0);
 
-  		CVar_RegisterS32("gChaosForcedBoots", 0);
-  		CVar_RegisterS32("gChaosOHKO", 0);
-  		CVar_RegisterS32("gChaosNoHud", 0);
-  		CVar_RegisterS32("gChaosNoZ", 0);
-  		CVar_RegisterS32("gChaosTurbo", 0);
-  		CVar_RegisterS32("gChaosInvertControls", 0);
+  		CVarRegisterInteger("gChaosForcedBoots", 0);
+  		CVarRegisterInteger("gChaosOHKO", 0);
+  		CVarRegisterInteger("gChaosNoHud", 0);
+  		CVarRegisterInteger("gChaosNoZ", 0);
+  		CVarRegisterInteger("gChaosTurbo", 0);
+  		CVarRegisterInteger("gChaosInvertControls", 0);
 		
 		Chaos_ResetAll();
 	}

@@ -802,7 +802,7 @@ void DrawFlagsTab() {
             
             DrawGroupWithBorder([&]() {
                 ImGui::Text("unk_6AE");
-                UIWidgets::DrawFlagArray16("unk_6AE", player->unk_6AE);
+                UIWidgets::DrawFlagArray16("unk_6AE", player->lookFlags);
             });
         }
         ImGui::TreePop();

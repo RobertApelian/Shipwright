@@ -258,7 +258,7 @@ void EnBomChu_Move(EnBomChu* this, PlayState* play) {
     Vec3f posSide;
     Vec3f posUpDown;
 
-    if (CVar_GetS32("gBrokenBombchus", 0)) {
+    if (CVarGetInteger("gBrokenBombchus", 0)) {
         this->actor.speedXZ = Rand_CenteredFloat(16 * 2) + 2.0f;
     } else {
         this->actor.speedXZ = 8.0f;

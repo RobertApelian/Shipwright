@@ -362,7 +362,7 @@ void EnAttackNiw_Update(Actor* thisx, PlayState* play) {
                 func_8002F6D4(play, &this->actor, 2.0f, this->actor.world.rot.y, 0.0f, 0x10);
                 cucco->timer9 = 0x46;
             }
-        } else if (CVar_GetS32("gCuccoAttack", 0) && (player->invincibilityTimer == 0)) {
+        } else if (CVarGetInteger("gCuccoAttack", 0) && (player->invincibilityTimer == 0)) {
             func_8002F6D4(play, &this->actor, 2.0f, this->actor.world.rot.y, 0.0f, 0x10);
         }
     }

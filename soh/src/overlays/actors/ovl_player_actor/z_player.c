@@ -2336,7 +2336,7 @@ s32 Player_SetupReadyFpsItemToShoot(Player* this, PlayState* play) {
 
             if (!Player_HoldsHookshot(this) && (Player_GetFpsItemAmmo(play, this, &item, &arrowType) > 0)) {
                 // Chaos
-                if (CVar_GetS32("gForceNormalArrows", 0)) {
+                if (CVarGetInteger("gForceNormalArrows", 0)) {
                     arrowType = ARROW_NORMAL;
                 }
 
@@ -3359,7 +3359,7 @@ void Player_SetupZTargeting(Player* this, PlayState* play) {
         (this->stateFlags1 & (PLAYER_STATE1_IN_DEATH_CUTSCENE | PLAYER_STATE1_IN_CUTSCENE)) ||
         (this->stateFlags3 & PLAYER_STATE3_MOVING_ALONG_HOOKSHOT_PATH)) {
         this->targetSwitchTimer = 0;
-    } else if ((zTrigPressed && !CVar_GetS32("gDisableTargeting", 0)) ||
+    } else if ((zTrigPressed && !CVarGetInteger("gDisableTargeting", 0)) ||
                (this->stateFlags2 & PLAYER_STATE2_USING_SWITCH_Z_TARGETING) || (this->forcedTargetActor != NULL)) {
         if (this->targetSwitchTimer <= 5) {
             this->targetSwitchTimer = 5;
@@ -3665,7 +3665,7 @@ s32 Player_CanQuickspin(Player* this) {
         }
     }
 
-    if (CVar_GetS32("gDisableMeleeAttacks", 0)) {
+    if (CVarGetInteger("gDisableMeleeAttacks", 0)) {
         return 0;
     }
 
@@ -3756,7 +3756,7 @@ void Player_StartMeleeWeaponAttack(PlayState* play, Player* this, s32 arg2) {
     u32 flags;
     s32 temp;
 
-    if (!CVar_GetS32("gDisableMeleeAttacks", 0)) {
+    if (!CVarGetInteger("gDisableMeleeAttacks", 0)) {
         Player_SetActionFunc(play, this, Player_MeleeWeaponAttack, 0);
         this->comboTimer = 8;
         if ((arg2 < 18) || (arg2 >= 20)) {
@@ -4037,7 +4037,7 @@ void Player_StartBurning(Player* this) {
 }
 
 void Player_PlayFallSfxAndCheckBurning(Player* this) {
-    if (this->actor.colChkInfo.acHitEffect == 1 || CVar_GetS32("gFireDamage", 0)) {
+    if (this->actor.colChkInfo.acHitEffect == 1 || CVarGetInteger("gFireDamage", 0)) {
         Player_StartBurning(this);
     }
     Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_FALL_L);
@@ -4181,8 +4181,8 @@ s32 Player_UpdateDamage(Player* this, PlayState* play) {
                     func_8002F7DC(&this->actor, NA_SE_PL_BODY_HIT);
                 }
 
-                u8 damageOverride = CVar_GetS32("gIceDamage", 0) || CVar_GetS32("gElectricDamage", 0) ||
-                                    CVar_GetS32("gKnockbackDamage", 0);
+                u8 damageOverride = CVarGetInteger("gIceDamage", 0) || CVarGetInteger("gElectricDamage", 0) ||
+                                    CVarGetInteger("gKnockbackDamage", 0);
 
                 if (!damageOverride) {
                     if (this->stateFlags1 & PLAYER_STATE1_SWIMMING) {
@@ -4198,13 +4198,13 @@ s32 Player_UpdateDamage(Player* this, PlayState* play) {
                         damageReaction = PLAYER_DMGREACTION_DEFAULT;
                     }
                 } else {
-                    if (CVar_GetS32("gIceDamage", 0)) {
+                    if (CVarGetInteger("gIceDamage", 0)) {
                         damageReaction = PLAYER_DMGREACTION_FROZEN;
                     }
-                    if (CVar_GetS32("gElectricDamage", 0)) {
+                    if (CVarGetInteger("gElectricDamage", 0)) {
                         damageReaction = PLAYER_DMGREACTION_ELECTRIC_SHOCKED;
                     }
-                    if (CVar_GetS32("gKnockbackDamage", 0)) {
+                    if (CVarGetInteger("gKnockbackDamage", 0)) {
                         damageReaction = PLAYER_DMGREACTION_KNOCKBACK;
                     }
                 }
@@ -4224,7 +4224,7 @@ s32 Player_UpdateDamage(Player* this, PlayState* play) {
                      (this->hurtFloorTimer >= D_808544F4[hurtFloorType])) ||
                     ((hurtFloorType >= 0) && ((this->currentTunic != PLAYER_TUNIC_GORON && CVarGetInteger("gSuperTunic", 0) == 0) ||
                                      (this->hurtFloorTimer >= D_808544F4[hurtFloorType]))) ||
-                    (CVar_GetS32("gFloorIsLava", 0) && this->actor.bgCheckFlags & BGCHECKFLAG_GROUND)) {
+                    (CVarGetInteger("gFloorIsLava", 0) && this->actor.bgCheckFlags & BGCHECKFLAG_GROUND)) {
                     this->hurtFloorTimer = 0;
                     this->actor.colChkInfo.damage = 4;
                     Player_SetupDamage(play, this, 0, 4.0f, 5.0f, this->actor.shape.rot.y, 20);
@@ -4297,7 +4297,7 @@ s32 Player_SetupWallJumpBehavior(Player* this, PlayState* play) {
         }
 
         // Chaos
-        if (CVar_GetS32("gDisableLedges", 0)) {
+        if (CVarGetInteger("gDisableLedges", 0)) {
             canJumpToLedge = 0;
         }
 
@@ -5118,7 +5118,7 @@ void Player_SetupMidairBehavior(Player* this, PlayState* play) {
                     return;
                 }
 
-                if (CVar_GetS32("gDisableLedges", 0)) {
+                if (CVarGetInteger("gDisableLedges", 0)) {
                     Player_PlayAnimLoop(play, this, &gPlayerAnim_link_normal_landing_wait);
                     return;
                 }
@@ -5138,7 +5138,7 @@ void Player_SetupMidairBehavior(Player* this, PlayState* play) {
 s32 Player_SetupCameraMode(PlayState* play, Player* this) {
     s32 cameraMode;
 
-    if (!(CVar_GetS32("gDisableFPSView", 0))) {
+    if (!(CVarGetInteger("gDisableFPSView", 0))) {
         if (this->attentionMode == PLAYER_ATTENTIONMODE_AIMING) {
             if (Actor_PlayerIsAimingFpsItem(this)) {
                 if (LINK_IS_ADULT) {
@@ -5491,7 +5491,7 @@ s32 Player_SetupCUpBehavior(Player* this, PlayState* play) {
 }
 
 void Player_SetupJumpSlash(PlayState* play, Player* this, s32 arg2, f32 xzVelocity, f32 yVelocity) {
-    if (!CVar_GetS32("gDisableMeleeAttacks", 0)) {
+    if (!CVarGetInteger("gDisableMeleeAttacks", 0)) {
         Player_StartMeleeWeaponAttack(play, this, arg2);
         Player_SetActionFunc(play, this, Player_JumpSlash, 0);
 
@@ -5534,10 +5534,10 @@ s32 Player_SetupMidairJumpSlash(Player* this, PlayState* play) {
 
 void Player_SetupRolling(Player* this, PlayState* play) {
     // Chaos
-    if (CVar_GetS32("gExplodingRolls", 0)) {
+    if (CVarGetInteger("gExplodingRolls", 0)) {
         Player_SpawnExplosion(play, this);
     }
-    if (CVar_GetS32("gFreezingRolls", 0)) {
+    if (CVarGetInteger("gFreezingRolls", 0)) {
         this->actor.colChkInfo.damage = 0;
         Player_SetupDamage(play, this, PLAYER_DMGREACTION_FROZEN, 0.0f, 0.0f, 0, 20);
     }
@@ -5569,7 +5569,7 @@ void Player_SetupBackflipOrSidehop(Player* this, PlayState* play, s32 relativeSt
 
 s32 Player_CanRoll(Player* this, PlayState* play) {
     if ((this->relativeAnalogStickInputs[this->inputFrameCounter] == 0) && (sFloorSpecialProperty != 7)) {
-        if (CVar_GetS32("gForwardJump", 0)) {
+        if (CVarGetInteger("gForwardJump", 0)) {
             Player_SetupBackflipOrSidehop(this, play, this->relativeAnalogStickInputs[this->inputFrameCounter]);
         }
         else {
@@ -5591,11 +5591,11 @@ s32 Player_SetupJumpSlashOrRoll(Player* this, PlayState* play) {
 
         if (relativeStickInput <= 0) {
             if (Player_IsZTargeting(this)) {
-                if (this->actor.category != ACTORCAT_PLAYER || CVar_GetS32("gForwardJump", 0)) {
+                if (this->actor.category != ACTORCAT_PLAYER || CVarGetInteger("gForwardJump", 0)) {
                     if (relativeStickInput < 0) {
                         Player_SetupJump(this, &gPlayerAnim_link_normal_jump, REG(69) / 100.0f, play);
                     } else {
-                        if (CVar_GetS32("gForwardJump", 0)) {
+                        if (CVarGetInteger("gForwardJump", 0)) {
                             Player_SetupBackflipOrSidehop(this, play, 0);
                         }
                         else {
@@ -5686,9 +5686,9 @@ void Player_ClearLookAndAttention(Player* this, PlayState* play) {
 }
 
 s32 Player_SetupRollOrPutAway(Player* this, PlayState* play) {
-    if (CVar_GetS32("gSonicRoll", 0)) {
+    if (CVarGetInteger("gSonicRoll", 0)) {
         Player_SetupRolling(this, play);
-    } else if (CVar_GetS32("gPogoStick", 0)) {
+    } else if (CVarGetInteger("gPogoStick", 0)) {
         // Hopping
         Player_SetupJump(this, &gPlayerAnim_link_normal_jump, REG(69) / 100.0f, play);
         Player_SetupBackflipOrSidehop(this, play, 0);
@@ -5878,7 +5878,7 @@ s32 Player_SetupDefaultSpawnBehavior(PlayState* play, Player* this, f32 arg2) {
 
     posY = this->actor.world.pos.y;
     if (WaterBox_GetSurface1(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z, &posY,
-                             &waterbox) != 0 && !CVar_GetS32("gNoWater", 0)) {
+                             &waterbox) != 0 && !CVarGetInteger("gNoWater", 0)) {
         posY -= this->actor.world.pos.y;
         if (this->ageProperties->unk_24 <= posY) {
             Player_SetActionFunc(play, this, Player_SpawnSwimming, 0);
@@ -6103,7 +6103,7 @@ void Player_RiseFromDive(PlayState* play, Player* this) {
 }
 
 void func_8083D36C(PlayState* play, Player* this) {
-    if (CVar_GetS32("gNoWater", 0)) {
+    if (CVarGetInteger("gNoWater", 0)) {
         return;
     }
     if ((this->currentBoots != PLAYER_BOOTS_IRON) || !(this->actor.bgCheckFlags & 1)) {
@@ -6184,15 +6184,15 @@ void func_8083D6EC(PlayState* play, Player* this) {
     this->actor.minVelocityY = -20.0f;
     this->actor.gravity = REG(68) / 100.0f;
 
-    if (Player_IsFloorSinkingSand(sFloorSpecialProperty) || CVar_GetS32("gSinkingFloor", 0)) {
+    if (Player_IsFloorSinkingSand(sFloorSpecialProperty) || CVarGetInteger("gSinkingFloor", 0)) {
         unsinkSpeed = fabsf(this->linearVelocity) * 20.0f;
         sinkSpeed = 0.0f;
 
-        if (sFloorSpecialProperty == 4 || CVar_GetS32("gSinkingFloor", 0)) {
-            if (this->shapeOffsetY > 1300.0f && !(CVar_GetS32("gSinkingFloor", 0) && sFloorSpecialProperty != 4)) {
+        if (sFloorSpecialProperty == 4 || CVarGetInteger("gSinkingFloor", 0)) {
+            if (this->shapeOffsetY > 1300.0f && !(CVarGetInteger("gSinkingFloor", 0) && sFloorSpecialProperty != 4)) {
                 maxSinkSpeed = this->shapeOffsetY;
             } else {
-                if (CVar_GetS32("gSinkingFloor", 0)) {
+                if (CVarGetInteger("gSinkingFloor", 0)) {
                     maxSinkSpeed = 4250.0f;
                 }
                 else {
@@ -6508,7 +6508,7 @@ static s32 D_80854598[] = {
 void Player_PickupItemDrop(PlayState* play, Player* this, GetItemEntry* giEntry) {
     s32 dropType = giEntry->field & 0x1F;
 
-    if (!CVar_GetS32("gBanItemDropPickup", 0)) {
+    if (!CVarGetInteger("gBanItemDropPickup", 0)) {
         if (!(giEntry->field & 0x80)) {
             Item_DropCollectible(play, &this->actor.world.pos, dropType | 0x8000);
             if ((dropType != 4) && (dropType != 8) && (dropType != 9) && (dropType != 0xA) && (dropType != 0) &&
@@ -8943,7 +8943,7 @@ void Player_Rolling(Player* this, PlayState* play) {
 
     if (func_80842964(this, play) == 0) {
         if (this->genericTimer != 0) {
-            if (!CVar_GetS32("gSonicRoll", 0)) {
+            if (!CVarGetInteger("gSonicRoll", 0)) {
                 Math_StepToF(&this->linearVelocity, 0.0f, 2.0f);
             }
 
@@ -8983,7 +8983,7 @@ void Player_Rolling(Player* this, PlayState* play) {
 
             if ((this->skelAnime.curFrame < 15.0f) || !Player_SetupStartMeleeWeaponAttack(this, play)) {
                 if (this->skelAnime.curFrame >= 20.0f) {
-                    if (CVar_GetS32("gSonicRoll", 0)) {
+                    if (CVarGetInteger("gSonicRoll", 0)) {
                         Player_SetupRolling(this, play);
                     } else {
                         Player_SetupReturnToStandStill(this, play);
@@ -8998,7 +8998,7 @@ void Player_Rolling(Player* this, PlayState* play) {
                     targetVelocity = 3.0f;
                 }
 
-                if (CVar_GetS32("gSonicRoll", 0)) {
+                if (CVarGetInteger("gSonicRoll", 0)) {
                     targetVelocity *= 4.5f;
                     Player_SetRunVelocityAndYaw(this, targetVelocity, targetYaw);
                     if (this->linearVelocity < 30.0f) {
@@ -10613,7 +10613,7 @@ void Player_UpdateCamAndSeqModes(PlayState* play, Player* this) {
                     camMode = CAM_MODE_HANG;
                 }
             } else if (this->stateFlags1 & (PLAYER_STATE1_Z_TARGETING_FRIENDLY | PLAYER_STATE1_30)) {
-                if ((Actor_PlayerIsAimingReadyFpsItem(this) || Player_IsAimingReadyBoomerang(this)) && !CVar_GetS32("gDisableFPSView", 0)) {
+                if ((Actor_PlayerIsAimingReadyFpsItem(this) || Player_IsAimingReadyBoomerang(this)) && !CVarGetInteger("gDisableFPSView", 0)) {
                     camMode = CAM_MODE_BOWARROWZ;
                 } else if (this->stateFlags1 & PLAYER_STATE1_CLIMBING) {
                     camMode = CAM_MODE_CLIMBZ;
@@ -10922,15 +10922,15 @@ void Player_SpawnExplosion(PlayState* play, Player* this) {
 void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     s32 pad;
 
-    if (CVar_GetS32("gForceUnequip", 0)) {
+    if (CVarGetInteger("gForceUnequip", 0)) {
         Player_UnequipItem(play, this);
         for (s32 i = 1; i < ARRAY_COUNT(gSaveContext.equips.buttonItems); i++) {
             gSaveContext.equips.buttonItems[i] = ITEM_NONE;
         }
-        CVar_SetS32("gForceUnequip", 0);
+        CVarSetInteger("gForceUnequip", 0);
     }
 
-    if (CVar_GetS32("gShuffleItems", 0)) {
+    if (CVarGetInteger("gShuffleItems", 0)) {
         u8 items[3] = { ITEM_NONE };
         u8 originalItems[3] = { ITEM_NONE };
         u8 unshuffledItems =  0;
@@ -10961,21 +10961,21 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         Player_UnequipItem(play, this);
         // Never allow the items to remain in the exact same order!
         if (unshuffledItems < 3) {
-            CVar_SetS32("gShuffleItems", 0);
+            CVarSetInteger("gShuffleItems", 0);
         }
     }
 
-    if (CVar_GetS32("gRandoMagic", 0) && gSaveContext.magicLevel > 0) {
+    if (CVarGetInteger("gRandoMagic", 0) && gSaveContext.magicLevel > 0) {
         // Randomize magic based on max
         if (gSaveContext.isDoubleMagicAcquired) {
             gSaveContext.magic = 0x60 * Rand_ZeroOne();
         } else {
             gSaveContext.magic = 0x30 * Rand_ZeroOne();
         }
-        CVar_SetS32("gRandoMagic", 0);
+        CVarSetInteger("gRandoMagic", 0);
     }
 
-    if (CVar_GetS32("gSunsSong", 0)) {
+    if (CVarGetInteger("gSunsSong", 0)) {
         switch (play->sceneNum) {
             case SCENE_YDAN:
             case SCENE_YDAN_BOSS:
@@ -11005,12 +11005,12 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             case SCENE_GANON_DEMO:
             case SCENE_GANONTIKA_SONOGO:
             case SCENE_TAKARAYA:
-                CVar_SetS32("gSunsSong", 0);
+                CVarSetInteger("gSunsSong", 0);
                 break;
             
             default:
                 gSaveContext.sunsSongState = SUNSSONG_START;
-                CVar_SetS32("gSunsSong", 0);
+                CVarSetInteger("gSunsSong", 0);
                 break;
         }
     }
@@ -11021,7 +11021,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     #define FLASH_TIME 120
     static s16 flashTimer = FLASH_TIME;
 
-    if (CVar_GetS32("gFlashbang", 0)) {
+    if (CVarGetInteger("gFlashbang", 0)) {
         if (flashTimer == FLASH_TIME) {
             Audio_PlayActorSound2(&this->actor, NA_SE_IT_EXPLOSION_LIGHT);
             play->envCtx.fillScreen = true;
@@ -11044,7 +11044,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         flashTimer = FLASH_TIME;
     }
 
-    if (CVar_GetS32("gRedoRando", 0)) {
+    if (CVarGetInteger("gRedoRando", 0)) {
         if (redoTimer == 0) {
             // Play ReDead scream SFX
             Audio_PlaySoundGeneral(NA_SE_EN_REDEAD_AIM, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
@@ -11063,7 +11063,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             // Reset the game
             redoTimer = 0;
             play->state.running = false;
-            CVar_SetS32("gRedoRando", 0);
+            CVarSetInteger("gRedoRando", 0);
             this->stateFlags2 &= ~PLAYER_STATE2_PAUSE_MOST_UPDATING;
             SET_NEXT_GAMESTATE(&play->state, FileChoose_Init, FileChooseContext);
             return;
@@ -11082,7 +11082,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         redoTimer = 0;
     }
 
-    if (CVar_GetS32("gBackToHome", 0)) {
+    if (CVarGetInteger("gBackToHome", 0)) {
         if (titleTimer == 0) {
             // Play ReDead scream SFX
             Audio_PlaySoundGeneral(NA_SE_VO_ST_DAMAGE, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
@@ -11132,7 +11132,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     #define PLAYER_JAIL_DIST 75
     #define PLAYER_JAIL_FLOOR_DIST 150
 
-    if (CVar_GetS32("gJailTime", 0) && !respawnJail) {
+    if (CVarGetInteger("gJailTime", 0) && !respawnJail) {
         if (!inJail) {
             jail[0] = (BgSpot15Saku*)Actor_Spawn(&play->actorCtx, play, ACTOR_BG_SPOT15_SAKU,
                                                this->actor.world.pos.x + PLAYER_JAIL_DIST, this->actor.world.pos.y - 1,
@@ -11180,7 +11180,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
     }
 
-    if (CVar_GetS32("gCowRitual", 0)) {
+    if (CVarGetInteger("gCowRitual", 0)) {
         if (!cowRitual) {
             Vec3f origin = this->actor.world.pos;
             Vec3f vtx[5];
@@ -11264,7 +11264,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
     }
     
-    if (CVar_GetS32("gFireRockRain", 0)) {
+    if (CVarGetInteger("gFireRockRain", 0)) {
         if (!fireRocksFalling) {
             fireRockSpawner =
                 (EnEncount2*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_ENCOUNT2, this->actor.world.pos.x,
@@ -11285,7 +11285,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
     }
 
-    if (CVar_GetS32("gCuccoAttack", 0)) {
+    if (CVarGetInteger("gCuccoAttack", 0)) {
         f32 viewX;
         f32 viewY;
         f32 viewZ;
@@ -11332,7 +11332,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     static Vec3f rupeeOrigin = { 0 };
     static u8 rupeeStartTimer = 0;
 
-    if (CVar_GetS32("gExplodingRupeeChallenge", 0)) {
+    if (CVarGetInteger("gExplodingRupeeChallenge", 0)) {
         if (explodeRupee == NULL) {
             explodeRupee =
                 Actor_Spawn(&play->actorCtx, play, ACTOR_EN_EX_RUPPY, this->actor.world.pos.x + 150.0f,
@@ -11358,11 +11358,11 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                 }
                 Player_SetupInvincibilityNoDamageFlash(this, -20);
                 func_80078884(NA_SE_SY_ERROR);
-                CVar_SetS32("gExplodingRupeeChallenge", 0);
+                CVarSetInteger("gExplodingRupeeChallenge", 0);
                 rupeeStartTimer = 0;
             } else if (Math_Vec3f_DistXZ(&rupeeOrigin, &this->actor.world.pos) >= 160.0f) {
                 Audio_PlayFanfare(NA_BGM_SMALL_ITEM_GET | 0x900);
-                CVar_SetS32("gExplodingRupeeChallenge", 0);
+                CVarSetInteger("gExplodingRupeeChallenge", 0);
                 rupeeStartTimer = 0;
             }
             explodeRupee->world.pos.x = 150.0f * Math_CosF(j) + rupeeOrigin.x;
@@ -11396,12 +11396,12 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     static Color_RGBA8 dustPrim = { 200, 200, 200, 128 };
     static Color_RGBA8 dustEnv = { 100, 100, 100, 0 };
 
-    if (CVar_GetS32("gTripToSpace", 0) || onSpaceTrip) {
+    if (CVarGetInteger("gTripToSpace", 0) || onSpaceTrip) {
         Vec3f dustVelocity;
         Vec3f dustPos;
 
         if (onSpaceTrip == false) {
-            CVar_SetS32("gTripToSpace", 0);
+            CVarSetInteger("gTripToSpace", 0);
             onSpaceTrip = true;
         }
 
@@ -11463,7 +11463,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
     static u8 forcedSandstormOn = false;
 
-    if (CVar_GetS32("gSandstorm", 0)) {
+    if (CVarGetInteger("gSandstorm", 0)) {
         play->envCtx.sandstormState = 3;
         forcedSandstormOn = true;
     }
@@ -11472,7 +11472,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         forcedSandstormOn = false;
     }
 
-    if (CVar_GetS32("gNaviSpam", 0)) {
+    if (CVarGetInteger("gNaviSpam", 0)) {
         if (!(play->state.frames % 10)) {
             Audio_PlaySoundGeneral(NA_SE_VO_NAVY_CALL, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         }
@@ -11481,12 +11481,12 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
     }
 
-    if (CVar_GetS32("gSpawnExplosion", 0)) {
+    if (CVarGetInteger("gSpawnExplosion", 0)) {
         Player_SpawnExplosion(play, this);
-        CVar_SetS32("gSpawnExplosion", 0);
+        CVarSetInteger("gSpawnExplosion", 0);
     };
 
-    if (CVar_GetS32("gDisableEnemyDraw", 0) && this->targetActor != NULL) {
+    if (CVarGetInteger("gDisableEnemyDraw", 0) && this->targetActor != NULL) {
         if (this->targetActor->category == ACTORCAT_ENEMY) {
             play->actorCtx.targetCtx.arrowPointedActor = NULL;
             this->targetActor = NULL;
@@ -11500,7 +11500,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         Environment_AdjustLights(play, lightIntensity, this->actor.projectedPos.z + 600.0f, 0.2f, 0.5f);
     }
 
-    if (CVar_GetS32("gDarkenArea", 0)) {
+    if (CVarGetInteger("gDarkenArea", 0)) {
         adjustLight = true;
         Math_SmoothStepToF(&lightIntensity, 1.0f, 0.5f, 0.2f, 0.01f);
     }
@@ -11513,14 +11513,14 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
     }
 
-    if (CVar_GetS32("gInvisPlayer", 0)) {
+    if (CVarGetInteger("gInvisPlayer", 0)) {
         this->actor.draw = NULL;
     }
     else {
         this->actor.draw = Player_Draw;
     }
 
-    if (CVar_GetS32("gChaosSpin", 0)) {
+    if (CVarGetInteger("gChaosSpin", 0)) {
         this->actor.shape.rot.x += DEGF_TO_BINANG(5.0f);
         this->actor.shape.rot.y += DEGF_TO_BINANG(9.0f);
         this->actor.shape.rot.z += DEGF_TO_BINANG(15.0f);
@@ -11540,7 +11540,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
     static u8 colorMode = 0;
 
-    if (CVar_GetS32("gRaveMode", 0)) {
+    if (CVarGetInteger("gRaveMode", 0)) {
         switch (colorMode) {
             case 0:
                 D_801614B0.r = 255;
@@ -11608,7 +11608,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                 }
                 break;
         }
-    } else if (!CVar_GetS32("gRedoRando", 0) && !CVar_GetS32("gBackToTitle", 0)) {
+    } else if (!CVarGetInteger("gRedoRando", 0) && !CVarGetInteger("gBackToTitle", 0)) {
         D_801614B0.r = 0;
         D_801614B0.g = 0;
         D_801614B0.b = 0;
@@ -11616,9 +11616,9 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         colorMode = 0;
     }
 
-    if (CVar_GetS32("gRestrainLink", 0)) {
+    if (CVarGetInteger("gRestrainLink", 0)) {
         Player_SetupRestrainedByEnemy(play, this);
-        CVar_SetS32("gRestrainLink", 0);
+        CVarSetInteger("gRestrainLink", 0);
     }
 
     Math_Vec3f_Copy(&this->actor.prevPos, &this->actor.home.pos);
@@ -11669,7 +11669,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         this->stateFlags3 &= ~PLAYER_STATE3_RESTORE_NAYRUS_LOVE;
     }
 
-    if (this->stateFlags2 & PLAYER_STATE2_PAUSE_MOST_UPDATING || CVar_GetS32("gOnHold", 0)) {
+    if (this->stateFlags2 & PLAYER_STATE2_PAUSE_MOST_UPDATING || CVarGetInteger("gOnHold", 0)) {
         if (!(this->actor.bgCheckFlags & 1)) {
             Player_StopMovement(this);
             Actor_MoveForward(&this->actor);
@@ -11731,7 +11731,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
         }
 
         if (!(this->skelAnime.moveFlags & 0x80)) {
-            if (CVar_GetS32("gSlipperyFloor", 0) ||
+            if (CVarGetInteger("gSlipperyFloor", 0) ||
                 ((this->actor.bgCheckFlags & 1) &&
                  (sFloorSpecialProperty == 5) && (this->currentBoots != PLAYER_BOOTS_IRON)) ||
                   ((this->currentBoots == PLAYER_BOOTS_HOVER) &&
@@ -11746,7 +11746,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
                     sp6E += 0x8000;
                 }
 
-                if (Math_StepToF(&this->actor.speedXZ, sp70, CVar_GetS32("gSlipperyFloor", 0) ? 0.15f: 0.35f) &&
+                if (Math_StepToF(&this->actor.speedXZ, sp70, CVarGetInteger("gSlipperyFloor", 0) ? 0.15f: 0.35f) &&
                     (sp70 == 0.0f)) {
                     this->actor.world.rot.y = this->currentYaw;
                 }
@@ -11902,7 +11902,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
               PLAYER_STATE2_CAN_ENTER_CRAWLSPACE | PLAYER_STATE2_CAN_DISMOUNT_HORSE | PLAYER_STATE2_ENABLE_REFLECTION);
         this->stateFlags3 &= ~PLAYER_STATE3_CHECKING_FLOOR_AND_WATER_COLLISION;
 
-        if (CVar_GetS32("gDisableTurning", 0)) {
+        if (CVarGetInteger("gDisableTurning", 0)) {
             this->stateFlags2 |= PLAYER_STATE2_ALWAYS_DISABLE_MOVE_ROTATION;
         }
 
@@ -12015,12 +12015,12 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
     this->stateFlags3 &= ~PLAYER_STATE3_PAUSE_ACTION_FUNC;
 
-    if (CVar_GetS32("gMegaLetterbox", 0)) {
+    if (CVarGetInteger("gMegaLetterbox", 0)) {
         ShrinkWindow_SetVal(110);
     }
 
-    if (CVar_GetS32("gPlayerGravity", 0) != 0) {
-        this->actor.gravity += CVar_GetS32("gPlayerGravity", 0) * 0.1f;
+    if (CVarGetInteger("gPlayerGravity", 0) != 0) {
+        this->actor.gravity += CVarGetInteger("gPlayerGravity", 0) * 0.1f;
     }
 
     Collider_ResetCylinderAC(play, &this->cylinder.base);
@@ -12893,8 +12893,8 @@ void Player_ClimbingWallOrDownLedge(Player* this, PlayState* play) {
         phi_f2 = -1.0f;
     }
 
-    if (CVar_GetS32("gChaosClimbSpeed", 0) != 0) {
-        this->skelAnime.playSpeed = (phi_f2 * phi_f0) * (1.0f - CVar_GetS32("gChaosClimbSpeed", 0) * 0.1f);
+    if (CVarGetInteger("gChaosClimbSpeed", 0) != 0) {
+        this->skelAnime.playSpeed = (phi_f2 * phi_f0) * (1.0f - CVarGetInteger("gChaosClimbSpeed", 0) * 0.1f);
     }
     else {
         this->skelAnime.playSpeed = phi_f2 * phi_f0 + phi_f2 * CVarGetInteger("gClimbSpeed", 0);
@@ -13460,7 +13460,7 @@ void Player_UpdateSwimIdle(Player* this, PlayState* play) {
     f32 sp34;
     s16 sp32;
 
-    if (CVar_GetS32("gNoWater", 0)) {
+    if (CVarGetInteger("gNoWater", 0)) {
         Player_SetupReturnToStandStill(this, play);
         return;
     }
@@ -13523,7 +13523,7 @@ void Player_Swim(Player* this, PlayState* play) {
     s16 sp32;
     s16 temp;
 
-    if (CVar_GetS32("gNoWater", 0)) {
+    if (CVarGetInteger("gNoWater", 0)) {
         Player_SetupReturnToStandStill(this, play);
         return;
     }

@@ -55,7 +55,7 @@ void spawn_n(int16_t id, int16_t params, int32_t n) {
         }
     }
 	if (id == 0x113) {
-		CVar_SetS32("gActivateNextIK", 1);
+		CVarSetInteger("gActivateNextIK", 1);
 	}
 }
 
@@ -149,12 +149,12 @@ void apply_ongoing_effects() {
     Player* player = GET_PLAYER(gPlayState);
 
     // TODO: replace |timers| with just a CVar
-    int16_t forced_boots = CVar_GetS32("gChaosForcedBoots", 0);
-    bool ohko = CVar_GetS32("gChaosOHKO", 0);
-    bool no_hud = CVar_GetS32("gChaosNoHud", 0);
-    bool no_z = CVar_GetS32("gChaosNoZ", 0);
-    bool turbo = CVar_GetS32("gChaosTurbo", 0);
-    bool invert_controls = CVar_GetS32("gChaosInvertControls", 0);
+    int16_t forced_boots = CVarGetInteger("gChaosForcedBoots", 0);
+    bool ohko = CVarGetInteger("gChaosOHKO", 0);
+    bool no_hud = CVarGetInteger("gChaosNoHud", 0);
+    bool no_z = CVarGetInteger("gChaosNoZ", 0);
+    bool turbo = CVarGetInteger("gChaosTurbo", 0);
+    bool invert_controls = CVarGetInteger("gChaosInvertControls", 0);
 
     if (forced_boots > 0) {
         // Boots are the first nibble of the |equipement| u16
@@ -171,7 +171,7 @@ void apply_ongoing_effects() {
     if (ohko) {
         if (gSaveContext.health == 0) {
             // Actually let us die if life is already at 0
-            CVar_SetS32("gChaosOHKO", 0);
+            CVarSetInteger("gChaosOHKO", 0);
         } else {
             gSaveContext.health = 1;
         }

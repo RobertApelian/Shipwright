@@ -490,7 +490,7 @@ s32 Player_IsBurningStickInRange(PlayState* play, Vec3f* pos, f32 xzRange, f32 y
 s32 Player_GetStrength(void) {
     s32 strengthUpgrade = CUR_UPG_VALUE(UPG_STRENGTH);
 
-    if (CVar_GetS32("gNoStrength", 0)) {
+    if (CVarGetInteger("gNoStrength", 0)) {
         return PLAYER_STR_NONE;
     }
 
@@ -911,7 +911,7 @@ void func_8008F87C(PlayState* play, Player* this, SkelAnime* skelAnime, Vec3f* p
             temp3 = func_80041D4C(&play->colCtx, sp88, sp84);
 
             if (((temp3 >= 2) && (temp3 < 4) && !SurfaceType_IsWallDamage(&play->colCtx, sp88, sp84)) ||
-                CVar_GetS32("gFloorIsLava", 0)) {
+                CVarGetInteger("gFloorIsLava", 0)) {
                 footprintPos.y = sp80;
                 EffectSsGFire_Spawn(play, &footprintPos);
             }
@@ -955,7 +955,7 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
         static f32 scuffScales[PLAYER_LIMB_MAX] = { 0.0f };
         static u8 i = 0;
 
-        if (CVar_GetS32("gPogoStick", 0)) {
+        if (CVarGetInteger("gPogoStick", 0)) {
             switch (limbIndex) {
                 case PLAYER_LIMB_R_FOOT:
                 case PLAYER_LIMB_R_THIGH:
@@ -970,7 +970,7 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
                 
             }
         } else {
-            if (CVar_GetS32("gScuffedLink", 0)) {
+            if (CVarGetInteger("gScuffedLink", 0)) {
                 if (i < PLAYER_LIMB_MAX) {
                     scuffScales[limbIndex] = (Rand_ZeroOne() + 0.01f) * 2.0f;
                     i++;
@@ -981,7 +981,7 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
             }
         }
 
-        if (CVar_GetS32("gThiccLink", 0)) {
+        if (CVarGetInteger("gThiccLink", 0)) {
             if (limbIndex == PLAYER_LIMB_WAIST) {
                 Matrix_Scale(2.0f, 2.0f, 2.0f, MTXMODE_APPLY);
             }
@@ -990,7 +990,7 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
             }
         }
 
-        if (CVar_GetS32("gFlipLink", 0)) {
+        if (CVarGetInteger("gFlipLink", 0)) {
             Matrix_Scale(1.0f, -1.0f, 1.0f, MTXMODE_APPLY);
         }
 
@@ -1003,10 +1003,10 @@ s32 func_8008FCC8(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s
                 } else if (scale < 1.0f) {
                     Matrix_Translate((LINK_IS_ADULT ? 3600.0f : 2900.0f) * ABS(scale - 1.0f), 0.0f, 0.0f, MTXMODE_APPLY);
                 }
-            } else if (CVar_GetS32("gBigHead", 0)) {
+            } else if (CVarGetInteger("gBigHead", 0)) {
                 Matrix_Scale(3.0f, 3.0f, 3.0f, MTXMODE_APPLY);
                 Matrix_Translate(-1000.0f, 0.0f, 0.0f, MTXMODE_APPLY);
-            } else if (CVar_GetS32("gTinyHead", 0)) {
+            } else if (CVarGetInteger("gTinyHead", 0)) {
                 Matrix_Scale(0.65f, 0.65f, 0.65f, MTXMODE_APPLY);
                 Matrix_Translate(800.0f, 0.0f, 0.0f, MTXMODE_APPLY);
             }
@@ -1299,7 +1299,7 @@ void Player_DrawGetItem(PlayState* play, Player* this) {
     //if (!this->giObjectLoading || !osRecvMesg(&this->giObjectLoadQueue, NULL, OS_MESG_NOBLOCK)) // OTRTODO: Do something about osRecvMesg here...
     {
         this->giObjectLoading = false;
-        if (!CVar_GetS32("gAnnoyingGetItems", 0)) {
+        if (!CVarGetInteger("gAnnoyingGetItems", 0)) {
             Player_DrawGetItemImpl(play, this, &sGetItemRefPos, ABS(this->giDrawIdPlusOne));
         }
     }

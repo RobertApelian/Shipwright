@@ -3759,8 +3759,8 @@ void Interface_DrawEnemyHealthBar(PlayState* play) {
 
     healthBarFill = (curHealth / maxHealth) * R_HEALTH_BAR_WIDTH;
 
-    CVar_SetS32("healthBarX", healthBarX);
-    CVar_SetS32("healthBarY", healthBarY);
+    CVarSetInteger("healthBarX", healthBarX);
+    CVarSetInteger("healthBarY", healthBarY);
 
     if (healthBarX > -8 && healthBarY > 0) {
         // Setup DL for overlay disp
@@ -5268,7 +5268,7 @@ void Interface_Draw(PlayState* play) {
         }
 
         // Check if target actor exists
-        if (player->targetActor != NULL && CVar_GetS32("gEnemyHealthBar", 0)) {
+        if (player->targetActor != NULL && CVarGetInteger("gEnemyHealthBar", 0)) {
             if (player->targetActor->category == ACTORCAT_ENEMY && play->pauseCtx.state < 4) {
                 Interface_DrawEnemyHealthBar(play);
             }

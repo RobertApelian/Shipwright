@@ -9,7 +9,7 @@
 #include <ctime>
 
 void Log(const std::string& msg) {
-	// SohImGui::overlay->TextDrawNotification(10.0f, true, msg.c_str());
+	SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, msg.c_str());
 }
 
 class ChaosCommand {
@@ -165,12 +165,12 @@ class TimedCVarCommand : public TimedCommand {
 			  initial_(initial),
 			  applied_(applied),
 			  TimedCommand(
-				[=]() { CVar_SetS32(cvar_.c_str(), applied_); },
-				[=]() { CVar_SetS32(cvar_.c_str(), initial_); },
+				[=]() { CVarSetInteger(cvar_.c_str(), applied_); },
+				[=]() { CVarSetInteger(cvar_.c_str(), initial_); },
 				seconds) {}
 
 		bool CanStart() override {
-			return !CVar_GetS32(cvar_.c_str(), initial_);
+			return !CVarGetInteger(cvar_.c_str(), initial_);
 		}
 
 		std::string cvar_;
@@ -188,7 +188,7 @@ class OneShotBooleanCVarCommand : public OneShotCommand {
 	public:
 		OneShotBooleanCVarCommand(const std::string& cvar) 
 			: cvar_(cvar),
-			  OneShotCommand([=]() { CVar_SetS32(cvar_.c_str(), 1); }) {}
+			  OneShotCommand([=]() { CVarSetInteger(cvar_.c_str(), 1); }) {}
 
 		std::string cvar_;
 };

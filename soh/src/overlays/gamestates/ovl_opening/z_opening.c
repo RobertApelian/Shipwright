@@ -16,7 +16,7 @@ void Opening_SetupTitleScreen(OpeningContext* this) {
     Sram_InitDebugSave();
     gSaveContext.cutsceneIndex = 0xFFF3;
     gSaveContext.sceneSetupIndex = 7;
-    CVar_SetS32("gBackToHome", 0);
+    CVarSetInteger("gBackToHome", 0);
     SET_NEXT_GAMESTATE(&this->state, Play_Init, PlayState);
 }
 

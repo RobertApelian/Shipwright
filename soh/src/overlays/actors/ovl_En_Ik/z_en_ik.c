@@ -290,8 +290,8 @@ void func_80A74714(EnIk* this) {
 void func_80A747C0(EnIk* this, PlayState* play) {
     Vec3f sp24;
 
-	s32 forceActivate = CVar_GetS32("gActivateNextIK", 0);
-	CVar_SetS32("gActivateNextIK", 0);
+	s32 forceActivate = CVarGetInteger("gActivateNextIK", 0);
+	CVarSetInteger("gActivateNextIK", 0);
     if ((this->bodyCollider.base.acFlags & AC_HIT) || forceActivate) {
         sp24 = this->actor.world.pos;
         Audio_PlayActorSound2(&this->actor, NA_SE_EN_IRONNACK_ARMOR_HIT);

@@ -39,7 +39,7 @@ const ActorInit En_Encount2_InitVars = {
 void EnEncount2_Init(Actor* thisx, PlayState* play) {
     EnEncount2* this = (EnEncount2*)thisx;
 
-    if (play->sceneNum != SCENE_SPOT16 && !CVar_GetS32("gFireRockRain", 0)) {
+    if (play->sceneNum != SCENE_SPOT16 && !CVarGetInteger("gFireRockRain", 0)) {
         this->isNotDeathMountain = true;
     }
 
@@ -49,7 +49,7 @@ void EnEncount2_Init(Actor* thisx, PlayState* play) {
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ デスマウンテンエンカウント２セットされました ☆☆☆☆☆ %d\n" VT_RST,
                      this->actor.params);
         if (LINK_IS_ADULT && (gSaveContext.eventChkInf[4] & 0x200) &&
-            !CVar_GetS32("gFireRockRain", 0)) { // flag for having used fire temple blue warp
+            !CVarGetInteger("gFireRockRain", 0)) { // flag for having used fire temple blue warp
             Actor_Kill(thisx);
         }
     } else {
@@ -69,11 +69,11 @@ void EnEncount2_Wait(EnEncount2* this, PlayState* play) {
     Player* player = GET_PLAYER(play);
 
     spawnerState = ENCOUNT2_INACTIVE;
-    if (!this->isNotDeathMountain || CVar_GetS32("gFireRockRain", 0)) {
+    if (!this->isNotDeathMountain || CVarGetInteger("gFireRockRain", 0)) {
         if (((player->actor.world.pos.y > 1500.0f) && (player->actor.world.pos.x > -700.0f) &&
             (player->actor.world.pos.x < 100.0f) && (player->actor.world.pos.z < -1290.0f) &&
              (player->actor.world.pos.z > -3600.0f)) ||
-            CVar_GetS32("gFireRockRain", 0)) {
+            CVarGetInteger("gFireRockRain", 0)) {
             spawnerState = ENCOUNT2_ACTIVE_DEATH_MOUNTAIN;
         }
     } else if ((this->actor.xzDistToPlayer < 700.0f) && (Flags_GetSwitch(play, 0x37))) {
@@ -151,8 +151,8 @@ void EnEncount2_SpawnRocks(EnEncount2* this, PlayState* play) {
         if (((player->actor.world.pos.y > 1500.0f) && (player->actor.world.pos.x > -700.0f) &&
              (player->actor.world.pos.x < 100.0f) && (player->actor.world.pos.z < -1290.0f) &&
              (player->actor.world.pos.z > -3860.0f)) ||
-            CVar_GetS32("gFireRockRain", 0)) {
-            if (CVar_GetS32("gFireRockRain", 0)) {
+            CVarGetInteger("gFireRockRain", 0)) {
+            if (CVarGetInteger("gFireRockRain", 0)) {
                 maxRocks = 10;
             } else {
                 maxRocks = 2;
@@ -274,7 +274,7 @@ void EnEncount2_Update(Actor* thisx, PlayState* play2) {
 
     EnEncount2_ParticleUpdate(this, play);
 
-    if (!this->isNotDeathMountain && !CVar_GetS32("gFireRockRain", 0)) {
+    if (!this->isNotDeathMountain && !CVarGetInteger("gFireRockRain", 0)) {
         this->unk_17C = this->envEffectsTimer / 60.0f;
         this->unk_160 = this->unk_17C * -50.0f;
         play->envCtx.adjAmbientColor[0] = (s16)this->unk_160 * -1.5f;

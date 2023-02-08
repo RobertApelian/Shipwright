@@ -1098,7 +1098,7 @@ void Message_DrawText(PlayState* play, Gfx** gfxP) {
             default:
                 if (msgCtx->msgMode == MSGMODE_TEXT_DISPLAYING && i + 1 == msgCtx->textDrawPos &&
                     msgCtx->textDelayTimer == msgCtx->textDelay) {
-                    Audio_PlaySoundGeneral((CVar_GetS32("gAnnoyingText", 0) ? NA_SE_SY_OCARINA_ERROR : 0), &D_801333D4,
+                    Audio_PlaySoundGeneral((CVarGetInteger("gAnnoyingText", 0) ? NA_SE_SY_OCARINA_ERROR : 0), &D_801333D4,
                                            4, &D_801333E0, &D_801333E0, &D_801333E8);
                 }
                 Message_DrawTextChar(play, &font->charTexBuf[charTexIdx], &gfx);
@@ -1109,9 +1109,9 @@ void Message_DrawText(PlayState* play, Gfx** gfxP) {
         }
     }
     if (msgCtx->textDelayTimer == 0) {
-        s16 textSpeed = (CVar_GetS32("gAnnoyingGetItems", 0) || CVar_GetS32("gAnnoyingText", 0)) ? 1 : CVarGetInteger("gTextSpeed", 2);
+        s16 textSpeed = (CVarGetInteger("gAnnoyingGetItems", 0) || CVarGetInteger("gAnnoyingText", 0)) ? 1 : CVarGetInteger("gTextSpeed", 2);
         msgCtx->textDrawPos = i + textSpeed;
-        msgCtx->textDelayTimer = msgCtx->textDelay + (CVar_GetS32("gAnnoyingText", 0) ? 10 : 0);
+        msgCtx->textDelayTimer = msgCtx->textDelay + (CVarGetInteger("gAnnoyingText", 0) ? 10 : 0);
     } else {
         msgCtx->textDelayTimer--;
     }
@@ -3255,7 +3255,7 @@ void Message_Update(PlayState* play) {
             break;
         case MSGMODE_TEXT_DISPLAYING:
             if (msgCtx->textBoxType != TEXTBOX_TYPE_NONE_BOTTOM && YREG(31) == 0 && isB_Held &&
-                !msgCtx->textUnskippable && !CVar_GetS32("gAnnoyingText", 0) && !CVar_GetS32("gAnnoyingGetItems", 0)) {
+                !msgCtx->textUnskippable && !CVarGetInteger("gAnnoyingText", 0) && !CVarGetInteger("gAnnoyingGetItems", 0)) {
                 sTextboxSkipped = true;
                 msgCtx->textDrawPos = msgCtx->decodedTextLen;
             }

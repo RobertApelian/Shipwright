@@ -129,14 +129,14 @@ void EnBoom_Fly(EnBoom* this, PlayState* play) {
     // If the boomerang is moving toward a targeted actor, handle setting the proper x and y angle to fly toward it.
     if (target != NULL) {
         yawTarget = Actor_WorldYawTowardPoint(&this->actor, &target->focus.pos);
-        if (CVar_GetS32("gZoomerang", 0)) {
+        if (CVarGetInteger("gZoomerang", 0)) {
             yawDiff = randAngle;
         } else {
             yawDiff = this->actor.world.rot.y - yawTarget;
         }
 
         pitchTarget = Actor_WorldPitchTowardPoint(&this->actor, &target->focus.pos);
-        if (CVar_GetS32("gZoomerang", 0)) {
+        if (CVarGetInteger("gZoomerang", 0)) {
             pitchDiff = randAngle * Math_CosS(randAngle);
         } else {
             pitchDiff = this->actor.world.rot.x - pitchTarget;
@@ -160,7 +160,7 @@ void EnBoom_Fly(EnBoom* this, PlayState* play) {
 
     // Set xyz speed, move forward, and play the boomerang sound
     
-    if (CVar_GetS32("gZoomerang", 0) && this->returnTimer != 0) {
+    if (CVarGetInteger("gZoomerang", 0) && this->returnTimer != 0) {
         f32 speed;
         speed = Rand_ZeroFloat(32.0f);
         this->actor.speedXZ = Math_CosS(randAngle) * speed;

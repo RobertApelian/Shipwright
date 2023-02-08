@@ -87,8 +87,8 @@ void ArmsHook_Wait(ArmsHook* this, PlayState* play) {
         // get correct timer length for hookshot or longshot
         s32 length = ((player->heldItemAction == PLAYER_IA_HOOKSHOT) ? 13 : 26) * CVarGetFloat("gCheatHookshotReachMultiplier", 1.0f);
 
-        if (CVar_GetS32("gHookshotLengthRemove", 0)) {
-            length = length * (1.0f - CVar_GetS32("gHookshotLengthRemove", 0) * 0.05f);
+        if (CVarGetInteger("gHookshotLengthRemove", 0)) {
+            length = length * (1.0f - CVarGetInteger("gHookshotLengthRemove", 0) * 0.05f);
         }
 
         ArmsHook_SetupAction(this, ArmsHook_Shoot);

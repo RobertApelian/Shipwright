@@ -233,13 +233,13 @@ void PadMgr_ProcessInputs(PadMgr* padMgr) {
                     input->cur.button &= ~(BTN_Z);
                 }
 
-                if (CVar_GetS32("gNoStart", 0)) {
+                if (CVarGetInteger("gNoStart", 0)) {
                     input->cur.button &= ~(BTN_START);
                 }
 
                 static u8 aliasGenerated = false;
 
-                if (CVar_GetS32("gButtonSwap", 0)) {
+                if (CVarGetInteger("gButtonSwap", 0)) {
                     // Create array to alias buttons
                     static u8 alias[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
@@ -279,9 +279,9 @@ void PadMgr_ProcessInputs(PadMgr* padMgr) {
                     aliasGenerated = false;
                 }
 
-                if (CVar_GetS32("gPressA", 0)) {
+                if (CVarGetInteger("gPressA", 0)) {
                     input->cur.button |= (BTN_A);
-                    CVar_SetS32("gPressA", 0);
+                    CVarSetInteger("gPressA", 0);
                 }
 
                 if (GameInteractor_ReverseControlsActive()) {

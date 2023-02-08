@@ -522,7 +522,7 @@ void func_8002C124(TargetContext* targetCtx, PlayState* play) {
 
     actor = targetCtx->unk_94;
     if ((actor != NULL) && !(actor->flags & ACTOR_FLAG_27)) {
-        if (!(CVar_GetS32("gDisableEnemyDraw", 0) && actor->category == ACTORCAT_ENEMY)) {
+        if (!(CVarGetInteger("gDisableEnemyDraw", 0) && actor->category == ACTORCAT_ENEMY)) {
             FrameInterpolation_RecordOpenChild(actor, 1);
             NaviColor* naviColor = &sNaviColorList[actor->category];
 
@@ -581,7 +581,7 @@ void func_8002C7BC(TargetContext* targetCtx, Player* player, Actor* actorArg, Pl
     }
 
     if (((unkActor != targetCtx->arrowPointedActor) || (actorCategory != targetCtx->activeCategory)) &&
-        !(CVar_GetS32("gDisableEnemyDraw", 0) && actorCategory == ACTORCAT_ENEMY)) {
+        !(CVarGetInteger("gDisableEnemyDraw", 0) && actorCategory == ACTORCAT_ENEMY)) {
         targetCtx->arrowPointedActor = unkActor;
         targetCtx->activeCategory = actorCategory;
         targetCtx->unk_40 = 1.0f;
@@ -1232,7 +1232,7 @@ void Actor_Init(Actor* actor, PlayState* play) {
         actor->init(actor, play);
         actor->init = NULL;
         // Set actor's max health for enemy health bar
-        if (CVar_GetS32("gEnemyHealthBar", 0)) {
+        if (CVarGetInteger("gEnemyHealthBar", 0)) {
             actor->maxHealth = actor->colChkInfo.health;
         }
     }
@@ -2938,7 +2938,7 @@ void func_800315AC(PlayState* play, ActorContext* actorCtx) {
                         invisibleActorCounter++;
                     } else {
                         if (((HREG(64) != 1) || ((HREG(65) != -1) && (HREG(65) != HREG(66))) || (HREG(72) == 0)) &&
-                            !(CVar_GetS32("gDisableEnemyDraw", 0) &&
+                            !(CVarGetInteger("gDisableEnemyDraw", 0) &&
                               (actor->category == ACTORCAT_ENEMY || actor->category == ACTORCAT_BOSS))) {
                             Actor_Draw(play, actor);
                             actor->isDrawn = true;

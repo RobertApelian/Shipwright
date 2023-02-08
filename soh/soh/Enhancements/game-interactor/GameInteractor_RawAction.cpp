@@ -44,7 +44,7 @@ void GameInteractor::RawAction::HealOrDamagePlayer(int16_t hearts) {
     } else if (hearts < 0) {
         Player* player = GET_PLAYER(gPlayState);
         Health_ChangeBy(gPlayState, hearts * 0x10);
-        func_80837C0C(gPlayState, player, 0, 0, 0, 0, 0);
+        Player_SetupDamage(gPlayState, player, 0, 0, 0, 0, 0);
         player->invincibilityTimer = 28;
     }
 }
@@ -107,12 +107,12 @@ void GameInteractor::RawAction::BurnPlayer() {
         player->flameTimers[i] = Rand_S16Offset(0, 200);
     }
     player->isBurning = true;
-    func_80837C0C(gPlayState, player, 0, 0, 0, 0, 0);
+    Player_SetupDamage(gPlayState, player, 0, 0, 0, 0, 0);
 }
 
 void GameInteractor::RawAction::ElectrocutePlayer() {
     Player* player = GET_PLAYER(gPlayState);
-    func_80837C0C(gPlayState, player, 4, 0, 0, 0, 0);
+    Player_SetupDamage(gPlayState, player, 4, 0, 0, 0, 0);
 }
 
 void GameInteractor::RawAction::KnockbackPlayer(float strength) {

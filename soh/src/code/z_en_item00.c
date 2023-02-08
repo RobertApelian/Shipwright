@@ -836,7 +836,7 @@ void EnItem00_Update(Actor* thisx, PlayState* play) {
         return;
     }
 
-    if (CVar_GetS32("gBanItemDropPickup", 0) &&
+    if (CVarGetInteger("gBanItemDropPickup", 0) &&
         !(this->actor.params == ITEM00_HEART_PIECE || this->actor.params == ITEM00_SMALL_KEY ||
           this->actor.params >= ITEM00_SHIELD_DEKU)) {
         func_80078884(NA_SE_SY_ERROR);

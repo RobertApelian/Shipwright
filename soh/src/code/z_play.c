@@ -417,10 +417,10 @@ void Play_Init(GameState* thisx) {
     u8 tempSetupIndex;
     s32 pad[2];
 
-    if (CVar_GetS32("gBackToHome", 0)) {
+    if (CVarGetInteger("gBackToHome", 0)) {
         // GO BACK HOME, BITCH
         gSaveContext.entranceIndex = 0x00BB;
-        CVar_SetS32("gBackToHome", 0);
+        CVarSetInteger("gBackToHome", 0);
     }
 
     // Skip Child Stealth when option is enabled, Zelda's Letter isn't obtained and Impa's reward hasn't been received
