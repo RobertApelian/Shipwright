@@ -1547,7 +1547,7 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
               Player_GetMask(play) == PLAYER_MASK_TRUTH) ||
              (Randomizer_GetSettingValue(RSK_GOSSIP_STONE_HINTS) == RO_GOSSIP_STONES_NEED_STONE && CHECK_QUEST_ITEM(QUEST_STONE_OF_AGONY)))) {
 
-            Actor* stone = GET_PLAYER(play)->targetActor; 
+            Actor* stone = GET_PLAYER(play)->talkActor;
             actorParams = stone->params;
 
             // if we're in a generic grotto
@@ -1615,7 +1615,7 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
                    (textId == TEXT_BUY_BOMBCHU_10_DESC || textId == TEXT_BUY_BOMBCHU_10_PROMPT)) {
             messageEntry = CustomMessageManager::Instance->RetrieveMessage(customMessageTableID, textId);
         } else if (textId == TEXT_CURSED_SKULLTULA_PEOPLE) {
-            actorParams = GET_PLAYER(play)->targetActor->params;
+            actorParams = GET_PLAYER(play)->talkActor->params;
             RandomizerSettingKey rsk = (RandomizerSettingKey)(RSK_KAK_10_SKULLS_HINT + (actorParams - 1));
             if (Randomizer_GetSettingValue(rsk)) {
                 messageEntry = OTRGlobals::Instance->gRandomizer->GetCursedSkullMessage(actorParams);
