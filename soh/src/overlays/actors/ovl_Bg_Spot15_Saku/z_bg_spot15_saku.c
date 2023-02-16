@@ -40,18 +40,17 @@ void BgSpot15Saku_Init(Actor* thisx, PlayState* play) {
     DynaPolyActor_Init(&this->dyna, DPM_UNK);
     CollisionHeader_GetVirtual(&gLonLonCorralFenceCol, &colHeader);
     this->dyna.bgId = DynaPoly_SetBgActor(play, &play->colCtx.dyna, &this->dyna.actor, colHeader);
-    if (this->dyna.actor.params & 1) {
-        this->dyna.actor.scale.x = 0.0625f;
-    } else {
-        this->dyna.actor.scale.x = 0.1f;
-    }
+    this->dyna.actor.scale.x = 0.1f;
     this->dyna.actor.scale.y = 0.1f;
     this->dyna.actor.scale.z = 0.1f;
     this->unk_170.x = this->dyna.actor.world.pos.x;
     this->unk_170.y = this->dyna.actor.world.pos.y;
     this->unk_170.z = this->dyna.actor.world.pos.z;
-    if (gSaveContext.infTable[7] & 2 && !(this->dyna.actor.params & 1)) {
+    if (gSaveContext.infTable[7] & 2 && !(this->dyna.actor.params == 1)) {
         this->dyna.actor.world.pos.z = 2659.0f;
+    }
+    if (this->dyna.actor.params == 1) {
+        this->dyna.actor.scale.x = 0.0625f;
     }
     this->actionFunc = func_808B4930;
 }
@@ -63,7 +62,7 @@ void BgSpot15Saku_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void func_808B4930(BgSpot15Saku* this, PlayState* play) {
-    if (this->unk_168 && !(gSaveContext.infTable[7] & 2) && !(this->dyna.actor.params & 1)) {
+    if (this->unk_168 && !(gSaveContext.infTable[7] & 2) && !(this->dyna.actor.params == 1)) {
         this->timer = 2;
         this->actionFunc = func_808B4978;
     }
