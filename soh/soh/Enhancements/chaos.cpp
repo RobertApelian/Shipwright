@@ -71,10 +71,13 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
 
 	CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
-	CMD_TIMED_BOOL_CVAR(0x07, "gChaosNoHud"),
-	CMD_TIMED_BOOL_CVAR(0x08, "gChaosNoZ"),
+	// CMD_TIMED_BOOL_CVAR(0x07, "gChaosNoHud"),
+	CMD_TIMED_INTERACTOR(0x07, new GameInteractionEffect::NoUI(), nullptr),
+	// CMD_TIMED_BOOL_CVAR(0x08, "gChaosNoZ"),
+	CMD_TIMED_INTERACTOR(0x08, new GameInteractionEffect::DisableZTargeting(), nullptr),
 	CMD_TIMED_BOOL_CVAR(0x09, "gChaosTurbo"),
-	CMD_TIMED_BOOL_CVAR(0x0A, "gChaosInvertControls"),
+	// CMD_TIMED_BOOL_CVAR(0x0A, "gChaosInvertControls"),
+	CMD_TIMED_INTERACTOR(0x0A, new GameInteractionEffect::ReverseControls(), nullptr),
 
 	CMD(0x0B, PL_NONE(), 
 		CR_PRED(
@@ -174,18 +177,21 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
 	// Paper link
-	CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
-		CR_ONE_SHOT_TIMED(
-			[&]() {
-				GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
-				effect->parameter = GI_LINK_SIZE_PAPER;
-				GameInteractor::ApplyEffect(effect);
-			},
-			[&]() {
-				GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
-				effect->parameter = GI_LINK_SIZE_PAPER;
-				GameInteractor::RemoveEffect(effect);
-			})),
+	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::ModifyLinkSize(),
+		[&](GameInteractionEffectBase* effect) { effect->parameter = GI_LINK_SIZE_PAPER; }),
+
+	// CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+	// 	CR_ONE_SHOT_TIMED(
+	// 		[&]() {
+	// 			GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
+	// 			effect->parameter = GI_LINK_SIZE_PAPER;
+	// 			GameInteractor::ApplyEffect(effect);
+	// 		},
+	// 		[&]() {
+	// 			GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
+	// 			effect->parameter = GI_LINK_SIZE_PAPER;
+	// 			GameInteractor::RemoveEffect(effect);
+	// 		})),
 
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gThiccLink"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFlipLink"),

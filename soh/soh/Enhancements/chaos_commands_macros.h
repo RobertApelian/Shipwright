@@ -59,6 +59,18 @@
 		tick, cleanup, frames); \
 }
 
+#define CR_TIMED_INTERACTOR(effect, applyParam)				\
+[](const std::vector<uint8_t>& payload) {					\
+	return std::make_unique<TimedInteractorCommand>(		\
+		effect, applyParam, Read<uint32_t>(payload, 0));	\
+}
+
+#define CR_ONE_SHOT_INTERACTOR(effect, applyParam)			\
+[](const std::vector<uint8_t>& payload) {					\
+	return std::make_unique<OneShotInteractorCommand>(		\
+		effect, applyParam);								\
+}
+
 // Commands
 #define CMD(id, payload, creator) { id, { payload, creator }}
 
@@ -75,5 +87,9 @@
 #define CMD_GIVE_AMMO(id, item, upgrade) CMD_ONE_SHOT(id, PL_BYTES(sizeof(uint32_t)), { uint32_t amt = Read<uint32_t>(payload, 0); AMMO(item) = s_add(AMMO(item), amt, CUR_CAPACITY(upgrade)); })
 
 #define CMD_TIMED_BOOL(id, variable) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_ONE_SHOT_TIMED([&]() { variable = 1; }, [&]() { variable = 0; }))
+
+#define CMD_TIMED_INTERACTOR(id, effect, applyParam) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_TIMED_INTERACTOR(effect, applyParam))
+
+#define CMD_ONE_SHOT_INTERACTOR(id, effect, applyParam) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_ONE_SHOT_INTERACTOR(effect, applyParam))
 
 #endif

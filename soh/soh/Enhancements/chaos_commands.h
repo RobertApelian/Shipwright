@@ -8,6 +8,8 @@
 
 #include <ctime>
 
+#include "soh/Enhancements/game-interactor/GameInteractor.h"
+
 void Log(const std::string& msg) {
 	SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, msg.c_str());
 }
@@ -21,6 +23,7 @@ class ChaosCommand {
 
 		virtual bool DoTick() = 0;
 		virtual bool CanStart() { return true; }
+		virtual bool CanStop() { return true; }
 };
 
 class PredicatedCommand : public ChaosCommand {
@@ -139,6 +142,7 @@ class OneShotTimedCommand : public ChaosCommand {
 			}
 
 			if ((time(nullptr) - start_time_) >= seconds_) {
+				if (!CanStop()) return true;
 				cleanup_f_();
 				return false;
 			}
@@ -191,6 +195,57 @@ class OneShotBooleanCVarCommand : public OneShotCommand {
 			  OneShotCommand([=]() { CVarSetInteger(cvar_.c_str(), 1); }) {}
 
 		std::string cvar_;
+};
+
+class OneShotInteractorCommand : public OneShotCommand {
+	public:
+		OneShotInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f)
+			: effect_(effect),
+			  applyParam_f_(applyParam_f),
+			  OneShotCommand([=]() { tryApplyParam(); GameInteractor::ApplyEffect(effect_); }) {}
+
+		bool CanStart() override {
+			tryApplyParam();
+			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible;
+		}
+
+		void tryApplyParam() {
+			if (applyParam_f_ != nullptr) {
+				applyParam_f_(effect_);
+			}
+		}
+
+		GameInteractionEffectBase* effect_;
+		std::function<void(GameInteractionEffectBase* effect)> applyParam_f_;
+};
+
+class TimedInteractorCommand : public OneShotTimedCommand {
+	public:
+		TimedInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f, uint32_t seconds)
+			: effect_(effect),
+			  applyParam_f_(applyParam_f),
+			  OneShotTimedCommand(
+				[=]() { tryApplyParam(); GameInteractor::ApplyEffect(effect_); },
+				[=]() { tryApplyParam(); GameInteractor::RemoveEffect(effect_); },
+				seconds) {}
+
+		bool CanStart() override {
+			tryApplyParam();
+			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible;
+		}
+
+		bool CanStop() override {
+			return CanStart();
+		}
+
+		void tryApplyParam() {
+			if (applyParam_f_ != nullptr) {
+				applyParam_f_(effect_);
+			}
+		}
+
+		GameInteractionEffectBase* effect_;
+		std::function<void(GameInteractionEffectBase* effect)> applyParam_f_;
 };
 
 #endif
