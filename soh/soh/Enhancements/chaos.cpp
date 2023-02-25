@@ -398,6 +398,7 @@ extern "C" {
 	}
 
 	void Chaos_Init() {
+		CVarSetInteger("gMusicMuted", 0);
   		CVarRegisterInteger("gChaosEnabled", 0);
 
   		CVarRegisterInteger("gChaosForcedBoots", 0);

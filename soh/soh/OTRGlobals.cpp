@@ -652,6 +652,17 @@ extern "C" void Graph_StartFrame() {
     OTRGlobals::Instance->context->SetLastScancode(-1);
 
     switch (dwScancode - 1) {
+        case SDL_SCANCODE_F4: {
+            bool prevState = CVarGetInteger("gMusicMuted", 0);
+            bool muteState = !prevState;
+            CVarSetInteger("gMusicMuted", muteState);
+
+            SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, muteState ? "Muting" : "Unmuting");
+
+            Audio_SetGameVolume(0, muteState ? 0 : CVarGetFloat("gMainMusicVolume", 1));
+            Audio_SetGameVolume(3, muteState ? 0 : CVarGetFloat("gSubMusicVolume", 1));
+            break;
+        }
         case SDL_SCANCODE_F5: {
             const unsigned int slot = OTRGlobals::Instance->gSaveStateMgr->GetCurrentSlot();
             const SaveStateReturn stateReturn =
