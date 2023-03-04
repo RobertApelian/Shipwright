@@ -12,7 +12,7 @@
 #include "../OTRGlobals.h"
 #include "debugconsole.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
-#include "soh/Enhancements/sfx-editor/SfxEditor.h"
+#include "soh/Enhancements/audio/AudioEditor.h"
 #include "soh/Enhancements/cosmetics/CosmeticsEditor.h"
 
 #include <algorithm>
@@ -198,7 +198,7 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoStart"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gBackToHome"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFlashbang"),
-	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { SfxEditor_RandomizeAll(); }),
+	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { AudioEditor_RandomizeAll(); }),
 	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { CosmeticsEditor_RandomizeAll(); }),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gPogoStick"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSunsSong"),
