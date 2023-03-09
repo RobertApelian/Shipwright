@@ -13728,7 +13728,8 @@ s32 Player_SetupGetItemText(PlayState* play, Player* this) {
         }
         this->genericVar = 1;
         equipItem = giEntry.itemId;
-        equipNow = CVarGetInteger("gAskToEquip", 0) && equipItem >= ITEM_SWORD_KOKIRI && equipItem <= ITEM_TUNIC_ZORA &&
+        equipNow = CVarGetInteger("gAskToEquip", 0) && giEntry.modIndex == MOD_NONE &&
+                    equipItem >= ITEM_SWORD_KOKIRI && equipItem <= ITEM_TUNIC_ZORA &&
                    ((gItemAgeReqs[equipItem] == 9 || gItemAgeReqs[equipItem] == gSaveContext.linkAge) ||
                     CVarGetInteger("gTimelessEquipment", 0));
 
