@@ -12140,8 +12140,8 @@ void Player_Update(Actor* thisx, PlayState* play) {
 
     // Make Link normal size when going through doors and crawlspaces and when climbing ladders.
     // Otherwise Link can glitch out, being in unloaded rooms or falling OoB.
-    if (this->stateFlags1 & PLAYER_STATE1_21 || this->stateFlags1 & PLAYER_STATE1_29 ||
-        this->stateFlags2 & PLAYER_STATE2_CRAWLING) {
+    if (this->stateFlags1 & PLAYER_STATE1_CLIMBING || this->stateFlags1 & PLAYER_STATE1_IN_CUTSCENE ||
+        this->stateFlags2 & PLAYER_STATE2_INSIDE_CRAWLSPACE) {
         this->actor.scale.x = 0.01f;
         this->actor.scale.y = 0.01f;
         this->actor.scale.z = 0.01f;
@@ -12181,7 +12181,7 @@ void Player_Update(Actor* thisx, PlayState* play) {
 
     // Don't apply gravity when Link is in water, otherwise
     // it makes him sink instead of float.
-    if (!(this->stateFlags1 & PLAYER_STATE1_27)) {
+    if (!(this->stateFlags1 & PLAYER_STATE1_SWIMMING)) {
         switch (GameInteractor_GravityLevel()) {
             case GI_GRAVITY_LEVEL_HEAVY:
                 this->actor.gravity = -4.0f;
@@ -12196,7 +12196,7 @@ void Player_Update(Actor* thisx, PlayState* play) {
 
     if (GameInteractor_GetRandomWindActive()) {
         Player* player = GET_PLAYER(play);
-        player->windSpeed = 3.0f;
+        player->pushedSpeed = 3.0f;
         // Play fan sound (too annoying)
         //func_8002F974(&player->actor, NA_SE_EV_WIND_TRAP - SFX_FLAG);
     }

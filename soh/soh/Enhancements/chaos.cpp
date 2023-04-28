@@ -178,18 +178,18 @@ static std::map<uint8_t, CommandCreator> kCommands {
 
 	// Paper link
 	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::ModifyLinkSize(),
-		[&](GameInteractionEffectBase* effect) { effect->parameter = GI_LINK_SIZE_PAPER; }),
+		[&](GameInteractionEffectBase* effect) { effect->parameters[0] = GI_LINK_SIZE_PAPER; }),
 
 	// CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 	// 	CR_ONE_SHOT_TIMED(
 	// 		[&]() {
 	// 			GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
-	// 			effect->parameter = GI_LINK_SIZE_PAPER;
+	// 			effect->parameters[0] = GI_LINK_SIZE_PAPER;
 	// 			GameInteractor::ApplyEffect(effect);
 	// 		},
 	// 		[&]() {
 	// 			GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
-	// 			effect->parameter = GI_LINK_SIZE_PAPER;
+	// 			effect->parameters[0] = GI_LINK_SIZE_PAPER;
 	// 			GameInteractor::RemoveEffect(effect);
 	// 		})),
 

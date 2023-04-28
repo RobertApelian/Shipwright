@@ -197,7 +197,7 @@ void UseBow(Actor* thisx, PlayState* play, u8 started, u8 arrowType) {
     EnPartner* this = (EnPartner*)thisx;
 
     if (started == 1) {
-        func_808328EC(this, NA_SE_PL_CHANGE_ARMS);
+        Player_PlayReactableSfx(this, NA_SE_PL_CHANGE_ARMS);
         this->canMove = 0;
     } else if (started == 0) {
         if (this->itemTimer <= 0) {
@@ -226,7 +226,7 @@ void UseBow(Actor* thisx, PlayState* play, u8 started, u8 arrowType) {
                         break;
                 }
 
-                GET_PLAYER(play)->unk_A73 = 4;
+                GET_PLAYER(play)->fpsItemShotTimer = 4;
                 newarrow->parent = NULL;
                 Inventory_ChangeAmmo(ITEM_BOW, -1);
             }
@@ -238,7 +238,7 @@ void UseSlingshot(Actor* thisx, PlayState* play, u8 started) {
     EnPartner* this = (EnPartner*)thisx;
 
     if (started == 1) {
-        func_808328EC(this, NA_SE_PL_CHANGE_ARMS);
+        Player_PlayReactableSfx(this, NA_SE_PL_CHANGE_ARMS);
         this->canMove = 0;
     } else if (started == 0) {
         if (this->itemTimer <= 0) {
@@ -247,7 +247,7 @@ void UseSlingshot(Actor* thisx, PlayState* play, u8 started) {
                 Actor* newarrow = Actor_SpawnAsChild(
                     &play->actorCtx, &this->actor, play, ACTOR_EN_ARROW, this->actor.world.pos.x,
                     this->actor.world.pos.y + 7, this->actor.world.pos.z, 0, this->actor.world.rot.y, 0, ARROW_SEED);
-                GET_PLAYER(play)->unk_A73 = 4;
+                GET_PLAYER(play)->fpsItemShotTimer = 4;
                 newarrow->parent = NULL;
                 Inventory_ChangeAmmo(ITEM_SLINGSHOT, -1);
             } else {
@@ -327,7 +327,7 @@ void UseDekuStick(Actor* thisx, PlayState* play, u8 started) {
     if (this->itemTimer <= 0) {
         if (started == 1) {
             if (AMMO(ITEM_STICK) > 0) {
-                func_808328EC(this, NA_SE_EV_FLAME_IGNITION);
+                Player_PlayReactableSfx(this, NA_SE_EV_FLAME_IGNITION);
             } else {
                 func_80078884(NA_SE_SY_ERROR);
             }
@@ -376,7 +376,7 @@ void UseHookshot(Actor* thisx, PlayState* play, u8 started) {
 
     if (this->itemTimer <= 0) {
         if (started == 1) {
-            func_808328EC(this, NA_SE_PL_CHANGE_ARMS);
+            Player_PlayReactableSfx(this, NA_SE_PL_CHANGE_ARMS);
             this->canMove = 0;
             this->hookshotTarget =
                 Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_OBJ_HSBLOCK, this->actor.world.pos.x,
@@ -388,7 +388,7 @@ void UseHookshot(Actor* thisx, PlayState* play, u8 started) {
         } else if (started == 0) {
             Actor_Kill(this->hookshotTarget);
             this->hookshotTarget = NULL;
-            func_808328EC(this, NA_SE_PL_CHANGE_ARMS);
+            Player_PlayReactableSfx(this, NA_SE_PL_CHANGE_ARMS);
             this->canMove = 1;
         } else if (started == 2) {
             this->hookshotTarget->shape.rot.y = this->actor.world.rot.y;

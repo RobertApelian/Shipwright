@@ -396,7 +396,7 @@ void GameInteractor::RawAction::SetRandomWind(bool active) {
     if (active) {
         GameInteractor::State::RandomWindActive = 1;
         if (GameInteractor::State::RandomWindSecondsSinceLastDirectionChange == 0) {
-            player->windDirection = (rand() % 49152) - 32767;
+            player->pushedYaw = (rand() % 49152) - 32767;
             GameInteractor::State::RandomWindSecondsSinceLastDirectionChange = 5;
         } else {
             GameInteractor::State::RandomWindSecondsSinceLastDirectionChange--;
@@ -404,8 +404,8 @@ void GameInteractor::RawAction::SetRandomWind(bool active) {
     } else {
         GameInteractor::State::RandomWindActive = 0;
         GameInteractor::State::RandomWindSecondsSinceLastDirectionChange = 0;
-        player->windSpeed = 0.0f;
-        player->windDirection = 0.0f;
+        player->pushedSpeed = 0.0f;
+        player->pushedYaw = 0.0f;
     }
 }
 
