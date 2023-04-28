@@ -128,6 +128,9 @@ void ZFile::ParseXML(tinyxml2::XMLElement* reader, const std::string& filename)
 	if (reader->Attribute("RangeEnd") != nullptr)
 		rangeEnd = StringHelper::StrToL(reader->Attribute("RangeEnd"), 16);
 
+	if (reader->Attribute("Compilable") != nullptr)
+		isCompilable = true;
+
 	if (rangeStart > rangeEnd)
 		HANDLE_ERROR_PROCESS(
 			WarningType::Always,
@@ -261,16 +264,19 @@ void ZFile::ParseXML(tinyxml2::XMLElement* reader, const std::string& filename)
 			}
 			nameSet.insert(nameXml);
 		}
-
+		
 		std::string nodeName = std::string(child->Name());
 
 		if (nodeMap.find(nodeName) != nodeMap.end())
 		{
 			ZResource* nRes = nodeMap[nodeName](this);
 
-			if (mode == ZFileMode::Extract || mode == ZFileMode::ExternalFile || mode == ZFileMode::ExtractDirectory)
-				nRes->ExtractFromXML(child, rawDataIndex);
-
+			if (mode == ZFileMode::Extract || mode == ZFileMode::ExternalFile ||
+			    mode == ZFileMode::ExtractDirectory)
+			{
+				if (!isCompilable)
+					nRes->ExtractFromXML(child, rawDataIndex);
+			}
 			switch (nRes->GetResourceType())
 			{
 			case ZResourceType::Texture:
@@ -800,19 +806,22 @@ void ZFile::GenerateSourceHeaderFiles()
 {
 	OutputFormatter formatter;
 
-	formatter.Write("#pragma once\n");
+	formatter.Write("#pragma once\n\n");
+	formatter.Write("#include \"align_asset_macro.h\"\n");
 	std::set<std::string> nameSet;
 	for (ZResource* res : resources)
 	{
 		std::string resSrc = res->GetSourceOutputHeader("", &nameSet);
-		formatter.Write(resSrc);
-
-		if (resSrc != "")
-			formatter.Write("\n");
+		if (!resSrc.empty()) 
+		{
+			formatter.Write(resSrc.front() == '\n' ? resSrc : "\n" + resSrc);
+			formatter.Write(res == resources.back() ? "" : "\n");
+		}
 	}
 
 	for (auto& sym : symbolResources)
 	{
+		formatter.Write("\n\n");
 		formatter.Write(sym.second->GetSourceOutputHeader("", &nameSet));
 	}
 
@@ -823,8 +832,12 @@ void ZFile::GenerateSourceHeaderFiles()
 	if (Globals::Instance->verbosity >= VerbosityLevel::VERBOSITY_INFO)
 		printf("Writing H file: %s\n", headerFilename.c_str());
 
+	std::string output = formatter.GetOutput();
+	while (output.back() == '\n')
+		output.pop_back();
+
 	if (Globals::Instance->fileMode != ZFileMode::ExtractDirectory)
-		File::WriteAllText(headerFilename, formatter.GetOutput());
+		File::WriteAllText(headerFilename, output);
 	else if (Globals::Instance->sourceOutputPath != "")
 	{
 		std::string xmlPath = xmlFilePath.string();
@@ -849,7 +862,7 @@ void ZFile::GenerateSourceHeaderFiles()
 				outPath += "/";
 		}
 
-		File::WriteAllText(outPath, formatter.GetOutput());
+		File::WriteAllText(outPath, output);
 	}
 }
 

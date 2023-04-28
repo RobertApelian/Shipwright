@@ -24,6 +24,7 @@
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
+#include <overlays/actors/ovl_En_Partner/z_en_partner.h>
 
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
 #include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
@@ -148,6 +149,7 @@ s32 Player_HoldBoomerang(Player* this, PlayState* play);
 s32 Player_SetupAimBoomerang(Player* this, PlayState* play); // Start aiming boomerang
 s32 Player_AimBoomerang(Player* this, PlayState* play); // Aim boomerang
 s32 Player_ThrowBoomerang(Player* this, PlayState* play); // Throw boomerang
+s32 spawn_boomerang_ivan(EnPartner* this, PlayState* play); // Throw boomerang Ivan
 s32 Player_WaitForThrownBoomerang(Player* this, PlayState* play); // Boomerang active
 s32 Player_CatchBoomerang(Player* this, PlayState* play);
 void Player_UseItem(PlayState* play, Player* this, s32 item);
@@ -2917,6 +2919,27 @@ s32 Player_ThrowBoomerang(Player* this, PlayState* play) {
             func_8002F7DC(&this->actor, NA_SE_IT_BOOMERANG_THROW);
             Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_SWORD_N);
         }
+    }
+
+    return 1;
+}
+
+s32 spawn_boomerang_ivan(EnPartner* this, PlayState* play) {
+    if (!CVarGetInteger("gIvanCoopModeEnabled", 0)) {
+        return 0;
+    }
+
+    f32 posX = (Math_SinS(this->actor.shape.rot.y) * 1.0f) + this->actor.world.pos.x;
+    f32 posZ = (Math_CosS(this->actor.shape.rot.y) * 1.0f) + this->actor.world.pos.z;
+    s32 yaw = this->actor.shape.rot.y;
+    EnBoom* boomerang =
+        (EnBoom*)Actor_Spawn(&play->actorCtx, play, ACTOR_EN_BOOM, posX, this->actor.world.pos.y + 7.0f, posZ,
+                             this->actor.focus.rot.x, yaw, 0, 0, true);
+
+    this->boomerangActor = &boomerang->actor;
+    if (boomerang != NULL) {
+        boomerang->returnTimer = 20;
+        Audio_PlayActorSound2(&this->actor, NA_SE_IT_BOOMERANG_THROW);
     }
 
     return 1;
@@ -6599,6 +6622,7 @@ s32 Player_SetupGetItemOrHoldBehavior(Player* this, PlayState* play) {
                     Player_SetPendingFlag(this, play);
                     Message_StartTextbox(play, 0xF8, NULL);
                     Audio_PlayFanfare(NA_BGM_SMALL_ITEM_GET);
+                    GameInteractor_ExecuteOnItemReceiveHooks(this->getItemEntry);
                     gSaveContext.pendingIceTrapCount++;
                     return 1;
                 }
@@ -7283,7 +7307,10 @@ void Player_SetupWalkSfx(Player* this, f32 frameStep) {
         frameStep = 7.25f;
     }
 
-    if ((this->currentBoots == PLAYER_BOOTS_HOVER) && !(this->actor.bgCheckFlags & 1) && (this->hoverBootsTimer != 0)) {
+    if ((this->currentBoots == PLAYER_BOOTS_HOVER ||
+         (CVarGetInteger("gIvanCoopModeEnabled", 0) && this->ivanFloating)) &&
+        !(this->actor.bgCheckFlags & 1) &&
+        (this->hoverBootsTimer != 0 || (CVarGetInteger("gIvanCoopModeEnabled", 0) && this->ivanFloating))) {
         func_8002F8F0(&this->actor, NA_SE_PL_HOBBERBOOTS_LV - SFX_FLAG);
     } else if (func_8084021C(this->walkFrame, frameStep, 29.0f, 10.0f) ||
                func_8084021C(this->walkFrame, frameStep, 29.0f, 24.0f)) {
@@ -8859,7 +8886,8 @@ void Player_UpdateMidair(Player* this, PlayState* play) {
                         func_80843E14(this, NA_SE_VO_LI_FALL_L);
                     }
 
-                    if ((this->actor.bgCheckFlags & 0x200) && !(this->stateFlags2 & PLAYER_STATE2_BACKFLIPPING_OR_SIDEHOPPING) &&
+                    if (!GameInteractor_GetDisableLedgeGrabsActive() && (this->actor.bgCheckFlags & 0x200) &&
+                        !(this->stateFlags2 & PLAYER_STATE2_BACKFLIPPING_OR_SIDEHOPPING) &&
                         !(this->stateFlags1 & (PLAYER_STATE1_HOLDING_ACTOR | PLAYER_STATE1_SWIMMING)) && (this->linearVelocity > 0.0f)) {
                         if ((this->wallHeight >= 150.0f) && (this->relativeAnalogStickInputs[this->inputFrameCounter] == 0)) {
                             func_8083EC18(this, play, sTouchedWallFlags);
@@ -8958,8 +8986,10 @@ void Player_Rolling(Player* this, PlayState* play) {
                 Player_SetupReturnToStandStill(this, play);
             }
         } else {
+            f32 rand = Rand_ZeroOne();
+            uint8_t randomBonk = (rand <= .05) && GameInteractor_GetRandomBonksActive();
             if (this->linearVelocity >= 7.0f) {
-                if (((this->actor.bgCheckFlags & 0x200) && (sYawToTouchedWall2 < 0x2000)) ||
+                if (randomBonk || ((this->actor.bgCheckFlags & 0x200) && (sYawToTouchedWall2 < 0x2000)) ||
                     ((this->cylinder.base.ocFlags1 & OC1_HIT) &&
                      (cylinderOc = this->cylinder.base.oc,
                       ((cylinderOc->id == ACTOR_EN_WOOD02) &&
@@ -8983,6 +9013,7 @@ void Player_Rolling(Player* this, PlayState* play) {
                     Player_PlayVoiceSfxForAge(this, NA_SE_VO_LI_CLIMB_END);
                     this->genericTimer = 1;
                     gSaveContext.sohStats.count[COUNT_BONKS]++;
+                    GameInteractor_ExecuteOnPlayerBonk();
                     return;
                 }
             }
@@ -9907,6 +9938,8 @@ void Player_InitCommon(Player* this, PlayState* play, FlexSkeletonHeader* skelHe
     Collider_SetQuad(play, &this->meleeWeaponQuads[1], &this->actor, &D_80854650);
     Collider_InitQuad(play, &this->shieldQuad);
     Collider_SetQuad(play, &this->shieldQuad, &this->actor, &D_808546A0);
+
+    this->ivanDamageMultiplier = 1;
 }
 
 static void (*D_80854738[])(PlayState* play, Player* this) = {
@@ -10284,13 +10317,16 @@ void func_808473D4(PlayState* play, Player* this) {
 s32 func_80847A78(Player* this) {
     s32 cond;
 
-    if ((this->currentBoots == PLAYER_BOOTS_HOVER) && (this->hoverBootsTimer != 0)) {
+    if ((this->currentBoots == PLAYER_BOOTS_HOVER ||
+         (CVarGetInteger("gIvanCoopModeEnabled", 0) && this->ivanFloating)) &&
+        (this->hoverBootsTimer != 0)) {
         this->hoverBootsTimer--;
     } else {
         this->hoverBootsTimer = 0;
     }
 
-    cond = (this->currentBoots == PLAYER_BOOTS_HOVER) &&
+    cond = (this->currentBoots == PLAYER_BOOTS_HOVER ||
+            (CVarGetInteger("gIvanCoopModeEnabled", 0) && this->ivanFloating)) &&
            ((this->actor.yDistToWater >= 0.0f) || (Player_GetHurtFloorType(sFloorSpecialProperty) >= 0) ||
             Player_IsFloorSinkingSand(sFloorSpecialProperty));
 
@@ -11740,7 +11776,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
             if (CVarGetInteger("gSlipperyFloor", 0) ||
                 ((this->actor.bgCheckFlags & 1) &&
                  (sFloorSpecialProperty == 5) && (this->currentBoots != PLAYER_BOOTS_IRON)) ||
-                  ((this->currentBoots == PLAYER_BOOTS_HOVER) &&
+                  ((this->currentBoots == PLAYER_BOOTS_HOVER || GameInteractor_GetSlipperyFloorActive()) &&
                  !(this->stateFlags1 & (PLAYER_STATE1_SWIMMING | PLAYER_STATE1_IN_CUTSCENE)))) {
                 f32 sp70 = this->linearVelocity;
                 s16 sp6E = this->currentYaw;
@@ -12102,42 +12138,67 @@ void Player_Update(Actor* thisx, PlayState* play) {
     MREG(54) = this->actor.world.pos.z;
     MREG(55) = this->actor.world.rot.y;
 
-    switch (GameInteractor_GetLinkSize()) {
-        case GI_LINK_SIZE_RESET:
-            this->actor.scale.x = 0.01f;
-            this->actor.scale.y = 0.01f;
-            this->actor.scale.z = 0.01f;
-            GameInteractor_SetLinkSize(GI_LINK_SIZE_NORMAL);
-            break;
-        case GI_LINK_SIZE_GIANT:
-            this->actor.scale.x = 0.02f;
-            this->actor.scale.y = 0.02f;
-            this->actor.scale.z = 0.02f;
-            break;
-        case GI_LINK_SIZE_MINISH:
-            this->actor.scale.x = 0.001f;
-            this->actor.scale.y = 0.001f;
-            this->actor.scale.z = 0.001f;
-            break;
-        case GI_LINK_SIZE_PAPER:
-            this->actor.scale.x = 0.001f;
-            this->actor.scale.y = 0.01f;
-            this->actor.scale.z = 0.01f;
-            break;
-        case GI_LINK_SIZE_NORMAL:
-        default:
-            break;
+    // Make Link normal size when going through doors and crawlspaces and when climbing ladders.
+    // Otherwise Link can glitch out, being in unloaded rooms or falling OoB.
+    if (this->stateFlags1 & PLAYER_STATE1_21 || this->stateFlags1 & PLAYER_STATE1_29 ||
+        this->stateFlags2 & PLAYER_STATE2_CRAWLING) {
+        this->actor.scale.x = 0.01f;
+        this->actor.scale.y = 0.01f;
+        this->actor.scale.z = 0.01f;
+    } else {
+        switch (GameInteractor_GetLinkSize()) {
+            case GI_LINK_SIZE_RESET:
+                this->actor.scale.x = 0.01f;
+                this->actor.scale.y = 0.01f;
+                this->actor.scale.z = 0.01f;
+                GameInteractor_SetLinkSize(GI_LINK_SIZE_NORMAL);
+                break;
+            case GI_LINK_SIZE_GIANT:
+                this->actor.scale.x = 0.02f;
+                this->actor.scale.y = 0.02f;
+                this->actor.scale.z = 0.02f;
+                break;
+            case GI_LINK_SIZE_MINISH:
+                this->actor.scale.x = 0.001f;
+                this->actor.scale.y = 0.001f;
+                this->actor.scale.z = 0.001f;
+                break;
+            case GI_LINK_SIZE_PAPER:
+                this->actor.scale.x = 0.001f;
+                this->actor.scale.y = 0.01f;
+                this->actor.scale.z = 0.01f;
+                break;
+            case GI_LINK_SIZE_SQUISHED:
+                this->actor.scale.x = 0.015f;
+                this->actor.scale.y = 0.001f;
+                this->actor.scale.z = 0.015f;
+                break;
+            case GI_LINK_SIZE_NORMAL:
+            default:
+                break;
+        }
     }
 
-    switch (GameInteractor_GravityLevel()) {
-        case GI_GRAVITY_LEVEL_HEAVY:
-            this->actor.gravity = -4.0f;
-            break;
-        case GI_GRAVITY_LEVEL_LIGHT:
-            this->actor.gravity = -0.3f;
-            break;
-        default:
-            break;
+    // Don't apply gravity when Link is in water, otherwise
+    // it makes him sink instead of float.
+    if (!(this->stateFlags1 & PLAYER_STATE1_27)) {
+        switch (GameInteractor_GravityLevel()) {
+            case GI_GRAVITY_LEVEL_HEAVY:
+                this->actor.gravity = -4.0f;
+                break;
+            case GI_GRAVITY_LEVEL_LIGHT:
+                this->actor.gravity = -0.3f;
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (GameInteractor_GetRandomWindActive()) {
+        Player* player = GET_PLAYER(play);
+        player->windSpeed = 3.0f;
+        // Play fan sound (too annoying)
+        //func_8002F974(&player->actor, NA_SE_EV_WIND_TRAP - SFX_FLAG);
     }
     
     GameInteractor_ExecuteOnPlayerUpdate();
@@ -12194,7 +12255,9 @@ void Player_DrawGameplay(PlayState* play, Player* this, s32 lod, Gfx* cullDList,
         if (CVarGetInteger("gFixIceTrapWithBunnyHood", 1)) Matrix_Pop();
     }
 
-    if ((this->currentBoots == PLAYER_BOOTS_HOVER) && !(this->actor.bgCheckFlags & 1) &&
+    if ((this->currentBoots == PLAYER_BOOTS_HOVER ||
+         (CVarGetInteger("gIvanCoopModeEnabled", 0) && this->ivanFloating)) &&
+        !(this->actor.bgCheckFlags & 1) &&
         !(this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) && (this->hoverBootsTimer != 0)) {
         s32 sp5C;
         s32 hoverBootsTimer = this->hoverBootsTimer;
@@ -13828,6 +13891,7 @@ s32 Player_SetupGetItemText(PlayState* play, Player* this) {
                 this->giDrawIdPlusOne = 0;
                 gSaveContext.pendingIceTrapCount++;
                 Player_SetPendingFlag(this, play);
+                GameInteractor_ExecuteOnItemReceiveHooks(giEntry);
             }
 
             this->getItemId = GI_NONE;
@@ -13997,9 +14061,11 @@ void Player_GetItem(Player* this, PlayState* play) {
                     Actor_Spawn(&play->actorCtx, play, ACTOR_EN_CLEAR_TAG, this->actor.world.pos.x,
                                 this->actor.world.pos.y + 100.0f, this->actor.world.pos.z, 0, 0, 0, 0, true);
                     Player_SetupStandingStillNoMorph(this, play);
+                    GameInteractor_ExecuteOnItemReceiveHooks(this->getItemEntry);
                 } else {
                     this->actor.colChkInfo.damage = 0;
                     Player_SetupDamage(play, this, 3, 0.0f, 0.0f, 0, 20);
+                    GameInteractor_ExecuteOnItemReceiveHooks(this->getItemEntry);
                     this->getItemId = GI_NONE;
                     this->getItemEntry = (GetItemEntry)GET_ITEM_NONE;
                     // Gameplay stats: Increment Ice Trap count

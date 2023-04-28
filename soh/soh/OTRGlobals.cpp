@@ -1,4 +1,4 @@
-﻿#include "OTRGlobals.h"
+#include "OTRGlobals.h"
 #include "OTRAudio.h"
 #include <iostream>
 #include <algorithm>
@@ -27,6 +27,7 @@
 #define DRWAV_IMPLEMENTATION
 #include <dr_libs/wav.h>
 #include <AudioPlayer.h>
+#include "Enhancements/speechsynthesizer/SpeechSynthesizer.h"
 #include "Enhancements/controls/GameControlEditor.h"
 #include "Enhancements/cosmetics/CosmeticsEditor.h"
 #include "Enhancements/audio/AudioCollection.h"
@@ -47,6 +48,10 @@
 #include <Utils/StringHelper.h>
 #include <Hooks.h>
 #include "Enhancements/custom-message/CustomMessageManager.h"
+
+#if not defined (__SWITCH__) && not defined(__WIIU__)
+#include "Extractor/Extract.h"
+#endif
 
 #include <Fast3D/gfx_pc.h>
 #include <Fast3D/gfx_rendering_api.h>
@@ -111,6 +116,7 @@ CustomMessageManager* CustomMessageManager::Instance;
 ItemTableManager* ItemTableManager::Instance;
 GameInteractor* GameInteractor::Instance;
 AudioCollection* AudioCollection::Instance;
+SpeechSynthesizer* SpeechSynthesizer::Instance;
 
 extern "C" char** cameraStrings;
 std::vector<std::shared_ptr<std::string>> cameraStdStrings;
@@ -203,6 +209,10 @@ OTRGlobals::OTRGlobals() {
     if (std::filesystem::exists(ootPath)) {
         OTRFiles.push_back(ootPath);
     }
+    std::string sohOtrPath = Ship::Window::GetPathRelativeToAppBundle("soh.otr");
+    if (std::filesystem::exists(sohOtrPath)) {
+        OTRFiles.push_back(sohOtrPath);
+    }
     std::string patchesPath = Ship::Window::GetPathRelativeToAppDirectory("mods");
     if (patchesPath.length() > 0 && std::filesystem::exists(patchesPath)) {
         if (std::filesystem::is_directory(patchesPath)) {
@@ -218,9 +228,9 @@ OTRGlobals::OTRGlobals() {
         OOT_NTSC_JP_MQ,
         OOT_NTSC_US_MQ,
         OOT_PAL_GC_MQ_DBG,
-        OOT_NTSC_10,
-        OOT_NTSC_11,
-        OOT_NTSC_12,
+        OOT_NTSC_US_10,
+        OOT_NTSC_US_11,
+        OOT_NTSC_US_12,
         OOT_PAL_10,
         OOT_PAL_11,
         OOT_NTSC_JP_GC_CE,
@@ -232,19 +242,19 @@ OTRGlobals::OTRGlobals() {
     };
     context = Ship::Window::CreateInstance("Ship of Harkinian", OTRFiles);
 
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Animation, std::make_shared<Ship::AnimationFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_PlayerAnimation, std::make_shared<Ship::PlayerAnimationFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Room, std::make_shared<Ship::SceneFactory>()); // Is room scene? maybe?
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_CollisionHeader, std::make_shared<Ship::CollisionHeaderFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Skeleton, std::make_shared<Ship::SkeletonFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_SkeletonLimb, std::make_shared<Ship::SkeletonLimbFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Path, std::make_shared<Ship::PathFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Cutscene, std::make_shared<Ship::CutsceneFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Text, std::make_shared<Ship::TextFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_AudioSample, std::make_shared<Ship::AudioSampleFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_AudioSoundFont, std::make_shared<Ship::AudioSoundFontFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_AudioSequence, std::make_shared<Ship::AudioSequenceFactory>());
-    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Background, std::make_shared<Ship::BackgroundFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Animation, "Animation", std::make_shared<Ship::AnimationFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_PlayerAnimation, "PlayerAnimation", std::make_shared<Ship::PlayerAnimationFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Room, "Room", std::make_shared<Ship::SceneFactory>()); // Is room scene? maybe?
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_CollisionHeader, "CollisionHeader", std::make_shared<Ship::CollisionHeaderFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Skeleton, "Skeleton", std::make_shared<Ship::SkeletonFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_SkeletonLimb, "SkeletonLimb", std::make_shared<Ship::SkeletonLimbFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Path, "Path", std::make_shared<Ship::PathFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Cutscene, "Cutscene", std::make_shared<Ship::CutsceneFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Text, "Text", std::make_shared<Ship::TextFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_AudioSample, "AudioSample", std::make_shared<Ship::AudioSampleFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_AudioSoundFont, "AudioSoundFont", std::make_shared<Ship::AudioSoundFontFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_AudioSequence, "AudioSequence", std::make_shared<Ship::AudioSequenceFactory>());
+    context->GetResourceManager()->GetResourceLoader()->RegisterResourceFactory(Ship::ResourceType::SOH_Background, "Background", std::make_shared<Ship::BackgroundFactory>());
 
     gSaveStateMgr = std::make_shared<SaveStateMgr>();
     gRandomizer = std::make_shared<Randomizer>();
@@ -283,9 +293,9 @@ OTRGlobals::OTRGlobals() {
             case OOT_PAL_GC_MQ_DBG:
                 hasMasterQuest = true;
                 break;
-            case OOT_NTSC_10:
-            case OOT_NTSC_11:
-            case OOT_NTSC_12:
+            case OOT_NTSC_US_10:
+            case OOT_NTSC_US_11:
+            case OOT_NTSC_US_12:
             case OOT_PAL_10:
             case OOT_PAL_11:
             case OOT_NTSC_JP_GC_CE:
@@ -313,8 +323,16 @@ bool OTRGlobals::HasOriginal() {
     return hasOriginal;
 }
 
-std::shared_ptr<std::vector<std::string>> OTRGlobals::ListFiles(std::string path) {
-    return context->GetResourceManager()->ListFiles(path);
+uint32_t OTRGlobals::GetInterpolationFPS() {
+    if (SohImGui::WindowBackend() == SohImGui::Backend::DX11) {
+        return CVarGetInteger("gInterpolationFPS", 20);
+    }
+
+    if (CVarGetInteger("gMatchRefreshRate", 0)) {
+        return Ship::Window::GetInstance()->GetCurrentRefreshRate();
+    }
+
+    return std::min<uint32_t>(Ship::Window::GetInstance()->GetCurrentRefreshRate(), CVarGetInteger("gInterpolationFPS", 20));
 }
 
 struct ExtensionEntry {
@@ -330,7 +348,7 @@ extern "C" void AudioMgr_CreateNextAudioBuffer(s16* samples, u32 num_samples);
 extern "C" void AudioPlayer_Play(const uint8_t* buf, uint32_t len);
 extern "C" int AudioPlayer_Buffered(void);
 extern "C" int AudioPlayer_GetDesiredBuffered(void);
-extern "C" void ResourceMgr_CacheDirectory(const char* resName);
+extern "C" void ResourceMgr_LoadDirectory(const char* resName);
 extern "C" SequenceData ResourceMgr_LoadSeqByName(const char* path);
 std::unordered_map<std::string, ExtensionEntry> ExtensionCache;
 
@@ -383,7 +401,7 @@ void OTRAudio_Thread() {
 extern "C" void OTRAudio_Init()
 {
     // Precache all our samples, sequences, etc...
-    ResourceMgr_CacheDirectory("audio");
+    ResourceMgr_LoadDirectory("audio");
 
     if (!audio.running) {
         audio.running = true;
@@ -543,8 +561,140 @@ extern "C" void VanillaItemTable_Init() {
     }
 }
 
+std::unordered_map<uint32_t, uint32_t> ItemIDtoGetItemID{
+    { ITEM_ARROWS_LARGE, GI_ARROWS_LARGE },
+    { ITEM_ARROWS_MEDIUM, GI_ARROWS_MEDIUM },
+    { ITEM_ARROWS_SMALL, GI_ARROWS_SMALL },
+    { ITEM_ARROW_FIRE, GI_ARROW_FIRE },
+    { ITEM_ARROW_ICE, GI_ARROW_ICE },
+    { ITEM_ARROW_LIGHT, GI_ARROW_LIGHT },
+    { ITEM_BEAN, GI_BEAN },
+    { ITEM_BIG_POE, GI_BIG_POE },
+    { ITEM_BLUE_FIRE, GI_BLUE_FIRE },
+    { ITEM_BOMB, GI_BOMBS_1 },
+    { ITEM_BOMBCHU, GI_BOMBCHUS_10 },
+    { ITEM_BOMBCHUS_20, GI_BOMBCHUS_20 },
+    { ITEM_BOMBCHUS_5, GI_BOMBCHUS_5 },
+    { ITEM_BOMBS_10, GI_BOMBS_10 },
+    { ITEM_BOMBS_20, GI_BOMBS_20 },
+    { ITEM_BOMBS_30, GI_BOMBS_30 },
+    { ITEM_BOMBS_5, GI_BOMBS_5 },
+    { ITEM_BOMB_BAG_20, GI_BOMB_BAG_20 },
+    { ITEM_BOMB_BAG_30, GI_BOMB_BAG_30 },
+    { ITEM_BOMB_BAG_40, GI_BOMB_BAG_40 },
+    { ITEM_BOOMERANG, GI_BOOMERANG },
+    { ITEM_BOOTS_HOVER, GI_BOOTS_HOVER },
+    { ITEM_BOOTS_IRON, GI_BOOTS_IRON },
+    { ITEM_BOTTLE, GI_BOTTLE },
+    { ITEM_BOW, GI_BOW },
+    { ITEM_BRACELET, GI_BRACELET },
+    { ITEM_BUG, GI_BUGS },
+    { ITEM_BULLET_BAG_30, GI_BULLET_BAG_30 },
+    { ITEM_BULLET_BAG_40, GI_BULLET_BAG_40 },
+    { ITEM_BULLET_BAG_50, GI_BULLET_BAG_50 }, { ITEM_CHICKEN, GI_CHICKEN },
+    { ITEM_CLAIM_CHECK, GI_CLAIM_CHECK },
+    { ITEM_COJIRO, GI_COJIRO },
+    { ITEM_COMPASS, GI_COMPASS },
+    { ITEM_DINS_FIRE, GI_DINS_FIRE },
+    { ITEM_DUNGEON_MAP, GI_MAP },
+    { ITEM_EYEDROPS, GI_EYEDROPS },
+    { ITEM_FAIRY, GI_FAIRY },
+    { ITEM_FARORES_WIND, GI_FARORES_WIND },
+    { ITEM_FISH, GI_FISH },
+    { ITEM_FROG, GI_FROG },
+    { ITEM_GAUNTLETS_GOLD, GI_GAUNTLETS_GOLD },
+    { ITEM_GAUNTLETS_SILVER, GI_GAUNTLETS_SILVER },
+    { ITEM_GERUDO_CARD, GI_GERUDO_CARD },
+    { ITEM_HAMMER, GI_HAMMER },
+    { ITEM_HEART, GI_HEART },
+    { ITEM_HEART_CONTAINER, GI_HEART_CONTAINER },
+    { ITEM_HEART_CONTAINER, GI_HEART_CONTAINER_2 },
+    { ITEM_HEART_PIECE_2, GI_HEART_PIECE },
+    { ITEM_HEART_PIECE_2, GI_HEART_PIECE_WIN },
+    { ITEM_HOOKSHOT, GI_HOOKSHOT },
+    { ITEM_KEY_BOSS, GI_KEY_BOSS },
+    { ITEM_KEY_SMALL, GI_DOOR_KEY },
+    { ITEM_KEY_SMALL, GI_KEY_SMALL },
+    { ITEM_LENS, GI_LENS },
+    { ITEM_LETTER_RUTO, GI_LETTER_RUTO },
+    { ITEM_LETTER_ZELDA, GI_LETTER_ZELDA },
+    { ITEM_LONGSHOT, GI_LONGSHOT },
+    { ITEM_MAGIC_LARGE, GI_MAGIC_LARGE },
+    { ITEM_MAGIC_SMALL, GI_MAGIC_SMALL },
+    { ITEM_MASK_BUNNY, GI_MASK_BUNNY },
+    { ITEM_MASK_GERUDO, GI_MASK_GERUDO },
+    { ITEM_MASK_GORON, GI_MASK_GORON },
+    { ITEM_MASK_KEATON, GI_MASK_KEATON },
+    { ITEM_MASK_SKULL, GI_MASK_SKULL },
+    { ITEM_MASK_SPOOKY, GI_MASK_SPOOKY },
+    { ITEM_MASK_TRUTH, GI_MASK_TRUTH },
+    { ITEM_MASK_ZORA, GI_MASK_ZORA },
+    { ITEM_MILK, GI_MILK },
+    { ITEM_MILK_BOTTLE, GI_MILK_BOTTLE },
+    { ITEM_NAYRUS_LOVE, GI_NAYRUS_LOVE },
+    { ITEM_NUT, GI_NUTS_5 },
+    { ITEM_NUTS_10, GI_NUTS_10 },
+    { ITEM_NUTS_5, GI_NUTS_5 },
+    { ITEM_NUTS_5, GI_NUTS_5_2 },
+    { ITEM_NUT_UPGRADE_30, GI_NUT_UPGRADE_30 },
+    { ITEM_NUT_UPGRADE_40, GI_NUT_UPGRADE_40 },
+    { ITEM_OCARINA_FAIRY, GI_OCARINA_FAIRY },
+    { ITEM_OCARINA_TIME, GI_OCARINA_OOT },
+    { ITEM_ODD_MUSHROOM, GI_ODD_MUSHROOM },
+    { ITEM_ODD_POTION, GI_ODD_POTION },
+    { ITEM_POCKET_CUCCO, GI_POCKET_CUCCO },
+    { ITEM_POCKET_EGG, GI_POCKET_EGG },
+    { ITEM_POE, GI_POE },
+    { ITEM_POTION_BLUE, GI_POTION_BLUE },
+    { ITEM_POTION_GREEN, GI_POTION_GREEN },
+    { ITEM_POTION_RED, GI_POTION_RED },
+    { ITEM_PRESCRIPTION, GI_PRESCRIPTION },
+    { ITEM_QUIVER_40, GI_QUIVER_40 },
+    { ITEM_QUIVER_50, GI_QUIVER_50 },
+    { ITEM_RUPEE_BLUE, GI_RUPEE_BLUE },
+    { ITEM_RUPEE_BLUE, GI_RUPEE_BLUE_LOSE },
+    { ITEM_RUPEE_GOLD, GI_RUPEE_GOLD },
+    { ITEM_RUPEE_GREEN, GI_RUPEE_GREEN },
+    { ITEM_RUPEE_GREEN, GI_RUPEE_GREEN_LOSE },
+    { ITEM_RUPEE_PURPLE, GI_RUPEE_PURPLE },
+    { ITEM_RUPEE_PURPLE, GI_RUPEE_PURPLE_LOSE },
+    { ITEM_RUPEE_RED, GI_RUPEE_RED },
+    { ITEM_RUPEE_RED, GI_RUPEE_RED_LOSE },
+    { ITEM_SAW, GI_SAW },
+    { ITEM_SCALE_GOLDEN, GI_SCALE_GOLD },
+    { ITEM_SCALE_SILVER, GI_SCALE_SILVER },
+    { ITEM_SEEDS, GI_SEEDS_5 },
+    { ITEM_SEEDS_30, GI_SEEDS_30 },
+    { ITEM_SHIELD_DEKU, GI_SHIELD_DEKU },
+    { ITEM_SHIELD_HYLIAN, GI_SHIELD_HYLIAN },
+    { ITEM_SHIELD_MIRROR, GI_SHIELD_MIRROR },
+    { ITEM_SKULL_TOKEN, GI_SKULL_TOKEN },
+    { ITEM_SLINGSHOT, GI_SLINGSHOT },
+    { ITEM_STICK, GI_STICKS_1 },
+    { ITEM_STICKS_10, GI_STICKS_10 },
+    { ITEM_STICKS_5, GI_STICKS_5 },
+    { ITEM_STICK_UPGRADE_20, GI_STICK_UPGRADE_20 },
+    { ITEM_STICK_UPGRADE_30, GI_STICK_UPGRADE_30 },
+    { ITEM_STONE_OF_AGONY, GI_STONE_OF_AGONY },
+    { ITEM_SWORD_BGS, GI_SWORD_BGS },
+    { ITEM_SWORD_BGS, GI_SWORD_KNIFE },
+    { ITEM_SWORD_BROKEN, GI_SWORD_BROKEN },
+    { ITEM_SWORD_KOKIRI, GI_SWORD_KOKIRI },
+    { ITEM_TUNIC_GORON, GI_TUNIC_GORON },
+    { ITEM_TUNIC_ZORA, GI_TUNIC_ZORA },
+    { ITEM_WALLET_ADULT, GI_WALLET_ADULT },
+    { ITEM_WALLET_GIANT, GI_WALLET_GIANT },
+    { ITEM_WEIRD_EGG, GI_WEIRD_EGG }
+};
+
+extern "C" uint32_t GetGIID(uint32_t itemID) {
+    if (ItemIDtoGetItemID.contains(itemID))
+        return ItemIDtoGetItemID.at(itemID);
+    return -1;
+}
+
 extern "C" void OTRExtScanner() {
-    auto lst = *OTRGlobals::Instance->context->GetResourceManager()->ListFiles("*.*").get();
+    auto lst = *OTRGlobals::Instance->context->GetResourceManager()->GetArchive()->ListFiles("*").get();
 
     for (auto& rPath : lst) {
         std::vector<std::string> raw = StringHelper::Split(rPath, ".");
@@ -557,6 +707,28 @@ extern "C" void OTRExtScanner() {
 }
 
 extern "C" void InitOTR() {
+#if not defined (__SWITCH__) && not defined(__WIIU__)
+    if (!std::filesystem::exists(Ship::Window::GetPathRelativeToAppDirectory("oot-mq.otr")) &&
+        !std::filesystem::exists(Ship::Window::GetPathRelativeToAppDirectory("oot.otr"))){
+        if (Extractor::ShowYesNoBox("No OTR Files", "No OTR files found. Generate one now?") == IDYES) {
+            Extractor extract;
+            if (!extract.Run()) {
+                Extractor::ShowErrorBox("Error", "An error occured, no OTR file was generated. Exiting...");
+                exit(1);
+            }
+            extract.CallZapd();
+        }
+        if (Extractor::ShowYesNoBox("Extraction Complete", "ROM Extracted. Extract another?") == IDYES) {
+            Extractor extract;
+            if (!extract.Run()) {
+                Extractor::ShowErrorBox("Error", "An error occured, an OTR file may have been generated by a different step. Continuing...");
+            } else {
+                extract.CallZapd();
+            }
+        }
+    }
+#endif
+
 #ifdef __SWITCH__
     Ship::Switch::Init(Ship::PreInitPhase);
 #elif defined(__WIIU__)
@@ -571,7 +743,14 @@ extern "C" void InitOTR() {
     ItemTableManager::Instance = new ItemTableManager();
     GameInteractor::Instance = new GameInteractor();
     AudioCollection::Instance = new AudioCollection();
-
+#ifdef __APPLE__
+    SpeechSynthesizer::Instance = new DarwinSpeechSynthesizer();
+    SpeechSynthesizer::Instance->Init();
+#elif defined(_WIN32)
+    SpeechSynthesizer::Instance = new SAPISpeechSynthesizer();
+    SpeechSynthesizer::Instance->Init();
+#endif
+    
     clearMtx = (uintptr_t)&gMtxClear;
     OTRMessage_Init();
     OTRAudio_Init();
@@ -610,6 +789,9 @@ extern "C" void InitOTR() {
 
 extern "C" void DeinitOTR() {
     OTRAudio_Exit();
+#if defined(_WIN32) || defined(__APPLE__)
+    SpeechSynthesizerUninitialize();
+#endif
 #ifdef ENABLE_CROWD_CONTROL
     CrowdControl::Instance->Disable();
     CrowdControl::Instance->Shutdown();
@@ -652,13 +834,15 @@ extern "C" void Graph_ProcessFrame(void (*run_one_game_iter)(void)) {
     OTRGlobals::Instance->context->MainLoop(run_one_game_iter);
 }
 
+extern bool ShouldClearTextureCacheAtEndOfFrame;
+
 extern "C" void Graph_StartFrame() {
 #ifndef __WIIU__
-    // Why -1?
+    using Ship::KbScancode;
     int32_t dwScancode = OTRGlobals::Instance->context->GetLastScancode();
     OTRGlobals::Instance->context->SetLastScancode(-1);
 
-    switch (dwScancode - 1) {
+    switch (dwScancode) {
         case SDL_SCANCODE_F4: {
             bool prevState = CVarGetInteger("gMusicMuted", 0);
             bool muteState = !prevState;
@@ -670,7 +854,7 @@ extern "C" void Graph_StartFrame() {
             Audio_SetGameVolume(3, muteState ? 0 : CVarGetFloat("gSubMusicVolume", 1));
             break;
         }
-        case SDL_SCANCODE_F5: {
+        case KbScancode::LUS_KB_F5: {
             const unsigned int slot = OTRGlobals::Instance->gSaveStateMgr->GetCurrentSlot();
             const SaveStateReturn stateReturn =
                 OTRGlobals::Instance->gSaveStateMgr->AddRequest({ slot, RequestType::SAVE });
@@ -687,7 +871,7 @@ extern "C" void Graph_StartFrame() {
             }
             break;
         }
-        case SDL_SCANCODE_F6: {
+        case KbScancode::LUS_KB_F6: {
             unsigned int slot = OTRGlobals::Instance->gSaveStateMgr->GetCurrentSlot();
             slot++;
             if (slot > 5) {
@@ -697,7 +881,7 @@ extern "C" void Graph_StartFrame() {
             SPDLOG_INFO("Set SaveState slot to {}.", slot);
             break;
         }
-        case SDL_SCANCODE_F7: {
+        case KbScancode::LUS_KB_F7: {
             const unsigned int slot = OTRGlobals::Instance->gSaveStateMgr->GetCurrentSlot();
             const SaveStateReturn stateReturn =
                 OTRGlobals::Instance->gSaveStateMgr->AddRequest({ slot, RequestType::LOAD });
@@ -721,6 +905,17 @@ extern "C" void Graph_StartFrame() {
 
             break;
         }
+        case KbScancode::LUS_KB_F9: {
+            // Toggle TTS
+            CVarSetInteger("gA11yTTS", !CVarGetInteger("gA11yTTS", 0));
+            break;
+        }
+        case KbScancode::LUS_KB_TAB: {
+            // Toggle HD Assets
+            CVarSetInteger("gAltAssets", !CVarGetInteger("gAltAssets", 0));
+            ShouldClearTextureCacheAtEndOfFrame = true;
+            break;
+        }
     }
 #endif
     OTRGlobals::Instance->context->StartFrame();
@@ -742,7 +937,7 @@ extern "C" void Graph_ProcessGfxCommands(Gfx* commands) {
 
     audio.cv_to_thread.notify_one();
     std::vector<std::unordered_map<Mtx*, MtxF>> mtx_replacements;
-    int target_fps = CVarGetInteger("gInterpolationFPS", 20);
+    int target_fps = OTRGlobals::Instance->GetInterpolationFPS();
     static int last_fps;
     static int last_update_rate;
     static int time;
@@ -786,6 +981,12 @@ extern "C" void Graph_ProcessGfxCommands(Gfx* commands) {
         while (audio.processing) {
             audio.cv_from_thread.wait(Lock);
         }
+    }
+
+    if (ShouldClearTextureCacheAtEndOfFrame) {
+        gfx_texture_cache_clear();
+        Ship::SkeletonPatcher::UpdateSkeletons();
+        ShouldClearTextureCacheAtEndOfFrame = false;
     }
 
     // OTRTODO: FIGURE OUT END FRAME POINT
@@ -853,20 +1054,17 @@ extern "C" uint32_t ResourceMgr_IsGameMasterQuest() {
     return IsGameMasterQuest();
 }
 
-extern "C" void ResourceMgr_CacheDirectory(const char* resName) {
-    OTRGlobals::Instance->context->GetResourceManager()->CacheDirectory(resName);
+extern "C" void ResourceMgr_LoadDirectory(const char* resName) {
+    OTRGlobals::Instance->context->GetResourceManager()->LoadDirectory(resName);
 }
 extern "C" void ResourceMgr_DirtyDirectory(const char* resName) {
     OTRGlobals::Instance->context->GetResourceManager()->DirtyDirectory(resName);
 }
 
-extern "C" void ResourceMgr_InvalidateCache() {
-    OTRGlobals::Instance->context->GetResourceManager()->InvalidateResourceCache();
-}
-
 // OTRTODO: There is probably a more elegant way to go about this...
+// Kenix: This is definitely leaking memory when it's called.
 extern "C" char** ResourceMgr_ListFiles(const char* searchMask, int* resultSize) {
-    auto lst = OTRGlobals::Instance->context->GetResourceManager()->ListFiles(searchMask);
+    auto lst = OTRGlobals::Instance->context->GetResourceManager()->GetArchive()->ListFiles(searchMask);
     char** result = (char**)malloc(lst->size() * sizeof(char*));
 
     for (size_t i = 0; i < lst->size(); i++) {
@@ -878,6 +1076,15 @@ extern "C" char** ResourceMgr_ListFiles(const char* searchMask, int* resultSize)
     *resultSize = lst->size();
 
     return result;
+}
+
+extern "C" uint8_t ResourceMgr_FileExists(const char* filePath) {
+    std::string path = filePath;
+    if(path.substr(0, 7) == "__OTR__"){
+        path = path.substr(7);
+    }
+
+    return ExtensionCache.contains(path);
 }
 
 extern "C" void ResourceMgr_LoadFile(const char* resName) {
@@ -905,26 +1112,6 @@ extern "C" char* GetResourceDataByNameHandlingMQ(const char* path) {
     return (char*)res->GetPointer();
 }
 
-extern "C" char* ResourceMgr_LoadFileRaw(const char* resName) {
-    // TODO: This should not exist. Anywhere we are loading textures with this function should be Resources instead.
-    // We are not currently packing our otr archive with certain textures as resources with otr headers.
-    static std::unordered_map<std::string, std::shared_ptr<Ship::OtrFile>> cachedRawFiles;
-
-    auto cacheFind = cachedRawFiles.find(resName);
-    if (cacheFind != cachedRawFiles.end()) {
-        return cacheFind->second->Buffer.data();
-    }
-    
-    auto file = OTRGlobals::Instance->context->GetResourceManager()->LoadFile(resName);
-    cachedRawFiles[resName] = file;
-
-    if (file == nullptr) {
-        return nullptr;
-    }
-
-    return file->Buffer.data();
-}
-
 extern "C" char* ResourceMgr_LoadFileFromDisk(const char* filePath) {
     FILE* file = fopen(filePath, "r");
     fseek(file, 0, SEEK_END);
@@ -939,7 +1126,12 @@ extern "C" char* ResourceMgr_LoadFileFromDisk(const char* filePath) {
     return data;
 }
 
-extern "C" char* ResourceMgr_LoadJPEG(char* data, int dataSize)
+extern "C" uint8_t ResourceMgr_ResourceIsBackground(char* texPath) {
+    auto res = GetResourceByNameHandlingMQ(texPath);
+    return res->InitData->Type == Ship::ResourceType::SOH_Background;
+}
+
+extern "C" char* ResourceMgr_LoadJPEG(char* data, size_t dataSize)
 {
     static char* finalBuffer = 0;
 
@@ -984,13 +1176,22 @@ extern "C" uint16_t ResourceMgr_LoadTexHeightByName(char* texPath);
 extern "C" char* ResourceMgr_LoadTexOrDListByName(const char* filePath) {
     auto res = GetResourceByNameHandlingMQ(filePath);
 
-    if (res->Type == Ship::ResourceType::DisplayList)
+    if (res->InitData->Type == Ship::ResourceType::DisplayList)
         return (char*)&((std::static_pointer_cast<Ship::DisplayList>(res))->Instructions[0]);
-    else if (res->Type == Ship::ResourceType::Array)
+    else if (res->InitData->Type == Ship::ResourceType::Array)
         return (char*)(std::static_pointer_cast<Ship::Array>(res))->Vertices.data();
     else {
         return (char*)GetResourceDataByNameHandlingMQ(filePath);
     }
+}
+
+extern "C" char* ResourceMgr_LoadIfDListByName(const char* filePath) {
+    auto res = GetResourceByNameHandlingMQ(filePath);
+
+    if (res->InitData->Type == Ship::ResourceType::DisplayList)
+        return (char*)&((std::static_pointer_cast<Ship::DisplayList>(res))->Instructions[0]);
+    
+    return nullptr;
 }
 
 extern "C" Sprite* GetSeedTexture(uint8_t index) {
@@ -1001,6 +1202,11 @@ extern "C" char* ResourceMgr_LoadPlayerAnimByName(const char* animPath) {
     auto anim = std::static_pointer_cast<Ship::PlayerAnimation>(GetResourceByNameHandlingMQ(animPath));
 
     return (char*)&anim->limbRotData[0];
+}
+
+extern "C" void ResourceMgr_PushCurrentDirectory(char* path)
+{
+    gfx_push_current_dir(path);
 }
 
 extern "C" Gfx* ResourceMgr_LoadGfxByName(const char* path)
@@ -1195,8 +1401,29 @@ extern "C" AnimationHeaderCommon* ResourceMgr_LoadAnimByName(const char* path) {
     return (AnimationHeaderCommon*)GetResourceDataByName(path, false);
 }
 
-extern "C" SkeletonHeader* ResourceMgr_LoadSkeletonByName(const char* path) {
-    return (SkeletonHeader*)GetResourceDataByName(path, false);
+extern "C" SkeletonHeader* ResourceMgr_LoadSkeletonByName(const char* path, SkelAnime* skelAnime) 
+{
+    SkeletonHeader* skelHeader = (SkeletonHeader*)GetResourceDataByName(path, false);
+
+    // This function is only called when a skeleton is initialized.
+    // Therefore we can take this oppurtunity to take note of the Skeleton that is created...
+    if (skelAnime != nullptr) {
+        auto stringPath = std::string(path);
+        Ship::SkeletonPatcher::RegisterSkeleton(stringPath, skelAnime);
+    }
+
+
+    return skelHeader;
+}
+
+extern "C" void ResourceMgr_UnregisterSkeleton(SkelAnime* skelAnime) {
+    if (skelAnime != nullptr)
+        Ship::SkeletonPatcher::UnregisterSkeleton(skelAnime);
+}
+
+extern "C" void ResourceMgr_ClearSkeletons(SkelAnime* skelAnime) {
+    if (skelAnime != nullptr)
+        Ship::SkeletonPatcher::ClearSkeletons();
 }
 
 extern "C" s32* ResourceMgr_LoadCSByName(const char* path) {
@@ -1643,11 +1870,20 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
             messageEntry = CustomMessageManager::Instance->RetrieveMessage(Randomizer::NaviRandoMessageTableID, naviTextId);
         } else if (Randomizer_GetSettingValue(RSK_SHUFFLE_MAGIC_BEANS) && textId == TEXT_BEAN_SALESMAN) {
             messageEntry = CustomMessageManager::Instance->RetrieveMessage(Randomizer::merchantMessageTableID, TEXT_BEAN_SALESMAN);
-        } else if (Randomizer_GetSettingValue(RSK_SHUFFLE_MERCHANTS) != RO_SHUFFLE_MERCHANTS_OFF && (textId == TEXT_MEDIGORON || 
+        } else if (Randomizer_GetSettingValue(RSK_SHUFFLE_MERCHANTS) != RO_SHUFFLE_MERCHANTS_OFF && (textId == TEXT_MEDIGORON ||
+          (textId == TEXT_GRANNYS_SHOP && !Flags_GetRandomizerInf(RAND_INF_MERCHANTS_GRANNYS_SHOP) &&
+                    (Randomizer_GetSettingValue(RSK_SHUFFLE_ADULT_TRADE) || INV_CONTENT(ITEM_CLAIM_CHECK) == ITEM_CLAIM_CHECK)) ||
           (textId == TEXT_CARPET_SALESMAN_1 && !Flags_GetRandomizerInf(RAND_INF_MERCHANTS_CARPET_SALESMAN)) ||
           (textId == TEXT_CARPET_SALESMAN_2 && !Flags_GetRandomizerInf(RAND_INF_MERCHANTS_CARPET_SALESMAN)))) {
-            RandomizerInf randoInf = (RandomizerInf)(textId == TEXT_MEDIGORON ? RAND_INF_MERCHANTS_MEDIGORON : RAND_INF_MERCHANTS_CARPET_SALESMAN);
-            messageEntry = OTRGlobals::Instance->gRandomizer->GetMerchantMessage(randoInf, textId, Randomizer_GetSettingValue(RSK_SHUFFLE_MERCHANTS) != RO_SHUFFLE_MERCHANTS_ON_HINT);            
+            RandomizerInf randoInf;
+            if (textId == TEXT_MEDIGORON) {
+                randoInf = RAND_INF_MERCHANTS_MEDIGORON;
+            } else if (textId == TEXT_GRANNYS_SHOP) {
+                randoInf = RAND_INF_MERCHANTS_GRANNYS_SHOP;
+            } else {
+                randoInf = RAND_INF_MERCHANTS_CARPET_SALESMAN;
+            }
+            messageEntry = OTRGlobals::Instance->gRandomizer->GetMerchantMessage(randoInf, textId, Randomizer_GetSettingValue(RSK_SHUFFLE_MERCHANTS) != RO_SHUFFLE_MERCHANTS_ON_HINT);
         } else if (Randomizer_GetSettingValue(RSK_BOMBCHUS_IN_LOGIC) &&
                    (textId == TEXT_BUY_BOMBCHU_10_DESC || textId == TEXT_BUY_BOMBCHU_10_PROMPT)) {
             messageEntry = CustomMessageManager::Instance->RetrieveMessage(customMessageTableID, textId);
@@ -1732,7 +1968,7 @@ extern "C" void Overlay_DisplayText(float duration, const char* text) {
 }
 
 extern "C" void Overlay_DisplayText_Seconds(int seconds, const char* text) {
-    float duration = seconds * CVarGetInteger("gInterpolationFPS", 20) * 0.05;
+    float duration = seconds * OTRGlobals::Instance->GetInterpolationFPS() * 0.05;
     SohImGui::GetGameOverlay()->TextDrawNotification(duration, true, text);
 }
 
@@ -1750,4 +1986,8 @@ extern "C" void EntranceTracker_SetCurrentGrottoID(s16 entranceIndex) {
 
 extern "C" void EntranceTracker_SetLastEntranceOverride(s16 entranceIndex) {
     SetLastEntranceOverrideForTracker(entranceIndex);
+}
+
+extern "C" void Gfx_RegisterBlendedTexture(const char* name, u8* mask, u8* replacement) {
+    gfx_register_blended_texture(name, mask, replacement);
 }
