@@ -150,8 +150,8 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gRaveMode"),
 	// CMD_TIMED_BOOL_CVAR(CMD_ID++, "gInvisPlayer"),
 	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::InvisibleLink(), false, nullptr),
-	// CMD_TIMED_BOOL_CVAR(CMD_ID++, "gSlipperyFloor"),
-	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::SlipperyFloor(), false, nullptr),
+	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gSlipperyFloor"),
+	// CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::SlipperyFloor(), false, nullptr),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gIceDamage"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gElectricDamage"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gKnockbackDamage"),
@@ -233,7 +233,7 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// 		effect->parameters[0] = IS_DAY ? 0 : 0x8000;
 	// 	}),
 	// CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
-	CMD_ONE_SHOT_INTERACTOR(CMD_ID++, new GameInteractionEffect::PressButton(), false, nullptr,
+	CMD_ONE_SHOT_INTERACTOR(CMD_ID++, new GameInteractionEffect::PressButton(), false,
 		[=](GameInteractionEffectBase* effect) {
 			effect->parameters[0] = BTN_A;
 		}),
@@ -245,16 +245,16 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gShuffleItems"),
 
 	// CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
-	CMD_TAKE_AMMO_INTERACTOR(0x80, ITEM_BOMBCHU),
 	// CMD_TAKE_AMMO(0x81, ITEM_STICK),
-	CMD_TAKE_AMMO_INTERACTOR(0x81, ITEM_STICK),
 	// CMD_TAKE_AMMO(0x82, ITEM_NUT),
-	CMD_TAKE_AMMO_INTERACTOR(0x82, ITEM_NUT),
 	// CMD_TAKE_AMMO(0x83, ITEM_BOMB),
-	CMD_TAKE_AMMO_INTERACTOR(0x83, ITEM_BOMB),
 	// CMD_TAKE_AMMO(0x84, ITEM_BOW),
-	CMD_TAKE_AMMO_INTERACTOR(0x84, ITEM_BOW),
 	// CMD_TAKE_AMMO(0x85, ITEM_SLINGSHOT),
+	CMD_TAKE_AMMO_INTERACTOR(0x80, ITEM_BOMBCHU),
+	CMD_TAKE_AMMO_INTERACTOR(0x81, ITEM_STICK),
+	CMD_TAKE_AMMO_INTERACTOR(0x82, ITEM_NUT),
+	CMD_TAKE_AMMO_INTERACTOR(0x83, ITEM_BOMB),
+	CMD_TAKE_AMMO_INTERACTOR(0x84, ITEM_BOW),
 	CMD_TAKE_AMMO_INTERACTOR(0x85, ITEM_SLINGSHOT),
 
 	// You can carry 50 chus if you have bomb bag when chus are not in logic, or have found chus previously with chus in logic
@@ -268,42 +268,42 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// 	}
 	// 	AMMO(ITEM_BOMBCHU) = s_add(AMMO(ITEM_BOMBCHU), amt, cap);
 	// }),
-	CMD_TAKE_AMMO_INTERACTOR(0xC0, ITEM_BOMBCHU),
 	// CMD_GIVE_AMMO(0xC1, ITEM_STICK, UPG_STICKS),
-	CMD_TAKE_AMMO_INTERACTOR(0xC1, ITEM_STICK),
 	// CMD_GIVE_AMMO(0xC2, ITEM_NUT, UPG_NUTS),
-	CMD_TAKE_AMMO_INTERACTOR(0xC2, ITEM_NUT, UPG_NUTS),
 	// CMD_GIVE_AMMO(0xC3, ITEM_BOMB, UPG_BOMB_BAG),
-	CMD_TAKE_AMMO_INTERACTOR(0xC3, ITEM_BOMB),
 	// CMD_GIVE_AMMO(0xC4, ITEM_BOW, UPG_QUIVER),
-	CMD_GIVE_AMMO_INTERACTOR(0xC4, ITEM_BOW),
 	// CMD_GIVE_AMMO(0xC5, ITEM_SLINGSHOT, UPG_BULLET_BAG),
-	CMD_TAKE_AMMO_INTERACTOR(0xC5, ITEM_SLINGSHOT),
+	CMD_GIVE_AMMO_INTERACTOR(0xC0, ITEM_BOMBCHU),
+	CMD_GIVE_AMMO_INTERACTOR(0xC1, ITEM_STICK),
+	CMD_GIVE_AMMO_INTERACTOR(0xC2, ITEM_NUT),
+	CMD_GIVE_AMMO_INTERACTOR(0xC3, ITEM_BOMB),
+	CMD_GIVE_AMMO_INTERACTOR(0xC4, ITEM_BOW),
+	CMD_GIVE_AMMO_INTERACTOR(0xC5, ITEM_SLINGSHOT),
 
-	// CMD(0xE2, PL_BYTES(sizeof(uint32_t)),
-	// 	CR_PRED(
-	// 		[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
-	// 		CR_TIMED_CVAR("gChaosForcedBoots", 0, 2))),
-	CMD_TIMED_INTERACTOR(0xE2, new GameInteractionEffect::ForceEquipBoots(), false,
-		[=](GameInteractionEffectBase* effect) {
-			effect->parameters[0] = PLAYER_BOOTS_IRON;
-		}),
-	// CMD(0xE3, PL_BYTES(sizeof(uint32_t)),
-	// 	CR_PRED(
-	// 		[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
-	// 		CR_TIMED_CVAR("gChaosForcedBoots", 0, 3))),
-	CMD_TIMED_INTERACTOR(0xE3, new GameInteractionEffect::ForceEquipBoots(), false,
-		[=](GameInteractionEffectBase* effect) {
-			effect->parameters[0] = PLAYER_BOOTS_HOVER;
-		}),
-	// CMD(0xEF, PL_BYTES(sizeof(uint32_t)),
-	// 	CR_PRED(
-	// 		[]() { return LINK_IS_CHILD && !CVarGetInteger("gChaosForcedBoots", 0); },
-	// 		CR_TIMED_CVAR("gChaosForcedBoots", 0, 0xF))),
-	CMD_TIMED_INTERACTOR(0xEF, new GameInteractionEffect::ForceEquipBoots(), false,
-		[=](GameInteractionEffectBase* effect) {
-			effect->parameters[0] = 0xD; // F boots
-		}),
+	CMD(0xE2, PL_BYTES(sizeof(uint32_t)),
+		CR_PRED(
+			[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
+			CR_TIMED_CVAR("gChaosForcedBoots", 0, 2))),
+	CMD(0xE3, PL_BYTES(sizeof(uint32_t)),
+		CR_PRED(
+			[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
+			CR_TIMED_CVAR("gChaosForcedBoots", 0, 3))),
+	CMD(0xEF, PL_BYTES(sizeof(uint32_t)),
+		CR_PRED(
+			[]() { return LINK_IS_CHILD && !CVarGetInteger("gChaosForcedBoots", 0); },
+			CR_TIMED_CVAR("gChaosForcedBoots", 0, 0xF))),
+	// CMD_TIMED_INTERACTOR(0xE2, new GameInteractionEffect::ForceEquipBoots(), false,
+	// 	[=](GameInteractionEffectBase* effect) {
+	// 		effect->parameters[0] = PLAYER_BOOTS_IRON;
+	// 	}),
+	// CMD_TIMED_INTERACTOR(0xE3, new GameInteractionEffect::ForceEquipBoots(), false,
+	// 	[=](GameInteractionEffectBase* effect) {
+	// 		effect->parameters[0] = PLAYER_BOOTS_HOVER;
+	// 	}),
+	// CMD_TIMED_INTERACTOR(0xEF, new GameInteractionEffect::ForceEquipBoots(), false,
+	// 	[=](GameInteractionEffectBase* effect) {
+	// 		effect->parameters[0] = 0xD; // F boots
+	// 	}),
 };
 
 static bool g_is_enabled = false;
