@@ -199,14 +199,15 @@ class OneShotBooleanCVarCommand : public OneShotCommand {
 
 class OneShotInteractorCommand : public OneShotCommand {
 	public:
-		OneShotInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f)
+		OneShotInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f, bool bypassStart = false)
 			: effect_(effect),
 			  applyParam_f_(applyParam_f),
+			  bypassStart_(bypassStart),
 			  OneShotCommand([=]() { tryApplyParam(); GameInteractor::ApplyEffect(effect_); }) {}
 
 		bool CanStart() override {
 			tryApplyParam();
-			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible;
+			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible || bypassStart_;
 		}
 
 		void tryApplyParam() {
@@ -217,13 +218,15 @@ class OneShotInteractorCommand : public OneShotCommand {
 
 		GameInteractionEffectBase* effect_;
 		std::function<void(GameInteractionEffectBase* effect)> applyParam_f_;
+		bool bypassStart_;
 };
 
 class TimedInteractorCommand : public OneShotTimedCommand {
 	public:
-		TimedInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f, uint32_t seconds)
+		TimedInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f, uint32_t seconds, bool bypassStart = false)
 			: effect_(effect),
 			  applyParam_f_(applyParam_f),
+			  bypassStart_(bypassStart),
 			  OneShotTimedCommand(
 				[=]() { tryApplyParam(); GameInteractor::ApplyEffect(effect_); },
 				[=]() { tryApplyParam(); GameInteractor::RemoveEffect(effect_); },
@@ -231,7 +234,7 @@ class TimedInteractorCommand : public OneShotTimedCommand {
 
 		bool CanStart() override {
 			tryApplyParam();
-			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible;
+			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible || bypassStart_;
 		}
 
 		bool CanStop() override {
@@ -246,6 +249,7 @@ class TimedInteractorCommand : public OneShotTimedCommand {
 
 		GameInteractionEffectBase* effect_;
 		std::function<void(GameInteractionEffectBase* effect)> applyParam_f_;
+		bool bypassStart_;
 };
 
 #endif

@@ -6,6 +6,7 @@
 #include "chaos_utils.h"
 
 #include <z64.h>
+#include <macros.h>
 #include <variables.h>
 #undef Polygon
 
@@ -52,7 +53,8 @@ struct CommandCreator {
 
 uint8_t CMD_ID = 0x11;
 static std::map<uint8_t, CommandCreator> kCommands {
-	CMD_ONE_SHOT(0x00, PL_NONE(), { push_pending_ice_trap(); }),
+	// CMD_ONE_SHOT(0x00, PL_NONE(), { push_pending_ice_trap(); }),
+	CMD_ONE_SHOT_INTERACTOR(0x00, new GameInteractionEffect::FreezePlayer(), false, nullptr),
 
 	CMD(0x01, PL_NONE(), 
 		CR_PRED(
@@ -70,14 +72,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 1.5f, 1.5f, 1.5f); }),
 	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
 
-	CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
+	// CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
+	CMD_TIMED_INTERACTOR(0x06, new GameInteractionEffect::OneHitKO(), false, nullptr),
 	// CMD_TIMED_BOOL_CVAR(0x07, "gChaosNoHud"),
-	CMD_TIMED_INTERACTOR(0x07, new GameInteractionEffect::NoUI(), nullptr),
+	CMD_TIMED_INTERACTOR(0x07, new GameInteractionEffect::NoUI(), false, nullptr),
 	// CMD_TIMED_BOOL_CVAR(0x08, "gChaosNoZ"),
-	CMD_TIMED_INTERACTOR(0x08, new GameInteractionEffect::DisableZTargeting(), nullptr),
+	CMD_TIMED_INTERACTOR(0x08, new GameInteractionEffect::DisableZTargeting(), false, nullptr),
 	CMD_TIMED_BOOL_CVAR(0x09, "gChaosTurbo"),
 	// CMD_TIMED_BOOL_CVAR(0x0A, "gChaosInvertControls"),
-	CMD_TIMED_INTERACTOR(0x0A, new GameInteractionEffect::ReverseControls(), nullptr),
+	CMD_TIMED_INTERACTOR(0x0A, new GameInteractionEffect::ReverseControls(), false, nullptr),
 
 	CMD(0x0B, PL_NONE(), 
 		CR_PRED(
@@ -95,23 +98,44 @@ static std::map<uint8_t, CommandCreator> kCommands {
 					count); 
 	}))),
 
-	CMD_ONE_SHOT(0x0D, PL_BYTES(sizeof(uint32_t)), { 
-		gSaveContext.health = s_add(gSaveContext.health, Read<uint32_t>(payload, 0), gSaveContext.healthCapacity); 
-	}),
-	CMD_ONE_SHOT(0x0E, PL_BYTES(sizeof(uint32_t)), { 
-		gSaveContext.health = s_sub(gSaveContext.health, Read<uint32_t>(payload, 0), 16); 
-	}),
+	// CMD_ONE_SHOT(0x0D, PL_BYTES(sizeof(uint32_t)), { 
+	// 	gSaveContext.health = s_add(gSaveContext.health, Read<uint32_t>(payload, 0), gSaveContext.healthCapacity);
+	// }),
+	// CMD_ONE_SHOT(0x0E, PL_BYTES(sizeof(uint32_t)), { 
+	// 	gSaveContext.health = s_sub(gSaveContext.health, Read<uint32_t>(payload, 0), 16);
+	// }),
+	CMD_ONE_SHOT_INTERACTOR(0x0D, new GameInteractionEffect::ModifyHealth(), true,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = Read<uint32_t>(payload, 0);
+		}),
+	CMD_ONE_SHOT_INTERACTOR(0x0E, new GameInteractionEffect::ModifyHealth(), true,
+		[=](GameInteractionEffectBase* effect) {
+			int healthToRemove = Read<uint32_t>(payload, 0);
+			if (gSaveContext.health - (healthToRemove * 16) <= 0) {
+				healthToRemove = ceil((gSaveContext.health / 16) - 1);
+			}
+			effect->parameters[0] = -healthToRemove;
+		}),
 
-	CMD_ONE_SHOT(0x0F, PL_BYTES(sizeof(uint32_t)), { 
-		gSaveContext.rupees = s_add(gSaveContext.rupees, Read<uint32_t>(payload, 0), CUR_CAPACITY(UPG_WALLET)); 
-	}),
-	CMD_ONE_SHOT(0x10, PL_BYTES(sizeof(uint32_t)), { 
-		gSaveContext.rupees = s_sub(gSaveContext.rupees, Read<uint32_t>(payload, 0), 16); 
-	}),
+	// CMD_ONE_SHOT(0x0F, PL_BYTES(sizeof(uint32_t)), { 
+	// 	gSaveContext.rupees = s_add(gSaveContext.rupees, Read<uint32_t>(payload, 0), CUR_CAPACITY(UPG_WALLET));
+	// }),
+	// CMD_ONE_SHOT(0x10, PL_BYTES(sizeof(uint32_t)), { 
+	// 	gSaveContext.rupees = s_sub(gSaveContext.rupees, Read<uint32_t>(payload, 0), 16);
+	// }),
+	CMD_ONE_SHOT_INTERACTOR(0x0F, new GameInteractionEffect::ModifyRupees(), true,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = Read<uint32_t>(payload, 0);
+		}),
+	CMD_ONE_SHOT_INTERACTOR(0x10, new GameInteractionEffect::ModifyRupees(), true,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = -Read<uint32_t>(payload, 0);
+		}),
 
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableFPSView"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gForceNormalArrows"),
-	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableLedges"),
+	// CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableLedges"),
+	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::DisableLedgeGrabs(), false, nullptr),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFloorIsLava"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gExplodingRolls"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gFreezingRolls"),
@@ -124,8 +148,10 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNaviSpam"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gScuffedLink"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gRaveMode"),
-	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gInvisPlayer"),
-	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gSlipperyFloor"),
+	// CMD_TIMED_BOOL_CVAR(CMD_ID++, "gInvisPlayer"),
+	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::InvisibleLink(), false, nullptr),
+	// CMD_TIMED_BOOL_CVAR(CMD_ID++, "gSlipperyFloor"),
+	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::SlipperyFloor(), false, nullptr),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gIceDamage"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gElectricDamage"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gKnockbackDamage"),
@@ -177,7 +203,7 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gAnnoyingText"),
 
 	// Paper link
-	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::ModifyLinkSize(),
+	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::ModifyLinkSize(), false,
 		[&](GameInteractionEffectBase* effect) { effect->parameters[0] = GI_LINK_SIZE_PAPER; }),
 
 	// CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
@@ -202,7 +228,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT(CMD_ID++, PL_BYTES(sizeof(uint32_t)), { CosmeticsEditor_RandomizeAll(); }),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gPogoStick"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSunsSong"),
-	CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
+	// CMD_ONE_SHOT_INTERACTOR(CMD_ID++, new GameInteractionEffect::SetTimeOfDay(), false,
+	// 	[=](GameInteractionEffectBase* effect) {
+	// 		effect->parameters[0] = IS_DAY ? 0 : 0x8000;
+	// 	}),
+	// CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
+	CMD_ONE_SHOT_INTERACTOR(CMD_ID++, new GameInteractionEffect::PressButton(), false, nullptr,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = BTN_A;
+		}),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gButtonSwap"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gRandoMagic"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gNoStrength"),
@@ -210,42 +244,66 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gForceUnequip"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gShuffleItems"),
 
-	CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
-	CMD_TAKE_AMMO(0x81, ITEM_STICK),
-	CMD_TAKE_AMMO(0x82, ITEM_NUT),
-	CMD_TAKE_AMMO(0x83, ITEM_BOMB),
-	CMD_TAKE_AMMO(0x84, ITEM_BOW),
-	CMD_TAKE_AMMO(0x85, ITEM_SLINGSHOT),
+	// CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
+	CMD_TAKE_AMMO_INTERACTOR(0x80, ITEM_BOMBCHU),
+	// CMD_TAKE_AMMO(0x81, ITEM_STICK),
+	CMD_TAKE_AMMO_INTERACTOR(0x81, ITEM_STICK),
+	// CMD_TAKE_AMMO(0x82, ITEM_NUT),
+	CMD_TAKE_AMMO_INTERACTOR(0x82, ITEM_NUT),
+	// CMD_TAKE_AMMO(0x83, ITEM_BOMB),
+	CMD_TAKE_AMMO_INTERACTOR(0x83, ITEM_BOMB),
+	// CMD_TAKE_AMMO(0x84, ITEM_BOW),
+	CMD_TAKE_AMMO_INTERACTOR(0x84, ITEM_BOW),
+	// CMD_TAKE_AMMO(0x85, ITEM_SLINGSHOT),
+	CMD_TAKE_AMMO_INTERACTOR(0x85, ITEM_SLINGSHOT),
 
 	// You can carry 50 chus if you have bomb bag when chus are not in logic, or have found chus previously with chus in logic
-	CMD_ONE_SHOT(0xC0, PL_BYTES(sizeof(uint32_t)), {
-		uint32_t amt = Read<uint32_t>(payload, 0);
-		size_t cap = 50;
-		bool bombchusInLogic = OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOMBCHUS_IN_LOGIC);
-		if ((bombchusInLogic && INV_CONTENT(ITEM_BOMBCHU) == ITEM_NONE) ||
-			(!bombchusInLogic && CUR_CAPACITY(UPG_BOMB_BAG) == 0)) {
-			cap = 0;
-		}
-		AMMO(ITEM_BOMBCHU) = s_add(AMMO(ITEM_BOMBCHU), amt, cap);
-	}),
-	CMD_GIVE_AMMO(0xC1, ITEM_STICK, UPG_STICKS),
-	CMD_GIVE_AMMO(0xC2, ITEM_NUT, UPG_NUTS),
-	CMD_GIVE_AMMO(0xC3, ITEM_BOMB, UPG_BOMB_BAG),
-	CMD_GIVE_AMMO(0xC4, ITEM_BOW, UPG_QUIVER),
-	CMD_GIVE_AMMO(0xC5, ITEM_SLINGSHOT, UPG_BULLET_BAG),
+	// CMD_ONE_SHOT(0xC0, PL_BYTES(sizeof(uint32_t)), {
+	// 	uint32_t amt = Read<uint32_t>(payload, 0);
+	// 	size_t cap = 50;
+	// 	bool bombchusInLogic = OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOMBCHUS_IN_LOGIC);
+	// 	if ((bombchusInLogic && INV_CONTENT(ITEM_BOMBCHU) == ITEM_NONE) ||
+	// 		(!bombchusInLogic && CUR_CAPACITY(UPG_BOMB_BAG) == 0)) {
+	// 		cap = 0;
+	// 	}
+	// 	AMMO(ITEM_BOMBCHU) = s_add(AMMO(ITEM_BOMBCHU), amt, cap);
+	// }),
+	CMD_TAKE_AMMO_INTERACTOR(0xC0, ITEM_BOMBCHU),
+	// CMD_GIVE_AMMO(0xC1, ITEM_STICK, UPG_STICKS),
+	CMD_TAKE_AMMO_INTERACTOR(0xC1, ITEM_STICK),
+	// CMD_GIVE_AMMO(0xC2, ITEM_NUT, UPG_NUTS),
+	CMD_TAKE_AMMO_INTERACTOR(0xC2, ITEM_NUT, UPG_NUTS),
+	// CMD_GIVE_AMMO(0xC3, ITEM_BOMB, UPG_BOMB_BAG),
+	CMD_TAKE_AMMO_INTERACTOR(0xC3, ITEM_BOMB),
+	// CMD_GIVE_AMMO(0xC4, ITEM_BOW, UPG_QUIVER),
+	CMD_GIVE_AMMO_INTERACTOR(0xC4, ITEM_BOW),
+	// CMD_GIVE_AMMO(0xC5, ITEM_SLINGSHOT, UPG_BULLET_BAG),
+	CMD_TAKE_AMMO_INTERACTOR(0xC5, ITEM_SLINGSHOT),
 
-	CMD(0xE2, PL_BYTES(sizeof(uint32_t)), 
-		CR_PRED(
-			[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
-			CR_TIMED_CVAR("gChaosForcedBoots", 0, 2))),
-	CMD(0xE3, PL_BYTES(sizeof(uint32_t)), 
-		CR_PRED(
-			[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
-			CR_TIMED_CVAR("gChaosForcedBoots", 0, 3))),
-	CMD(0xEF, PL_BYTES(sizeof(uint32_t)), 
-		CR_PRED(
-			[]() { return LINK_IS_CHILD && !CVarGetInteger("gChaosForcedBoots", 0); },
-			CR_TIMED_CVAR("gChaosForcedBoots", 0, 0xF))),
+	// CMD(0xE2, PL_BYTES(sizeof(uint32_t)),
+	// 	CR_PRED(
+	// 		[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
+	// 		CR_TIMED_CVAR("gChaosForcedBoots", 0, 2))),
+	CMD_TIMED_INTERACTOR(0xE2, new GameInteractionEffect::ForceEquipBoots(), false,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = PLAYER_BOOTS_IRON;
+		}),
+	// CMD(0xE3, PL_BYTES(sizeof(uint32_t)),
+	// 	CR_PRED(
+	// 		[]() { return LINK_IS_ADULT && !CVarGetInteger("gChaosForcedBoots", 0); },
+	// 		CR_TIMED_CVAR("gChaosForcedBoots", 0, 3))),
+	CMD_TIMED_INTERACTOR(0xE3, new GameInteractionEffect::ForceEquipBoots(), false,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = PLAYER_BOOTS_HOVER;
+		}),
+	// CMD(0xEF, PL_BYTES(sizeof(uint32_t)),
+	// 	CR_PRED(
+	// 		[]() { return LINK_IS_CHILD && !CVarGetInteger("gChaosForcedBoots", 0); },
+	// 		CR_TIMED_CVAR("gChaosForcedBoots", 0, 0xF))),
+	CMD_TIMED_INTERACTOR(0xEF, new GameInteractionEffect::ForceEquipBoots(), false,
+		[=](GameInteractionEffectBase* effect) {
+			effect->parameters[0] = 0xD; // F boots
+		}),
 };
 
 static bool g_is_enabled = false;
