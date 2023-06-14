@@ -25,6 +25,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
 #include <overlays/actors/ovl_En_Partner/z_en_partner.h>
+#include "soh/Enhancements/enhancementTypes.h"
 
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
 #include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
@@ -1398,7 +1399,7 @@ s32 Player_ClearAttentionModeAndStopMoving(Player* this) {
 s32 Player_CheckActorTalkRequested(PlayState* play) {
     Player* this = GET_PLAYER(play);
 
-    return CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_8);
+    return CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_PLAYER_TALKED_TO);
 }
 
 void Player_PlayAnimOnce(PlayState* play, Player* this, LinkAnimationHeader* anim) {
@@ -2090,7 +2091,7 @@ s32 Player_IsFriendlyZTargeting(Player* this) {
 }
 
 s32 Player_SetupStartUnfriendlyZTargeting(Player* this) {
-    if ((this->targetActor != NULL) && CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_2)) {
+    if ((this->targetActor != NULL) && CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_HOSTILE)) {
         this->stateFlags1 |= PLAYER_STATE1_Z_TARGETING_UNFRIENDLY;
         return 1;
     }
@@ -2163,7 +2164,7 @@ void Player_SetupUseItem(Player* this, PlayState* play) {
     s32 i;
 
     if (this->currentMask != PLAYER_MASK_NONE) {
-        if (CVarGetInteger("gMMBunnyHood", 0) != 0) {
+        if (CVarGetInteger("gMMBunnyHood", BUNNY_HOOD_VANILLA) != BUNNY_HOOD_VANILLA) {
             s32 maskItem = this->currentMask - PLAYER_MASK_KEATON + ITEM_MASK_KEATON;
             bool hasOnDpad = false;
             if (CVarGetInteger("gDpadEquips", 0) != 0) {
@@ -3420,7 +3421,7 @@ void Player_SetupZTargeting(Player* this, PlayState* play) {
                 holdTarget = (gSaveContext.zTargetSetting != 0) || (this->actor.category != ACTORCAT_PLAYER);
                 this->stateFlags1 |= PLAYER_STATE1_UNUSED_Z_TARGETING_FLAG;
 
-                if ((actorToTarget != NULL) && !(actorToTarget->flags & ACTOR_FLAG_27)) {
+                if ((actorToTarget != NULL) && !(actorToTarget->flags & ACTOR_FLAG_NO_LOCKON)) {
                     if ((actorToTarget == this->targetActor) && (this->actor.category == ACTORCAT_PLAYER)) {
                         actorToTarget = play->actorCtx.targetCtx.unk_94;
                     }
@@ -3462,7 +3463,7 @@ void Player_SetupZTargeting(Player* this, PlayState* play) {
         if (this->targetActor != NULL) {
             this->stateFlags1 &= ~(PLAYER_STATE1_FORCE_STRAFING | PLAYER_STATE1_Z_TARGETING_FRIENDLY);
             if ((this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) ||
-                !CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_2)) {
+                !CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_HOSTILE)) {
                 this->stateFlags1 |= PLAYER_STATE1_FORCE_STRAFING;
             }
         } else {
@@ -3945,6 +3946,7 @@ void Player_SetupDamage(PlayState* play, Player* this, s32 damageReaction, f32 k
             Player_SetActionFunc(play, this, Player_StartKnockback, 0);
 
             this->stateFlags3 |= PLAYER_STATE3_MIDAIR;
+            this->stateFlags3 |= PLAYER_STATE3_MIDAIR;
 
             Player_RequestRumble(this, 255, 20, 150, 0);
             Player_ClearAttentionModeAndStopMoving(this);
@@ -4204,7 +4206,7 @@ s32 Player_UpdateDamage(Player* this, PlayState* play) {
                 Actor* ac = this->cylinder.base.ac;
                 s32 damageReaction;
 
-                if (ac->flags & ACTOR_FLAG_24) {
+                if (ac->flags & ACTOR_FLAG_PLAY_HIT_SFX) {
                     func_8002F7DC(&this->actor, NA_SE_PL_BODY_HIT);
                 }
 
@@ -4279,6 +4281,7 @@ void Player_SetupJumpWithSfx(Player* this, LinkAnimationHeader* anim, f32 arg2, 
     Player_PlayJumpSfx(this);
     Player_PlayVoiceSfxForAge(this, sfxId);
 
+    this->stateFlags1 |= PLAYER_STATE1_JUMPING;
     this->stateFlags1 |= PLAYER_STATE1_JUMPING;
 }
 
@@ -4654,7 +4657,8 @@ s32 Player_SetupOpenDoor(Player* this, PlayState* play) {
     if ((this->doorType != PLAYER_DOORTYPE_NONE) &&
         (!(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) ||
          ((this->heldActor != NULL) && (this->heldActor->id == ACTOR_EN_RU1)))) {
-        if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) || (Player_SetupOpenDoorFromSpawn == this->actionFunc)) {
+        // Disable doors in Boss Rush so the player can't leave the boss rooms backwards.
+        if ((CHECK_BTN_ALL(sControlInput->press.button, BTN_A) || (Player_SetupOpenDoorFromSpawn == this->actionFunc)) && !gSaveContext.isBossRush) {
             doorActor = this->doorActor;
 
             if (this->doorType <= PLAYER_DOORTYPE_AJAR) {
@@ -5333,7 +5337,7 @@ s32 Player_SetupItemCutsceneOrFirstPerson(Player* this, PlayState* play) {
                                 this->genericTimer = 0x50;
                                 this->genericVar = -1;
                             }
-                            targetActor->flags |= ACTOR_FLAG_8;
+                            targetActor->flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
                             this->targetActor = this->talkActor;
                         } else if (item == EXCH_ITEM_LETTER_RUTO) {
                             this->genericVar = 1;
@@ -5345,7 +5349,7 @@ s32 Player_SetupItemCutsceneOrFirstPerson(Player* this, PlayState* play) {
                             Player_SetCameraTurnAround(play, 4);
                         }
 
-                        this->actor.flags |= ACTOR_FLAG_8;
+                        this->actor.flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
                         this->exchangeItemId = item;
 
                         if (this->genericVar < 0) {
@@ -5419,7 +5423,7 @@ s32 Player_SetupSpeakOrCheck(Player* this, PlayState* play) {
     s32 naviHasText = 0;
     s32 targetActorHasText;
 
-    targetActorHasText = (targetActor != NULL) && (CHECK_FLAG_ALL(targetActor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_18) || (targetActor->naviEnemyId != 0xFF));
+    targetActorHasText = (targetActor != NULL) && (CHECK_FLAG_ALL(targetActor->flags, ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_NAVI_HAS_INFO) || (targetActor->naviEnemyId != 0xFF));
 
     if (targetActorHasText || (this->naviTextId != 0)) {
         naviHasText = (this->naviTextId < 0) && ((ABS(this->naviTextId) & 0xFF00) != 0x200);
@@ -5438,13 +5442,13 @@ s32 Player_SetupSpeakOrCheck(Player* this, PlayState* play) {
         if ((targetActor == NULL) || (targetActor == talkActor) || (targetActor == naviActor)) {
             if (!(this->stateFlags1 & PLAYER_STATE1_HOLDING_ACTOR) ||
                 ((this->heldActor != NULL) && (naviHasText || (talkActor == this->heldActor) || (naviActor == this->heldActor) ||
-                                               ((talkActor != NULL) && (talkActor->flags & ACTOR_FLAG_16))))) {
+                                               ((talkActor != NULL) && (talkActor->flags & ACTOR_FLAG_WILL_TALK))))) {
                 if ((this->actor.bgCheckFlags & 1) || (this->stateFlags1 & PLAYER_STATE1_RIDING_HORSE) ||
                     (Player_IsSwimming(this) && !(this->stateFlags2 & PLAYER_STATE2_DIVING))) {
 
                     if (talkActor != NULL) {
                         this->stateFlags2 |= PLAYER_STATE2_CAN_SPEAK_OR_CHECK;
-                        if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) || (talkActor->flags & ACTOR_FLAG_16)) {
+                        if (CHECK_BTN_ALL(sControlInput->press.button, BTN_A) || (talkActor->flags & ACTOR_FLAG_WILL_TALK)) {
                             naviActor = NULL;
                         } else if (naviActor == NULL) {
                             return 0;
@@ -5508,7 +5512,7 @@ s32 Player_SetupCUpBehavior(Player* this, PlayState* play) {
     }
 
     if ((this->targetActor != NULL) &&
-        (CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_18) || (this->targetActor->naviEnemyId != 0xFF))) {
+        (CHECK_FLAG_ALL(this->targetActor->flags, ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_NAVI_HAS_INFO) || (this->targetActor->naviEnemyId != 0xFF))) {
         this->stateFlags2 |= PLAYER_STATE2_NAVI_REQUESTING_TALK;
     } else if ((this->naviTextId == 0 || CVarGetInteger("gNaviOnL", 0)) && !Player_IsUnfriendlyZTargeting(this) &&
                CHECK_BTN_ALL(sControlInput->press.button, BTN_CUP) && (YREG(15) != 0x10) && (YREG(15) != 0x20) &&
@@ -6394,7 +6398,7 @@ void func_8083DFE0(Player* this, f32* arg1, s16* arg2) {
             }
         }
 
-        if (CVarGetInteger("gMMBunnyHood", 0) == 1 && this->currentMask == PLAYER_MASK_BUNNY) {
+        if (CVarGetInteger("gMMBunnyHood", BUNNY_HOOD_VANILLA) == BUNNY_HOOD_FAST_AND_JUMP && this->currentMask == PLAYER_MASK_BUNNY) {
             maxSpeed *= 1.5f;
         } 
         
@@ -6759,7 +6763,7 @@ void func_8083EA94(Player* this, PlayState* play) {
 }
 
 s32 func_8083EAF0(Player* this, Actor* actor) {
-    if ((actor != NULL) && !(actor->flags & ACTOR_FLAG_23) &&
+    if ((actor != NULL) && !(actor->flags & ACTOR_FLAG_ALWAYS_THROWN) &&
         ((this->linearVelocity < 1.1f) || (actor->id == ACTOR_EN_BOM_CHU))) {
         return 0;
     }
@@ -8053,10 +8057,10 @@ void Player_Run(Player* this, PlayState* play) {
                 }
             }
 
-            if (CVarGetInteger("gMMBunnyHood", 0) && this->currentMask == PLAYER_MASK_BUNNY) {
+            if (CVarGetInteger("gMMBunnyHood", BUNNY_HOOD_VANILLA) != BUNNY_HOOD_VANILLA && this->currentMask == PLAYER_MASK_BUNNY) {
                 sp2C *= 1.5f;
             }
-
+            
             if (CVarGetInteger("gEnableWalkModify", 0)) {
                 if (CVarGetInteger("gWalkSpeedToggle", 0)) {
                     if (gWalkSpeedToggle1) {
@@ -8207,7 +8211,7 @@ void func_8084279C(Player* this, PlayState* play) {
                 this, GET_PLAYER_ANIM(PLAYER_ANIMGROUP_END_CHECKING_OR_SPEAKING, this->modelAnimType), play);
         }
 
-        this->actor.flags &= ~ACTOR_FLAG_8;
+        this->actor.flags &= ~ACTOR_FLAG_PLAYER_TALKED_TO;
         func_8005B1A4(Play_GetCamera(play, 0));
     }
 }
@@ -8464,7 +8468,7 @@ void Player_AimShieldCrouched(Player* this, PlayState* play) {
 
     if (this->genericTimer != 0) {
         sp54 = sControlInput->rel.stick_y * 100;
-        sp50 = sControlInput->rel.stick_x * -120;
+        sp50 = sControlInput->rel.stick_x * (CVarGetInteger("gMirroredWorld", 0) ? 120 : -120);
         sp4E = this->actor.shape.rot.y - Camera_GetInputDirYaw(GET_ACTIVE_CAM(play));
 
         sp40 = Math_CosS(sp4E);
@@ -9157,6 +9161,7 @@ void Player_ChargeSpinAttack(Player* this, PlayState* play) {
     s16 sp32;
     s32 temp;
 
+    this->stateFlags1 |= PLAYER_STATE1_CHARGING_SPIN_ATTACK;
     this->stateFlags1 |= PLAYER_STATE1_CHARGING_SPIN_ATTACK;
 
     if (LinkAnimation_Update(play, &this->skelAnime)) {
@@ -10026,7 +10031,7 @@ void Player_Init(Actor* thisx, PlayState* play2) {
     Player_UseItem(play, this, ITEM_NONE);
     Player_SetEquipmentData(play, this);
     this->prevBoots = this->currentBoots;
-    if (CVarGetInteger("gMMBunnyHood", 0)) {
+    if (CVarGetInteger("gMMBunnyHood", BUNNY_HOOD_VANILLA) != BUNNY_HOOD_VANILLA) {
         if (INV_CONTENT(ITEM_TRADE_CHILD) == ITEM_SOLD_OUT) {
             sMaskMemory = PLAYER_MASK_NONE;
         }
@@ -10631,7 +10636,7 @@ void Player_UpdateCamAndSeqModes(PlayState* play, Player* this) {
             } else if (this->stateFlags2 & PLAYER_STATE2_ENABLE_PUSH_PULL_CAM) {
                 camMode = CAM_MODE_PUSHPULL;
             } else if ((targetActor = this->targetActor) != NULL) {
-                if (CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_8)) {
+                if (CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_PLAYER_TALKED_TO)) {
                     camMode = CAM_MODE_TALK;
                 } else if (this->stateFlags1 & PLAYER_STATE1_FORCE_STRAFING) {
                     if (this->stateFlags1 & PLAYER_STATE1_AWAITING_THROWN_BOOMERANG) {
@@ -11974,7 +11979,7 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
         Player_UpdateYaw(this, play);
 
-        if (CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_8)) {
+        if (CHECK_FLAG_ALL(this->actor.flags, ACTOR_FLAG_PLAYER_TALKED_TO)) {
             this->talkActorDistance = 0.0f;
         } else {
             this->talkActor = NULL;
@@ -12437,6 +12442,9 @@ void Player_Destroy(Actor* thisx, PlayState* play) {
     func_800876C8(play);
 
     gSaveContext.linkAge = play->linkAgeOnLoad;
+
+    ResourceMgr_UnregisterSkeleton(&this->skelAnime);
+    ResourceMgr_UnregisterSkeleton(&this->skelAnime2);
 }
 
 //first person manipulate player actor
@@ -12444,12 +12452,13 @@ s16 func_8084ABD8(PlayState* play, Player* this, s32 arg2, s16 arg3) {
     s32 temp1;
     s16 temp2;
     s16 temp3;
+    bool gInvertAimingXAxis = (CVarGetInteger("gInvertAimingXAxis", 0) && !CVarGetInteger("gMirroredWorld", 0)) || (!CVarGetInteger("gInvertAimingXAxis", 0) && CVarGetInteger("gMirroredWorld", 0));
 
     if (!Actor_PlayerIsAimingReadyFpsItem(this) && !Player_IsAimingReadyBoomerang(this) && (arg2 == 0) && !CVarGetInteger("gDisableAutoCenterViewFirstPerson", 0)) {
         temp2 = sControlInput->rel.stick_y * 240.0f * (CVarGetInteger("gInvertAimingYAxis", 1) ? 1 : -1); // Sensitivity not applied here because higher than default sensitivies will allow the camera to escape the autocentering, and glitch out massively
         Math_SmoothStepToS(&this->actor.focus.rot.x, temp2, 14, 4000, 30);
 
-        temp2 = sControlInput->rel.stick_x * -16.0f * (CVarGetInteger("gInvertAimingXAxis", 0) ? -1 : 1) * (CVarGetFloat("gFirstPersonCameraSensitivityX", 1.0f));
+        temp2 = sControlInput->rel.stick_x * -16.0f * (gInvertAimingXAxis ? -1 : 1) * (CVarGetFloat("gFirstPersonCameraSensitivityX", 1.0f));
         temp2 = CLAMP(temp2, -3000, 3000);
         this->actor.focus.rot.y += temp2;
     } else {
@@ -12474,18 +12483,18 @@ s16 func_8084ABD8(PlayState* play, Player* this, s32 arg2, s16 arg3) {
         temp2 = this->actor.focus.rot.y - this->actor.shape.rot.y;
         temp3 = ((sControlInput->rel.stick_x >= 0) ? 1 : -1) *
                 (s32)((1.0f - Math_CosS(sControlInput->rel.stick_x * 200)) * -1500.0f *
-                        (CVarGetInteger("gInvertAimingXAxis", 0) ? -1 : 1)) * (CVarGetFloat("gFirstPersonCameraSensitivityX", 1.0f));
+                        (gInvertAimingXAxis ? -1 : 1)) * (CVarGetFloat("gFirstPersonCameraSensitivityX", 1.0f));
         temp2 += temp3;
 
         this->actor.focus.rot.y = CLAMP(temp2, -temp1, temp1) + this->actor.shape.rot.y;
 
         if (fabsf(sControlInput->cur.gyro_y) > 0.01f) {
-            this->actor.focus.rot.y += (sControlInput->cur.gyro_y) * 750.0f;
+            this->actor.focus.rot.y += (sControlInput->cur.gyro_y) * 750.0f * (CVarGetInteger("gMirroredWorld", 0) ? -1 : 1);
         }
 
         if (fabsf(sControlInput->cur.right_stick_x) > 15.0f && CVarGetInteger("gRightStickAiming", 0) != 0) {
             this->actor.focus.rot.y +=
-                (sControlInput->cur.right_stick_x) * 10.0f * (CVarGetInteger("gInvertAimingXAxis", 0) ? 1 : -1) * (CVarGetFloat("gFirstPersonCameraSensitivityX", 1.0f));
+                (sControlInput->cur.right_stick_x) * 10.0f * (gInvertAimingXAxis ? 1 : -1) * (CVarGetFloat("gFirstPersonCameraSensitivityX", 1.0f));
         }
     }
 
@@ -12664,9 +12673,9 @@ void Player_TalkWithActor(Player* this, PlayState* play) {
     Player_SetupCurrentUpperAction(this, play);
 
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CLOSING) {
-        this->actor.flags &= ~ACTOR_FLAG_8;
+        this->actor.flags &= ~ACTOR_FLAG_PLAYER_TALKED_TO;
 
-        if (!CHECK_FLAG_ALL(this->talkActor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_2)) {
+        if (!CHECK_FLAG_ALL(this->talkActor->flags, ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_HOSTILE)) {
             this->stateFlags2 &= ~PLAYER_STATE2_USING_SWITCH_Z_TARGETING;
         }
 
@@ -13044,7 +13053,7 @@ void Player_ClimbingWallOrDownLedge(Player* this, PlayState* play) {
                 if ((this->genericVar != 0) && (sp80 != 0)) {
                     anim2 = this->ageProperties->unk_BC[this->genericTimer];
 
-                    if (sp80 > 0) {
+                    if (CVarGetInteger("gMirroredWorld", 0) ? (sp80 < 0) : (sp80 > 0)) {
                         this->skelAnime.prevTransl = this->ageProperties->unk_7A[this->genericTimer];
                         Player_PlayAnimOnce(play, this, anim2);
                     } else {
@@ -13986,6 +13995,7 @@ void Player_PlayOcarina(Player* this, PlayState* play) {
 
         this->csMode = 0;
         this->stateFlags1 &= ~PLAYER_STATE1_IN_CUTSCENE;
+        this->stateFlags1 &= ~PLAYER_STATE1_IN_CUTSCENE;
 
         Player_SetupPlayerCutscene(play, NULL, 8);
         play->mainCamera.unk_14C &= ~8;
@@ -14421,7 +14431,7 @@ void Player_PresentExchangeItem(Player* this, PlayState* play) {
 
             this->giDrawIdPlusOne = 0;
             if (targetActor->textId != 0xFFFF) {
-                this->actor.flags |= ACTOR_FLAG_8;
+                this->actor.flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
             }
 
             Player_StartTalkingWithActor(play, targetActor);
@@ -14445,7 +14455,7 @@ void Player_PresentExchangeItem(Player* this, PlayState* play) {
 
                 this->genericTimer = 1;
             } else if (Message_GetState(&play->msgCtx) == TEXT_STATE_CLOSING) {
-                this->actor.flags &= ~ACTOR_FLAG_8;
+                this->actor.flags &= ~ACTOR_FLAG_PLAYER_TALKED_TO;
                 this->giDrawIdPlusOne = 0;
 
                 if (this->genericVar == 1) {
@@ -14740,9 +14750,9 @@ s32 Player_CheckNoDebugModeCombo(Player* this, PlayState* play) {
                 if (CHECK_BTN_ALL(sControlInput->cur.button, BTN_DDOWN)) {
                     angle = temp + 0x8000;
                 } else if (CHECK_BTN_ALL(sControlInput->cur.button, BTN_DLEFT)) {
-                    angle = temp + 0x4000;
+                    angle = temp + (0x4000 * (CVarGetInteger("gMirroredWorld", 0) ? -1 : 1));
                 } else if (CHECK_BTN_ALL(sControlInput->cur.button, BTN_DRIGHT)) {
-                    angle = temp - 0x4000;
+                    angle = temp - (0x4000 * (CVarGetInteger("gMirroredWorld", 0) ? -1 : 1));
                 }
 
                 this->actor.world.pos.x += speed * Math_SinS(angle);
@@ -16183,7 +16193,7 @@ void Player_CutsceneUnk6Update(PlayState* play, Player* this, CsCmdActorAction* 
     }
 
     if (linkCsAction == NULL) {
-        this->actor.flags &= ~ACTOR_FLAG_6;
+        this->actor.flags &= ~ACTOR_FLAG_ACTIVE;
         return;
     }
 
@@ -16310,8 +16320,8 @@ void Player_StartTalkingWithActor(PlayState* play, Actor* actor) {
     s32 pad;
 
     if ((this->talkActor != NULL) || (actor == this->naviActor) ||
-        CHECK_FLAG_ALL(actor->flags, ACTOR_FLAG_0 | ACTOR_FLAG_18)) {
-        actor->flags |= ACTOR_FLAG_8;
+        CHECK_FLAG_ALL(actor->flags, ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_NAVI_HAS_INFO)) {
+        actor->flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
     }
 
     this->talkActor = actor;
@@ -16319,13 +16329,13 @@ void Player_StartTalkingWithActor(PlayState* play, Actor* actor) {
 
     if (actor->textId == 0xFFFF) {
         func_8002DF54(play, actor, 1);
-        actor->flags |= ACTOR_FLAG_8;
+        actor->flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
         Player_UnequipItem(play, this);
     } else {
-        if (this->actor.flags & ACTOR_FLAG_8) {
+        if (this->actor.flags & ACTOR_FLAG_PLAYER_TALKED_TO) {
             this->actor.textId = 0;
         } else {
-            this->actor.flags |= ACTOR_FLAG_8;
+            this->actor.flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
             this->actor.textId = actor->textId;
         }
 
@@ -16368,7 +16378,7 @@ void Player_StartTalkingWithActor(PlayState* play, Actor* actor) {
     }
 
     if ((this->naviActor == this->talkActor) && ((this->talkActor->textId & 0xFF00) != 0x200)) {
-        this->naviActor->flags |= ACTOR_FLAG_8;
+        this->naviActor->flags |= ACTOR_FLAG_PLAYER_TALKED_TO;
         Player_SetCameraTurnAround(play, 0xB);
     }
 }

@@ -18,7 +18,7 @@ while [[ (! -e "$SHIP_HOME"/oot.otr) || (! -e "$SHIP_HOME"/oot-mq.otr) ]]; do
         do
             if [[ -e $romfile ]]; then
                 export ASSETDIR="$(mktemp -d /tmp/assets-XXXXX)"
-                ln -s "$HERE"/usr/bin/{assets,soh.elf,OTRGui} "$ASSETDIR"
+                ln -s "$HERE"/usr/bin/{assets,soh.elf,ZAPD} "$ASSETDIR"
                 export OLDPWD="$PWD"
                 mkdir -p "$ASSETDIR"/tmp
 	            mkdir -p "$ASSETDIR"/Extract
@@ -35,6 +35,14 @@ while [[ (! -e "$SHIP_HOME"/oot.otr) || (! -e "$SHIP_HOME"/oot-mq.otr) ]]; do
                 0227d7c0074f2d0ac935631990da8ec5914597b4)
                     if [[ ! -e "$SHIP_HOME"/oot.otr ]]; then
                         ROM=GC_NMQ_PAL_F
+                        OTRNAME="oot.otr"
+                    else
+                        continue
+                    fi
+                    ;;
+                cfbb98d392e4a9d39da8285d10cbef3974c2f012)
+                    if [[ ! -e "$SHIP_HOME"/oot.otr ]]; then
+                        ROM=N64_PAL_11
                         OTRNAME="oot.otr"
                     else
                         continue

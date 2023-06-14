@@ -11,8 +11,6 @@ extern void* __cdecl memset(_Out_writes_bytes_all_(_Size) void* _Dst, _In_ int _
 
 s32 D_8012D280 = 1;
 
-static ControllerCallback controllerCallback;
-
 OSMesgQueue* PadMgr_LockSerialMesgQueue(PadMgr* padMgr) {
     OSMesgQueue* ctrlrQ = NULL;
 
@@ -211,6 +209,7 @@ void PadMgr_RumbleSet(PadMgr* padMgr, u8* ctrlrRumbles) {
     padMgr->rumbleOnFrames = 240;
 }
 
+#define PAUSE_BUFFER_INPUT_BLOCK_ID 0
 void PadMgr_ProcessInputs(PadMgr* padMgr) {
     s32 i;
     Input* input;
@@ -347,29 +346,13 @@ void PadMgr_ProcessInputs(PadMgr* padMgr) {
         input->press.stick_y += (s8)(input->cur.stick_y - input->prev.stick_y);
     }
 
-    controllerCallback.rumble = (padMgr->rumbleEnable[0] > 0);
+    uint8_t rumble = (padMgr->rumbleEnable[0] > 0);
+    OTRControllerCallback(rumble);
 
-    if (HealthMeter_IsCritical()) {
-        controllerCallback.ledColor = 0;
-    } else if (gPlayState) {
-        switch (CUR_EQUIP_VALUE(EQUIP_TUNIC) - 1) {
-            case PLAYER_TUNIC_KOKIRI:
-                controllerCallback.ledColor = 1;
-                break;
-            case PLAYER_TUNIC_GORON:
-                controllerCallback.ledColor = 2;
-                break;
-            case PLAYER_TUNIC_ZORA:
-                controllerCallback.ledColor = 3;
-                break;
-        }
-    }
-
-    OTRControllerCallback(&controllerCallback);
     if (CVarGetInteger("gPauseBufferBlockInputFrame", 0)) {
-        Controller_BlockGameInput();
+        ControllerBlockGameInput(PAUSE_BUFFER_INPUT_BLOCK_ID);
     } else {
-        Controller_UnblockGameInput();
+        ControllerUnblockGameInput(PAUSE_BUFFER_INPUT_BLOCK_ID);
     }
 
     PadMgr_UnlockPadData(padMgr);

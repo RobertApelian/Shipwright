@@ -29,6 +29,10 @@ void Sram_InitDebugSave(void) {
     Save_InitFile(true);
 }
 
+void Sram_InitBossRushSave(void) {
+    Save_InitFile(false);
+}
+
 /**
  *  Copy save currently on the buffer to Save Context and complete various tasks to open the save.
  *  This includes:
@@ -222,6 +226,7 @@ void Sram_InitSave(FileChooseContext* fileChooseCtx) {
     }
 
     Save_SaveFile();
+    SaveManager_ThreadPoolWait();
 }
 
 void Sram_InitSram(GameState* gameState) {
