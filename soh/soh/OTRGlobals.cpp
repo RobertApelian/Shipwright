@@ -873,7 +873,7 @@ extern "C" void Graph_StartFrame() {
             bool muteState = !prevState;
             CVarSetInteger("gMusicMuted", muteState);
 
-            SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, muteState ? "Muting" : "Unmuting");
+            LUS::Context::GetInstance()->GetWindow()->GetGui()->GetGameOverlay()->TextDrawNotification(10.0f, true, muteState ? "Muting" : "Unmuting");
 
             Audio_SetGameVolume(0, muteState ? 0 : CVarGetFloat("gMainMusicVolume", 1));
             Audio_SetGameVolume(3, muteState ? 0 : CVarGetFloat("gSubMusicVolume", 1));

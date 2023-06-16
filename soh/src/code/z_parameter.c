@@ -3665,6 +3665,9 @@ void Interface_DrawEnemyHealthBar(PlayState* play) {
     func_8002BE04(play, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
 
     projTarget.x = (SCREEN_WIDTH / 2) * ((projTarget.x * projTargetCappedInvW) + 1);
+    if (CVarGetInteger("gMirroredWorld", 0)) {
+        projTarget.x = SCREEN_WIDTH - projTarget.x;
+    }
     healthBarX = projTarget.x - (R_HEALTH_BAR_WIDTH / 2);
 
     projTarget.y = -(SCREEN_HEIGHT / 2) * ((projTarget.y * projTargetCappedInvW) - 1);

@@ -1,6 +1,8 @@
 #ifndef _CHAOS_COMMANDS_H_
 #define _CHAOS_COMMANDS_H_
 
+#include <libultraship/libultraship.h>
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -11,7 +13,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 
 void Log(const std::string& msg) {
-	SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, msg.c_str());
+	LUS::Context::GetInstance()->GetWindow()->GetGui()->GetGameOverlay()->TextDrawNotification(10.0f, true, msg.c_str());
 }
 
 class ChaosCommand {

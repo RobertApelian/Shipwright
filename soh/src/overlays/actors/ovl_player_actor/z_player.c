@@ -12444,7 +12444,7 @@ void Player_Destroy(Actor* thisx, PlayState* play) {
     gSaveContext.linkAge = play->linkAgeOnLoad;
 
     ResourceMgr_UnregisterSkeleton(&this->skelAnime);
-    ResourceMgr_UnregisterSkeleton(&this->skelAnime2);
+    ResourceMgr_UnregisterSkeleton(&this->skelAnimeUpper);
 }
 
 //first person manipulate player actor

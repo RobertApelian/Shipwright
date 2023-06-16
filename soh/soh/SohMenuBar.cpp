@@ -460,6 +460,23 @@ void DrawEnhancementsMenu() {
 
         if (ImGui::BeginMenu("Gameplay"))
         {
+            // if (ImGui::BeginMenu("Chaos (TESTING)"))
+            // {
+            //     UIWidgets::EnhancementCheckbox("Scuffed Link", "gScuffedLink");
+            //     UIWidgets::EnhancementCheckbox("Pogo Stick", "gPogoStick");
+            //     UIWidgets::EnhancementCheckbox("Force Sun's Song", "gSunsSong");
+            //     UIWidgets::EnhancementCheckbox("Force A Press", "gPressA");
+            //     UIWidgets::EnhancementCheckbox("Swap All Buttons", "gButtonSwap");
+            //     UIWidgets::EnhancementCheckbox("Randomize Magic", "gRandoMagic");
+            //     UIWidgets::EnhancementCheckbox("Force No Strength", "gNoStrength");
+            //     UIWidgets::EnhancementCheckbox("Removes All Water", "gNoWater");
+            //     UIWidgets::EnhancementCheckbox("Force Unequip Current Item", "gForceUnequip");
+            //     UIWidgets::EnhancementCheckbox("Shuffle Equipped Items", "gShuffleItems");
+            //     ImGui::EndMenu();
+            // };
+            UIWidgets::EnhancementCheckbox("Chaos Mode", "gChaosEnabled");
+            UIWidgets::Tooltip("Toggles Chaos mode");
+
             if (ImGui::BeginMenu("Time Savers"))
             {
                 UIWidgets::PaddedEnhancementSliderInt("Text Speed: %dx", "##TEXTSPEED", "gTextSpeed", 1, 5, "", 1, true, false, true);

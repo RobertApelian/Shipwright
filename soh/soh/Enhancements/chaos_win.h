@@ -22,7 +22,7 @@ void PlatformStart() {
                        0,             // default attributes
                        NULL);         // no template file
     if (hPipe == INVALID_HANDLE_VALUE) {
-        SohImGui::GetGameOverlay()->TextDrawNotification(10.0f, true, "Failed to open pipe");
+        LUS::Context::GetInstance()->GetWindow()->GetGui()->GetGameOverlay()->TextDrawNotification(10.0f, true, "Failed to open pipe");
         PlatformStop();
     }
 }
