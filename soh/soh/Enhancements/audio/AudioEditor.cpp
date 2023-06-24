@@ -547,6 +547,8 @@ void AudioEditor::DrawElement() {
 std::vector<SeqType> allTypes = { SEQ_BGM_WORLD, SEQ_BGM_EVENT, SEQ_BGM_BATTLE, SEQ_OCARINA, SEQ_FANFARE, SEQ_INSTRUMENT, SEQ_SFX };
 
 void AudioEditor_RandomizeAll() {
+    AudioCollection::Instance->InitializeShufflePool();
+
     for (auto type : allTypes) {
         RandomizeGroup(type);
     }

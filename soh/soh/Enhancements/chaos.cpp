@@ -68,8 +68,18 @@ static std::map<uint8_t, CommandCreator> kCommands {
 			CR_ONE_SHOT({ toggle_age(); }))),
 
 	CMD_ONE_SHOT(0x03, PL_NONE(), { gSaveContext.health = 0; }),
-	CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 1.5f, 1.5f, 1.5f); }),
-	CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
+	// CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 1.5f, 1.5f, 1.5f); }),
+	CMD_ONE_SHOT(0x04, PL_NONE(), { GameInteractor::ChaosState::CustomLinkScale *= 1.5f; }),
+	// CMD_ONE_SHOT_INTERACTOR(0x04, new GameInteractionEffect::ModifyLinkScale(), true,
+	// 	[=](GameInteractionEffectBase* effect) {
+	// 		effect->parameters[0] = 1.5f;
+	// 	}),
+	// CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
+	CMD_ONE_SHOT(0x05, PL_NONE(), { GameInteractor::ChaosState::CustomLinkScale *= 0.66f; }),
+	// CMD_ONE_SHOT_INTERACTOR(0x05, new GameInteractionEffect::ModifyLinkScale(), true,
+	// 	[=](GameInteractionEffectBase* effect) {
+	// 		effect->parameters[0] = 0.66;
+	// 	}),
 
 	// CMD_TIMED_BOOL_CVAR(0x06, "gChaosOHKO"),
 	CMD_TIMED_INTERACTOR(0x06, new GameInteractionEffect::OneHitKO(), false, nullptr),
@@ -393,6 +403,13 @@ void EachFrameCallback() {
 	CVarSetInteger("gHookshotLengthRemove", std::clamp<uint32_t>(g_hookshot_length_modifier, 0, 9));
 }
 
+void RegisterChaosHooks() {
+	GameInteractor::Instance->RegisterGameHook<GameInteractor::OnSceneInit>([](int16_t sceneNum) {
+		// GameInteractor::RemoveEffect(new GameInteractionEffect::ModifyLinkScale());
+		GameInteractor::ChaosState::CustomLinkScale = 1.0f;
+    });
+}
+
 extern "C" {
 	void Chaos_ResetAll() {
 		CVarSetInteger("gChaosForcedBoots", 0);
@@ -464,8 +481,10 @@ extern "C" {
   		CVarRegisterInteger("gChaosNoZ", 0);
   		CVarRegisterInteger("gChaosTurbo", 0);
   		CVarRegisterInteger("gChaosInvertControls", 0);
-		
+
 		Chaos_ResetAll();
+
+		RegisterChaosHooks();
 	}
 
 	void Chaos_EachFrame() {

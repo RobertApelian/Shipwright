@@ -12207,6 +12207,15 @@ void Player_Update(Actor* thisx, PlayState* play) {
     }
     
     GameInteractor_ExecuteOnPlayerUpdate();
+
+    // Chaos
+    f32 customScale = GameInteractor_CustomLinkScale();
+    this->actor.scale.x = 0.01f * customScale;
+    this->actor.scale.y = 0.01f * customScale;
+    this->actor.scale.z = 0.01f * customScale;
+    if (GameInteractor_GetLinkSize() == GI_LINK_SIZE_PAPER) {
+        this->actor.scale.x /= 10.0f;
+    }
 }
 
 static struct_80858AC8 D_80858AC8;

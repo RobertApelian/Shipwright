@@ -4,6 +4,7 @@
 #define GameInteractor_h
 
 #include "GameInteractionEffect.h"
+#include "soh/Enhancements/ChaosInteractorEffect.h"
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
 
 typedef enum {
@@ -83,6 +84,9 @@ uint8_t GameInteractor_GetRandomWindActive();
 uint8_t GameInteractor_GetRandomBonksActive();
 uint8_t GameInteractor_GetSlipperyFloorActive();
 uint8_t GameInteractor_SecondCollisionUpdate();
+
+// Chaos ==========================================================
+float GameInteractor_CustomLinkScale();
 #ifdef __cplusplus
 }
 #endif
@@ -129,6 +133,7 @@ public:
 
     // Effects
     static GameInteractionEffectQueryResult CanApplyEffect(GameInteractionEffectBase* effect);
+    static GameInteractionEffectQueryResult CanRemoveEffect(GameInteractionEffectBase* effect);
     static GameInteractionEffectQueryResult ApplyEffect(GameInteractionEffectBase* effect);
     static GameInteractionEffectQueryResult RemoveEffect(GameInteractionEffectBase* effect);
 
@@ -215,6 +220,16 @@ public:
 
         static GameInteractionEffectQueryResult SpawnEnemyWithOffset(uint32_t enemyId, int32_t enemyParams);
         static GameInteractionEffectQueryResult SpawnActor(uint32_t actorId, int32_t actorParams);
+    };
+
+    // Chaos ==========================================================
+    class ChaosState {
+    public:
+        static float CustomLinkScale;
+    };
+
+    class ChaosRawAction {
+    public:
     };
 };
 

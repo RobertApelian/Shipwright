@@ -209,7 +209,7 @@ class OneShotInteractorCommand : public OneShotCommand {
 
 		bool CanStart() override {
 			tryApplyParam();
-			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible || bypassStart_;
+			return bypassStart_ || GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible;
 		}
 
 		void tryApplyParam() {
@@ -236,11 +236,12 @@ class TimedInteractorCommand : public OneShotTimedCommand {
 
 		bool CanStart() override {
 			tryApplyParam();
-			return GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible || bypassStart_;
+			return bypassStart_ || GameInteractor::CanApplyEffect(effect_) == GameInteractionEffectQueryResult::Possible;
 		}
 
 		bool CanStop() override {
-			return CanStart();
+			tryApplyParam();
+			return bypassStart_ || GameInteractor::CanRemoveEffect(effect_) == GameInteractionEffectQueryResult::Possible;
 		}
 
 		void tryApplyParam() {
