@@ -3644,82 +3644,145 @@ void Interface_DrawMagicBar(PlayState* play) {
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
-#define R_HEALTH_BAR_WIDTH 64
+static Vtx sEnemyHealthVtx[12];
 
-void Interface_DrawEnemyHealthBar(PlayState* play) {
+// Build vertex coordinates for a quad command
+// In order of top left, top right, bottom left, then bottom right
+// Supports flipping the texture horizontally
+void Interface_CreateQuadVertexGroup(Vtx* vtxList, s32 xStart, s32 yStart, s32 width, s32 height, u8 flippedH) {
+    vtxList[0].v.ob[0] = xStart;
+    vtxList[0].v.ob[1] = yStart;
+    vtxList[0].v.tc[0] = (flippedH ? width : 0) << 5;
+    vtxList[0].v.tc[1] = 0 << 5;
+
+    vtxList[1].v.ob[0] = xStart + width;
+    vtxList[1].v.ob[1] = yStart;
+    vtxList[1].v.tc[0] = (flippedH ? width * 2 : width) << 5;
+    vtxList[1].v.tc[1] = 0 << 5;
+
+    vtxList[2].v.ob[0] = xStart;
+    vtxList[2].v.ob[1] = yStart + height;
+    vtxList[2].v.tc[0] = (flippedH ? width : 0) << 5;
+    vtxList[2].v.tc[1] = height << 5;
+
+    vtxList[3].v.ob[0] = xStart + width;
+    vtxList[3].v.ob[1] = yStart + height;
+    vtxList[3].v.tc[0] = (flippedH ? width * 2 : width) << 5;
+    vtxList[3].v.tc[1] = height << 5;
+}
+
+// Draws an enemy health bar using the magic bar textures and positions it in a similar way to Z-Targeting
+void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
-    TargetContextEntry* entry;
     Player* player = GET_PLAYER(play);
-    Actor* targetActor = player->targetActor;
-    Vec3f projTarget;
+    Actor* actor = targetCtx->targetedActor;
+
+    Vec3f projTargetCenter;
     f32 projTargetCappedInvW;
-    f32 curHealth = targetActor->colChkInfo.health;
-    f32 maxHealth = targetActor->maxHealth;
-    s16 healthBarFill;
-    s16 healthBarX;
-    s16 healthBarY;
+
+    Color_RGBA8 healthbar_red = { 255, 0, 0, 255 - 90 };
+    Color_RGBA8 healthbar_border = { 255, 255, 255, 255 - 90 };
+    s16 healthbar_fillWidth = 64;
+    s16 healthbar_actorOffset = 40;
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    // Get actor projected position
-    func_8002BE04(play, &targetActor->focus.pos, &projTarget, &projTargetCappedInvW);
+    if (targetCtx->unk_48 != 0 && actor != NULL && actor->category == ACTORCAT_ENEMY) {
+        s16 texHeight = 16;
+        s16 endTexWidth = 8;
+        f32 scaleY = -0.75f;
+        f32 scaledHeight = -texHeight * scaleY;
+        f32 halfBarWidth = endTexWidth + (healthbar_fillWidth / 2);
+        s16 healthBarFill = ((f32)actor->colChkInfo.health / actor->maxHealth) * healthbar_fillWidth;
 
-    projTarget.x = (SCREEN_WIDTH / 2) * ((projTarget.x * projTargetCappedInvW) + 1);
-    if (CVarGetInteger("gMirroredWorld", 0)) {
-        projTarget.x = SCREEN_WIDTH - projTarget.x;
-    }
-    healthBarX = projTarget.x - (R_HEALTH_BAR_WIDTH / 2);
+        // Get actor projected position
+        func_8002BE04(play, &targetCtx->targetCenterPos, &projTargetCenter, &projTargetCappedInvW);
 
-    projTarget.y = -(SCREEN_HEIGHT / 2) * ((projTarget.y * projTargetCappedInvW) - 1);
-    healthBarY = projTarget.y - 32;
+        projTargetCenter.x = (SCREEN_WIDTH / 2) * (projTargetCenter.x * projTargetCappedInvW);
+        projTargetCenter.x = projTargetCenter.x * (CVarGetInteger("gMirroredWorld", 0) ? -1 : 1);
+        projTargetCenter.x = CLAMP(projTargetCenter.x, (-SCREEN_WIDTH / 2) + halfBarWidth,
+                                    (SCREEN_WIDTH / 2) - halfBarWidth);
 
-    healthBarFill = (curHealth / maxHealth) * R_HEALTH_BAR_WIDTH;
+        projTargetCenter.y = (SCREEN_HEIGHT / 2) * (projTargetCenter.y * projTargetCappedInvW);
+        projTargetCenter.y = projTargetCenter.y + healthbar_actorOffset;
+        projTargetCenter.y = CLAMP(projTargetCenter.y, (-SCREEN_HEIGHT / 2) + (scaledHeight / 2),
+                                    (SCREEN_HEIGHT / 2) - (scaledHeight / 2));
 
-    CVarSetInteger("healthBarX", healthBarX);
-    CVarSetInteger("healthBarY", healthBarY);
+        // Health bar border end left
+        Interface_CreateQuadVertexGroup(&sEnemyHealthVtx[0], -halfBarWidth, -texHeight / 2, endTexWidth, texHeight, 0);
+        // Health bar border middle
+        Interface_CreateQuadVertexGroup(&sEnemyHealthVtx[4], -halfBarWidth + endTexWidth, -texHeight / 2,
+                                        healthbar_fillWidth, texHeight, 0);
+        // Health bar border end right
+        Interface_CreateQuadVertexGroup(&sEnemyHealthVtx[8], halfBarWidth - endTexWidth, -texHeight / 2, endTexWidth,
+                                        texHeight, 1);
+        // Health bar fill
+        Interface_CreateQuadVertexGroup(&sEnemyHealthVtx[12], -halfBarWidth + endTexWidth, (-texHeight / 2) + 3,
+                                        healthBarFill, 7, 0);
 
-    if (healthBarX > -8 && healthBarY > 0) {
-        // Setup DL for overlay disp
-        Gfx_SetupDL_39Overlay(play->state.gfxCtx);
+        if (((!(player->stateFlags1 & 0x40)) || (actor != player->targetActor)) && targetCtx->unk_44 < 500.0f) {
+            f32 slideInOffsetY = 0;
 
-        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255,
-                        CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
-        gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
+            // Slide in the health bar from edge of the screen (mimic the Z-Target triangles fly in)
+            if (targetCtx->unk_44 > 120.0f) {
+                slideInOffsetY = (targetCtx->unk_44 - 120.0f) / 2;
+                slideInOffsetY *= -1;
+            }
 
-        OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gMagicMeterEndTex, 8, 16, healthBarX, healthBarY, 8, 16,
-                                        1 << 10, 2 << 10);
+            // Setup DL for overlay disp
+            Gfx_SetupDL_39Overlay(play->state.gfxCtx);
 
-        OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gMagicMeterMidTex, 24, 16, healthBarX + 8, healthBarY,
-                                        R_HEALTH_BAR_WIDTH, 16, 1 << 10, 2 << 10);
+            Matrix_Translate(projTargetCenter.x, projTargetCenter.y - slideInOffsetY, 0, MTXMODE_NEW);
+            Matrix_Scale(1.0f, scaleY, 1.0f, MTXMODE_APPLY);
+            gSPMatrix(OVERLAY_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_MODELVIEW | G_MTX_LOAD);
 
-        gDPLoadTextureBlock(OVERLAY_DISP++, gMagicMeterEndTex, G_IM_FMT_IA, G_IM_SIZ_8b, 8, 16, 0,
-                            G_TX_MIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 3, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
+            // Health bar border
+            gDPSetPrimColor(OVERLAY_DISP++, 0, 0, healthbar_border.r, healthbar_border.g, healthbar_border.b,
+                            healthbar_border.a);
+            gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
 
-        gSPTextureRectangle(OVERLAY_DISP++,
-                            ((healthBarX + R_HEALTH_BAR_WIDTH) + 8) << 2,  // upper X
-                            healthBarY << 2,                               // upper Y
-                            ((healthBarX + R_HEALTH_BAR_WIDTH) + 16) << 2, // lower X
-                            (healthBarY + 16) << 2,                        // lower Y
-                            G_TX_RENDERTILE, 256, 0, 1 << 10, 2 << 10);
+            gSPVertex(OVERLAY_DISP++, sEnemyHealthVtx, 16, 0);
 
-        gDPPipeSync(OVERLAY_DISP++);
-        gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE, PRIMITIVE,
-                            ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE);
-        gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 0, 255);
-
-        // Fill the health bar with red
-        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 0, 0, CLAMP(interfaceCtx->magicAlpha - 90, 0, 255));
-
-        gDPLoadMultiBlock_4b(OVERLAY_DISP++, gMagicMeterFillTex, 0, G_TX_RENDERTILE, G_IM_FMT_I, 16, 16, 0,
+            gDPLoadTextureBlock(OVERLAY_DISP++, gMagicMeterEndTex, G_IM_FMT_IA, G_IM_SIZ_8b, endTexWidth, texHeight, 0,
                                 G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
                                 G_TX_NOLOD, G_TX_NOLOD);
 
-        gSPTextureRectangle(OVERLAY_DISP++,
-                            (healthBarX + 8) << 2,                   // upper X
-                            (healthBarY + 2) << 2,                   // upper Y
-                            ((healthBarX + 8) + healthBarFill) << 2, // lower X
-                            (healthBarY + 5) << 2,                  // lower Y
-                            G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
+            gSP1Quadrangle(OVERLAY_DISP++, 0, 2, 3, 1, 0);
+
+            gDPLoadTextureBlock(OVERLAY_DISP++, gMagicMeterMidTex, G_IM_FMT_IA, G_IM_SIZ_8b, endTexWidth, texHeight, 0,
+                                G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
+                                G_TX_NOLOD, G_TX_NOLOD);
+
+            gSP1Quadrangle(OVERLAY_DISP++, 4, 6, 7, 5, 0);
+
+            gDPLoadTextureBlock(OVERLAY_DISP++, gMagicMeterEndTex, G_IM_FMT_IA, G_IM_SIZ_8b, endTexWidth, texHeight, 0,
+                                G_TX_MIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 3, G_TX_NOMASK, G_TX_NOLOD,
+                                G_TX_NOLOD);
+
+            gSP1Quadrangle(OVERLAY_DISP++, 8, 10, 11, 9, 0);
+
+            // Health bar fill
+            Matrix_Push();
+            Matrix_Translate(-0.375f, -0.5f, 0, MTXMODE_APPLY);
+            gSPMatrix(OVERLAY_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_MODELVIEW | G_MTX_LOAD);
+
+            gDPPipeSync(OVERLAY_DISP++);
+            gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE,
+                              PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, 0, 0, 0, PRIMITIVE);
+            gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 0, 255);
+
+            gDPSetPrimColor(OVERLAY_DISP++, 0, 0, healthbar_red.r, healthbar_red.g, healthbar_red.b, healthbar_red.a);
+
+            gDPLoadMultiBlock_4b(OVERLAY_DISP++, gMagicMeterFillTex, 0, G_TX_RENDERTILE, G_IM_FMT_I, 16, texHeight, 0,
+                                 G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
+                                 G_TX_NOLOD, G_TX_NOLOD);
+
+            gSPVertex(OVERLAY_DISP++, &sEnemyHealthVtx[12], 4, 0);
+
+            gSP1Quadrangle(OVERLAY_DISP++, 0, 2, 3, 1, 0);
+
+            Matrix_Pop();
+        }
     }
 
     CLOSE_DISPS(play->state.gfxCtx);
@@ -5164,13 +5227,6 @@ void Interface_Draw(PlayState* play) {
             Interface_DrawLineupTick(play);
         }
 
-        // Check if target actor exists
-        if (player->targetActor != NULL && CVarGetInteger("gEnemyHealthBar", 0)) {
-            if (player->targetActor->category == ACTORCAT_ENEMY && play->pauseCtx.state < 4) {
-                Interface_DrawEnemyHealthBar(play);
-            }
-        }
-
         if (fullUi || gSaveContext.magicState > 0) {
             Interface_DrawMagicBar(play);
         }
@@ -5184,6 +5240,11 @@ void Interface_Draw(PlayState* play) {
             func_8002C124(&play->actorCtx.targetCtx, play); // Draw Z-Target
             if (CVarGetInteger("gMirroredWorld", 0)) {
                 gSPMatrix(OVERLAY_DISP++, interfaceCtx->view.projectionPtr, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_PROJECTION);
+            }
+
+            // Render enemy health bar after Z-target to leverage set variables
+            if (CVarGetInteger("gEnemyHealthBar", 0)) {
+                Interface_DrawEnemyHealthBar(&play->actorCtx.targetCtx, play);
             }
         }
 
