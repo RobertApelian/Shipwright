@@ -26,6 +26,13 @@
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
 #include <overlays/actors/ovl_En_Partner/z_en_partner.h>
 #include "soh/Enhancements/enhancementTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include "soh/Enhancements/randomizer/randomizer_grotto.h"
+#include "soh/frame_interpolation.h"
+
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include "overlays/actors/ovl_En_Bom/z_en_bom.h"
 #include "overlays/actors/ovl_Bg_Spot15_Saku/z_bg_spot15_saku.h"
@@ -1385,13 +1392,13 @@ static LinkAnimationHeader* sReadyFpsItemAnims[] = {
 };
 
 // return type can't be void due to regalloc in Player_CheckNoDebugModeCombo
-s32 Player_StopMovement(Player* this) {
+void Player_StopMovement(Player* this) {
     this->actor.speedXZ = 0.0f;
     this->linearVelocity = 0.0f;
 }
 
 // return type can't be void due to regalloc in func_8083F72C
-s32 Player_ClearAttentionModeAndStopMoving(Player* this) {
+void Player_ClearAttentionModeAndStopMoving(Player* this) {
     Player_StopMovement(this);
     this->attentionMode = 0;
 }
@@ -5218,7 +5225,7 @@ void Player_LoadGetItemObject(Player* this, s16 objectId) {
         size = gObjectTable[objectId].vromEnd - gObjectTable[objectId].vromStart;
 
         LOG_HEX("size", size);
-        ASSERT(size <= 1024 * 8);
+        assert(size <= 1024 * 8);
 
         DmaMgr_SendRequest2(&this->giObjectDmaRequest, (uintptr_t)this->giObjectSegment,
                             gObjectTable[objectId].vromStart, size, 0, &this->giObjectLoadQueue, OS_MESG_PTR(NULL),
