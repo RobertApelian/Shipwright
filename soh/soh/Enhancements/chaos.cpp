@@ -255,6 +255,16 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gMoonwalk"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gDisableLedgeJump"),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gChaosRedeem"),
+	CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+		CR_TIMED(
+			[&]() {
+				CVarSetInteger("gHyperBosses", 1);
+				CVarSetInteger("gHyperEnemies", 1);
+			},
+			[&]() {
+				CVarSetInteger("gHyperBosses", 0);
+				CVarSetInteger("gHyperEnemies", 0);
+			})),
 
 	// CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
 	// CMD_TAKE_AMMO(0x81, ITEM_STICK),
