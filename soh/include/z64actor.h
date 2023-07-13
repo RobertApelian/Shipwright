@@ -179,6 +179,9 @@ typedef struct Actor {
     /* 0x138 */ ActorResetFunc reset;
     /*       */ u8 maxHealth; // Health value for an actor immediately after actor init is finished
     /* 0x13C */ char dbgPad[0x10]; // Padding that only exists in the debug rom
+    // #region SOH [General]
+    /*       */ u8 maximumHealth; // Max health value for use with health bars, set on actor init
+    // #endregion
 } Actor; // size = 0x14C
 
 typedef enum {

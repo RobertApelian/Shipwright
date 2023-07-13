@@ -3679,10 +3679,23 @@ void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
     Vec3f projTargetCenter;
     f32 projTargetCappedInvW;
 
-    Color_RGBA8 healthbar_red = { 255, 0, 0, 255 - 90 };
-    Color_RGBA8 healthbar_border = { 255, 255, 255, 255 - 90 };
+    Color_RGBA8 healthbar_red = { 255, 0, 0, 255 };
+    Color_RGBA8 healthbar_border = { 255, 255, 255, 255 };
     s16 healthbar_fillWidth = 64;
     s16 healthbar_actorOffset = 40;
+    s32 healthbar_offsetX = CVarGetInteger("gCosmetics.Hud_EnemyHealthBarPosX", 0);
+    s32 healthbar_offsetY = CVarGetInteger("gCosmetics.Hud_EnemyHealthBarPosY", 0);
+    s8 anchorType = CVarGetInteger("gCosmetics.Hud_EnemyHealthBarPosType", ENEMYHEALTH_ANCHOR_ACTOR);
+
+    if (CVarGetInteger("gCosmetics.Hud_EnemyHealthBar.Changed", 0)) {
+        healthbar_red = CVarGetColor("gCosmetics.Hud_EnemyHealthBar.Value", healthbar_red);
+    }
+    if (CVarGetInteger("gCosmetics.Hud_EnemyHealthBorder.Changed", 0)) {
+        healthbar_border = CVarGetColor("gCosmetics.Hud_EnemyHealthBorder.Value", healthbar_border);
+    }
+    if (CVarGetInteger("gCosmetics.Hud_EnemyHealthBarWidth.Changed", 0)) {
+        healthbar_fillWidth = CVarGetInteger("gCosmetics.Hud_EnemyHealthBarWidth.Value", healthbar_fillWidth);
+    }
 
     OPEN_DISPS(play->state.gfxCtx);
 
@@ -3692,20 +3705,28 @@ void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
         f32 scaleY = -0.75f;
         f32 scaledHeight = -texHeight * scaleY;
         f32 halfBarWidth = endTexWidth + (healthbar_fillWidth / 2);
-        s16 healthBarFill = ((f32)actor->colChkInfo.health / actor->maxHealth) * healthbar_fillWidth;
+        s16 healthBarFill = ((f32)actor->colChkInfo.health / actor->maximumHealth) * healthbar_fillWidth;
 
-        // Get actor projected position
-        func_8002BE04(play, &targetCtx->targetCenterPos, &projTargetCenter, &projTargetCappedInvW);
+        if (anchorType == ENEMYHEALTH_ANCHOR_ACTOR) {
+            // Get actor projected position
+            func_8002BE04(play, &targetCtx->targetCenterPos, &projTargetCenter, &projTargetCappedInvW);
 
-        projTargetCenter.x = (SCREEN_WIDTH / 2) * (projTargetCenter.x * projTargetCappedInvW);
-        projTargetCenter.x = projTargetCenter.x * (CVarGetInteger("gMirroredWorld", 0) ? -1 : 1);
-        projTargetCenter.x = CLAMP(projTargetCenter.x, (-SCREEN_WIDTH / 2) + halfBarWidth,
-                                    (SCREEN_WIDTH / 2) - halfBarWidth);
+            projTargetCenter.x = (SCREEN_WIDTH / 2) * (projTargetCenter.x * projTargetCappedInvW);
+            projTargetCenter.x = projTargetCenter.x * (CVarGetInteger("gMirroredWorld", 0) ? -1 : 1);
+            projTargetCenter.x = CLAMP(projTargetCenter.x, (-SCREEN_WIDTH / 2) + halfBarWidth,
+                                       (SCREEN_WIDTH / 2) - halfBarWidth);
 
-        projTargetCenter.y = (SCREEN_HEIGHT / 2) * (projTargetCenter.y * projTargetCappedInvW);
-        projTargetCenter.y = projTargetCenter.y + healthbar_actorOffset;
-        projTargetCenter.y = CLAMP(projTargetCenter.y, (-SCREEN_HEIGHT / 2) + (scaledHeight / 2),
-                                    (SCREEN_HEIGHT / 2) - (scaledHeight / 2));
+            projTargetCenter.y = (SCREEN_HEIGHT / 2) * (projTargetCenter.y * projTargetCappedInvW);
+            projTargetCenter.y = projTargetCenter.y - healthbar_offsetY + healthbar_actorOffset;
+            projTargetCenter.y = CLAMP(projTargetCenter.y, (-SCREEN_HEIGHT / 2) + (scaledHeight / 2),
+                                       (SCREEN_HEIGHT / 2) - (scaledHeight / 2));
+        } else if (anchorType == ENEMYHEALTH_ANCHOR_TOP) {
+            projTargetCenter.x = healthbar_offsetX;
+            projTargetCenter.y = (SCREEN_HEIGHT / 2) - (scaledHeight / 2) - healthbar_offsetY;
+        } else if (anchorType == ENEMYHEALTH_ANCHOR_BOTTOM) {
+            projTargetCenter.x = healthbar_offsetX;
+            projTargetCenter.y = (-SCREEN_HEIGHT / 2) + (scaledHeight / 2) - healthbar_offsetY;
+        }
 
         // Health bar border end left
         Interface_CreateQuadVertexGroup(&sEnemyHealthVtx[0], -halfBarWidth, -texHeight / 2, endTexWidth, texHeight, 0);
@@ -3723,9 +3744,12 @@ void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
             f32 slideInOffsetY = 0;
 
             // Slide in the health bar from edge of the screen (mimic the Z-Target triangles fly in)
-            if (targetCtx->unk_44 > 120.0f) {
+            if (anchorType == ENEMYHEALTH_ANCHOR_ACTOR && targetCtx->unk_44 > 120.0f) {
                 slideInOffsetY = (targetCtx->unk_44 - 120.0f) / 2;
-                slideInOffsetY *= -1;
+                // Slide in from the top if the bar is placed on the top half of the screen
+                if (healthbar_offsetY - healthbar_actorOffset <= 0) {
+                    slideInOffsetY *= -1;
+                }
             }
 
             // Setup DL for overlay disp
@@ -3736,6 +3760,7 @@ void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
             gSPMatrix(OVERLAY_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_MODELVIEW | G_MTX_LOAD);
 
             // Health bar border
+            gDPPipeSync(OVERLAY_DISP++);
             gDPSetPrimColor(OVERLAY_DISP++, 0, 0, healthbar_border.r, healthbar_border.g, healthbar_border.b,
                             healthbar_border.a);
             gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
@@ -3748,7 +3773,7 @@ void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
 
             gSP1Quadrangle(OVERLAY_DISP++, 0, 2, 3, 1, 0);
 
-            gDPLoadTextureBlock(OVERLAY_DISP++, gMagicMeterMidTex, G_IM_FMT_IA, G_IM_SIZ_8b, endTexWidth, texHeight, 0,
+            gDPLoadTextureBlock(OVERLAY_DISP++, gMagicMeterMidTex, G_IM_FMT_IA, G_IM_SIZ_8b, 24, texHeight, 0,
                                 G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
                                 G_TX_NOLOD, G_TX_NOLOD);
 
