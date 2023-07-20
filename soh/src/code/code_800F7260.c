@@ -4,6 +4,10 @@
 
 #include "soh/Enhancements/audio/AudioEditor.h"
 
+// #region CHAOS
+#include <stdlib.h>
+// #endregion
+
 typedef struct {
     /* 0x00 */ u16 sfxId;
     /* 0x04 */ Vec3f* pos;
