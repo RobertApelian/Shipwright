@@ -96,11 +96,19 @@ float GameInteractor_CustomLinkScale();
 
 #include <vector>
 #include <functional>
+#include <string>
 
 #define DEFINE_HOOK(name, type)         \
     struct name {                       \
         typedef std::function<type> fn; \
     }
+
+struct DogFollower {
+    std::string name;
+    void* dog;
+    int16_t params;
+    float scale;
+};
 
 class GameInteractor {
 public:
@@ -228,6 +236,7 @@ public:
     class ChaosState {
     public:
         static float CustomLinkScale;
+        static std::vector<DogFollower> DogFollowers;
     };
 
     class ChaosRawAction {

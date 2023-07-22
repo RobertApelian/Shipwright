@@ -321,6 +321,7 @@ static std::map<std::string, CosmeticOption> cosmeticOptions = {
     // Todo (Cosmetics): Health fairy
     COSMETIC_OPTION("NPC_Dog1",                      "Dog 1",                GROUP_NPC,          ImVec4(255, 255, 200, 255), false, true, true),
     COSMETIC_OPTION("NPC_Dog2",                      "Dog 2",                GROUP_NPC,          ImVec4(150, 100,  50, 255), false, true, true),
+    COSMETIC_OPTION("NPC_Dog3",                      "Shiny Dog Redeem",     GROUP_NPC,          ImVec4(150, 100,  50, 255), false, true, true),
     COSMETIC_OPTION("NPC_GoldenSkulltula",           "Golden Skulltula",     GROUP_NPC,          ImVec4(255, 255, 255, 255), false, true, false),
     COSMETIC_OPTION("NPC_Kokiri",                    "Kokiri",               GROUP_NPC,          ImVec4(  0, 130,  70, 255), false, true, false),
     COSMETIC_OPTION("NPC_Gerudo",                    "Gerudo",               GROUP_NPC,          ImVec4( 90,   0, 140, 255), false, true, false),

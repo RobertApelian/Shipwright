@@ -3,6 +3,7 @@
 // MARK: - State Definitions
 
 float GameInteractor::ChaosState::CustomLinkScale = 1.0f;
+std::vector<DogFollower> GameInteractor::ChaosState::DogFollowers = {};
 
 // MARK: C - Bridge
 

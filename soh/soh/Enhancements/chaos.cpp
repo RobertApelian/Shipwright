@@ -14,6 +14,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/audio/AudioEditor.h"
 #include "soh/Enhancements/cosmetics/CosmeticsEditor.h"
+#include "soh/Enhancements/nametag.h"
 
 #include <algorithm>
 #include <functional>
@@ -47,8 +48,18 @@ T Read(const std::vector<uint8_t>& bytes, size_t start_index) {
 
 struct CommandCreator {
 	std::function<std::vector<uint8_t>(const std::vector<uint8_t>&)> read_payload_;
-	std::function<std::unique_ptr<ChaosCommand>(const std::vector<uint8_t>&)> create_;
+	std::function<std::unique_ptr<ChaosCommand>(const std::vector<uint8_t>&, const std::vector<uint8_t>&)> create_;
 };
+
+void spawnDogFollower(DogFollower* follower) {
+	Actor* dog = spawn_on_link(ACTOR_EN_DOG, follower->params);
+	dog->room = -1; // Prevent despawn on room change
+	dog->scale.x *= follower->scale;
+	dog->scale.y *= follower->scale;
+	dog->scale.z *= follower->scale;
+	follower->dog = dog;
+	NameTag_RegisterForActorWithOptions(dog, follower->name.c_str(), { .tag = "dog_redeem", .yOffset = (int16_t)((follower->scale - 1.0f) * 16) });
+}
 
 uint8_t CMD_ID = 0x11;
 static std::map<uint8_t, CommandCreator> kCommands {
@@ -266,6 +277,35 @@ static std::map<uint8_t, CommandCreator> kCommands {
 				CVarSetInteger("gHyperEnemies", 0);
 			})),
 
+	// Dog redeem
+    CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+        CR_ONE_SHOT_TIMED(
+			[=]() {
+				DogFollower follower;
+				// Shiny 10% chance for rainbow dog
+				if ((rand() % 10) < 1) {
+					// shiny
+					follower.params = 0x8002;
+					// follower.scale += 0.85f;
+					follower.scale = (((double) rand() / RAND_MAX)) + 2.0f;
+				} else {
+					follower.params = 0x8003;
+					follower.scale = (((double) rand() / RAND_MAX) / 2) + 0.75f;
+				}
+				follower.name = std::string(cheerer.begin(), cheerer.end());
+
+				spawnDogFollower(&follower);
+
+				GameInteractor::ChaosState::DogFollowers.push_back(follower);
+			},
+			[=]() {
+				auto follower = GameInteractor::ChaosState::DogFollowers.begin();
+				if (follower->dog != nullptr) {
+					Actor_Kill(static_cast<Actor*>(follower->dog));
+				}
+				GameInteractor::ChaosState::DogFollowers.erase(follower);
+			})),
+
 	// CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
 	// CMD_TAKE_AMMO(0x81, ITEM_STICK),
 	// CMD_TAKE_AMMO(0x82, ITEM_NUT),
@@ -337,13 +377,12 @@ void Start() {
     CVarSetInteger("gEnemyHealthBar", 1);
 }
 
-void DisplayCommandMessage(const std::vector<uint8_t>& bytes, size_t start_index) {
-	std::string msg(bytes.begin() + start_index, bytes.end());
+void DisplayCommandMessage(std::string msg) {
     LUS::Context::GetInstance()->GetWindow()->GetGui()->GetGameOverlay()->TextDrawNotification(15.0f, true, msg.c_str());
 }
 
 void EnqueueCommand(const std::vector<uint8_t>& bytes) {
-	size_t message_start_index = 1; // Account for the command idx itself
+	size_t payloadStartIndex = 1; // Account for the command idx itself
 
 	auto it = kCommands.find(bytes[0]);
 	if (it == kCommands.end()) {
@@ -352,9 +391,13 @@ void EnqueueCommand(const std::vector<uint8_t>& bytes) {
 	}
 
 	auto payload = it->second.read_payload_(bytes);
-	g_command_storage.AddCommand(it->second.create_(payload));
+	size_t messageStartIndex = payloadStartIndex + payload.size();
+	std::string msg(bytes.begin() + messageStartIndex, bytes.end());
+	std::vector<uint8_t> cheerer(bytes.begin() + messageStartIndex, bytes.begin() + messageStartIndex + msg.find_first_of(':'));
 
-	DisplayCommandMessage(bytes, message_start_index + payload.size());
+	g_command_storage.AddCommand(it->second.create_(payload, cheerer));
+
+	DisplayCommandMessage(msg);
 }
 
 bool ReadBytes(size_t num, std::vector<uint8_t>* buf) {
@@ -421,6 +464,20 @@ void RegisterChaosHooks() {
 		// GameInteractor::RemoveEffect(new GameInteractionEffect::ModifyLinkScale());
 		GameInteractor::ChaosState::CustomLinkScale = 1.0f;
     });
+
+	GameInteractor::Instance->RegisterGameHook<GameInteractor::OnPlayDestroy>([]() {
+		for (auto& follower : GameInteractor::ChaosState::DogFollowers) {
+			follower.dog = nullptr;
+		}
+	});
+
+	GameInteractor::Instance->RegisterGameHook<GameInteractor::OnSceneSpawnActors>([]() {
+		for (auto& follower : GameInteractor::ChaosState::DogFollowers) {
+			if (follower.dog == nullptr) {
+				spawnDogFollower(&follower);
+			}
+		}
+	});
 }
 
 extern "C" {
@@ -497,6 +554,11 @@ extern "C" {
   		CVarRegisterInteger("gChaosNoZ", 0);
   		CVarRegisterInteger("gChaosTurbo", 0);
   		CVarRegisterInteger("gChaosInvertControls", 0);
+
+		CVarSetInteger("gCosmetics.NPC_Dog3.Changed", 1);
+		CVarSetInteger("gCosmetics.NPC_Dog3.Locked", 1);
+		CVarSetInteger("gCosmetics.NPC_Dog3.Rainbow", 1);
+		CVarSetColor24("gCosmetics.NPC_Dog3.Value", { 150, 100, 50 });
 
 		Chaos_ResetAll();
 

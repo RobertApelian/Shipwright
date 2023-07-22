@@ -15,58 +15,58 @@
 
 // Creators
 #define CR_TIMED_CVAR(cvar, initial, applied)				\
-[](const std::vector<uint8_t>& payload) {					\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {					\
 	return std::make_unique<TimedCVarCommand>(				\
 		cvar, Read<uint32_t>(payload, 0), initial, applied);\
 }
 
 #define CR_TIMED_BOOL_CVAR(cvar)						\
-[](const std::vector<uint8_t>& payload) {				\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {				\
 	return std::make_unique<TimedBooleanCVarCommand>(	\
 		cvar, Read<uint32_t>(payload, 0));				\
 }
 
 #define CR_ONE_SHOT_CVAR(cvar)									\
-[](const std::vector<uint8_t>& payload) {						\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {						\
 	return std::make_unique<OneShotBooleanCVarCommand>(cvar);	\
 }
 
 #define CR_ONE_SHOT(body) 									\
-[](const std::vector<uint8_t>& payload) { 					\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) { 					\
 	return std::make_unique<OneShotCommand>([=]() { body });\
 }
 
 #define CR_PRED(pred, creator)									\
-[](const std::vector<uint8_t>& payload) { 						\
-	return std::make_unique<PredicatedCommand>(creator(payload), pred);\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) { 						\
+	return std::make_unique<PredicatedCommand>(creator(payload, cheerer), pred);\
 }
 
 #define CR_TIMED(tick, cleanup)						\
-[](const std::vector<uint8_t>& payload) {			\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {			\
 	return std::make_unique<TimedCommand>(			\
 		tick, cleanup, Read<uint32_t>(payload, 0)); \
 }
 
 #define CR_ONE_SHOT_TIMED(tick, cleanup)						\
-[](const std::vector<uint8_t>& payload) {			\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {			\
 	return std::make_unique<OneShotTimedCommand>(			\
 		tick, cleanup, Read<uint32_t>(payload, 0)); \
 }
 
 #define CR_ONE_SHOT_CLEANUP(tick, cleanup, frames)						\
-[](const std::vector<uint8_t>& payload) {			\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {			\
 	return std::make_unique<OneShotWithCleanupCommand>(			\
 		tick, cleanup, frames); \
 }
 
 #define CR_TIMED_INTERACTOR(effect, applyParam, bypassStart)			\
-[](const std::vector<uint8_t>& payload) {								\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {								\
 	return std::make_unique<TimedInteractorCommand>(					\
 		effect, applyParam, Read<uint32_t>(payload, 0), bypassStart);	\
 }
 
 #define CR_ONE_SHOT_INTERACTOR(effect, applyParam, bypassStart)	\
-[](const std::vector<uint8_t>& payload) {						\
+[](const std::vector<uint8_t>& payload, const std::vector<uint8_t>& cheerer) {						\
 	return std::make_unique<OneShotInteractorCommand>(			\
 		effect, applyParam, bypassStart);						\
 }

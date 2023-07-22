@@ -20,9 +20,9 @@ void scale(Actor* actor, float x, float y, float z) {
     actor->scale.z *= z;
 }
 
-void spawn_on_link(int16_t id, int16_t params) {
+Actor* spawn_on_link(int16_t id, int16_t params) {
     Player* player = GET_PLAYER(gPlayState);
-    Actor_Spawn(&(gPlayState->actorCtx), gPlayState, id,
+    return Actor_Spawn(&(gPlayState->actorCtx), gPlayState, id,
                 player->actor.world.pos.x,
                 player->actor.world.pos.y,
                 player->actor.world.pos.z,
