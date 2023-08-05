@@ -2,10 +2,12 @@
 #include <libultraship/bridge.h>
 #include "game-interactor/GameInteractor.h"
 #include "tts/tts.h"
+#include "soh/OTRGlobals.h"
 #include "soh/Enhancements/boss-rush/BossRushTypes.h"
 #include "soh/Enhancements/enhancementTypes.h"
 #include "soh/Enhancements/randomizer/3drando/random.hpp"
 #include "soh/Enhancements/cosmetics/authenticGfxPatches.h"
+#include <soh/Enhancements/item-tables/ItemTableManager.h>
 #include "soh/Enhancements/nametag.h"
 
 extern "C" {
@@ -600,6 +602,40 @@ void RegisterMirrorModeHandler() {
     });
 }
 
+f32 triforcePieceScale;
+
+void RegisterTriforceHunt() {
+    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnPlayerUpdate>([]() {
+        if (!GameInteractor::IsGameplayPaused()) {
+
+            // Warp to credits
+            if (GameInteractor::State::TriforceHuntCreditsWarpActive) {
+                gPlayState->nextEntranceIndex = 0x6B;
+                gSaveContext.nextCutsceneIndex = 0xFFF2;
+                gPlayState->sceneLoadFlag = 0x14;
+                gPlayState->fadeTransition = 3;
+                GameInteractor::State::TriforceHuntCreditsWarpActive = 0;
+            }
+
+            // Reset Triforce Piece scale for GI animation
+            if (GameInteractor::State::TriforceHuntPieceGiven) {
+                triforcePieceScale = 0.0f;
+                GameInteractor::State::TriforceHuntPieceGiven = 0;
+            }
+
+            uint8_t currentPieces = gSaveContext.triforcePiecesCollected;
+            uint8_t requiredPieces = OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_TRIFORCE_HUNT_PIECES_REQUIRED);
+            
+            // Give Boss Key when player loads back into the savefile.
+            if (currentPieces >= requiredPieces && gPlayState->sceneLoadFlag != 0x14 &&
+                (1 << 0 & gSaveContext.inventory.dungeonItems[SCENE_GANON]) == 0) {
+                GetItemEntry getItemEntry = ItemTableManager::Instance->RetrieveItemEntry(MOD_RANDOMIZER, RG_GANONS_CASTLE_BOSS_KEY);
+                GiveItemEntryWithoutActor(gPlayState, getItemEntry);
+            }
+        }
+    });
+}
+
 void InitMods() {
     RegisterTTS();
     RegisterInfiniteMoney();
@@ -622,5 +658,6 @@ void InitMods() {
     RegisterBonkDamage();
     RegisterMenuPathFix();
     RegisterMirrorModeHandler();
+    RegisterTriforceHunt();
     NameTag_RegisterHooks();
 }

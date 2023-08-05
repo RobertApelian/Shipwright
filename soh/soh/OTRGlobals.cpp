@@ -1920,6 +1920,8 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
                 }
             } else if (player->getItemEntry.getItemId >= RG_DEKU_TREE_MAP && player->getItemEntry.getItemId <= RG_ICE_CAVERN_MAP) {
                 messageEntry = OTRGlobals::Instance->gRandomizer->GetMapGetItemMessageWithHint(player->getItemEntry);
+            } else if (player->getItemEntry.getItemId == RG_TRIFORCE_PIECE) {
+                messageEntry = Randomizer::GetTriforcePieceMessage();
             } else {
                 messageEntry = Randomizer_GetCustomGetItemMessage(player);
             }
