@@ -14,6 +14,8 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/audio/AudioEditor.h"
 #include "soh/Enhancements/cosmetics/CosmeticsEditor.h"
+#include "soh/Enhancements/enhancementTypes.h"
+#include "soh/Enhancements/mods.h"
 #include "soh/Enhancements/nametag.h"
 
 #include <algorithm>
@@ -306,6 +308,17 @@ static std::map<uint8_t, CommandCreator> kCommands {
 				GameInteractor::ChaosState::DogFollowers.erase(follower);
 			})),
 
+	CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
+		CR_TIMED(
+			[&]() {
+				CVarSetInteger("gMirroredWorldMode", MIRRORED_WORLD_ALWAYS);
+				if (gPlayState != nullptr) UpdateMirrorModeState(gPlayState->sceneNum);
+			},
+			[&]() {
+				CVarSetInteger("gMirroredWorldMode", MIRRORED_WORLD_OFF);
+				if (gPlayState != nullptr) UpdateMirrorModeState(gPlayState->sceneNum);
+			})),
+
 	// CMD_TAKE_AMMO(0x80, ITEM_BOMBCHU),
 	// CMD_TAKE_AMMO(0x81, ITEM_STICK),
 	// CMD_TAKE_AMMO(0x82, ITEM_NUT),
@@ -542,6 +555,7 @@ extern "C" {
 		CVarSetInteger("gMoonwalk", 0);
 		CVarSetInteger("gDisableLedgeJump", 0);
 		CVarSetInteger("gChaosRedeem", 0);
+		CVarSetInteger("gMirroredWorldMode", MIRRORED_WORLD_OFF);
 	}
 
 	void Chaos_Init() {
