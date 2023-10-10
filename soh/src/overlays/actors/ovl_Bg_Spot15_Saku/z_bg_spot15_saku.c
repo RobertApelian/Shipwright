@@ -46,7 +46,7 @@ void BgSpot15Saku_Init(Actor* thisx, PlayState* play) {
     this->unk_170.x = this->dyna.actor.world.pos.x;
     this->unk_170.y = this->dyna.actor.world.pos.y;
     this->unk_170.z = this->dyna.actor.world.pos.z;
-    if (Flags_GetInfTable(INFTABLE_71) && !(this->dyna.actor.params == 1)) {
+    if (Flags_GetInfTable(INFTABLE_71)) {
         this->dyna.actor.world.pos.z = 2659.0f;
     }
     if (this->dyna.actor.params == 1) {

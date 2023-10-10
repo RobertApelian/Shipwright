@@ -16,7 +16,7 @@ void KaleidoSetup_Update(PlayState* play) {
         play->sceneLoadFlag == 0 && play->transitionMode == 0 && gSaveContext.cutsceneIndex < 0xFFF0 &&
         gSaveContext.nextCutsceneIndex < 0xFFF0 && !Play_InCsMode(play) &&
         play->shootingGalleryStatus <= 1 && gSaveContext.magicState != 8 && gSaveContext.magicState != 9 &&
-        (play->sceneNum != SCENE_BOWLING || !Flags_GetSwitch(play, 0x38))) {
+        (play->sceneNum != SCENE_BOMBCHU_BOWLING_ALLEY || !Flags_GetSwitch(play, 0x38))) {
 
         u8 easyPauseBufferEnabled = CVarGetInteger("gCheatEasyPauseBufferEnabled", 0);
         u8 easyPauseBufferTimer = CVarGetInteger("gCheatEasyPauseBufferTimer", 0);
@@ -32,7 +32,7 @@ void KaleidoSetup_Update(PlayState* play) {
                 pauseCtx->debugState = 3;
             }
         } else if ((CHECK_BTN_ALL(input->press.button, BTN_START) && (!easyPauseBufferEnabled || !easyPauseBufferTimer)) ||
-            (easyPauseBufferEnabled && easyPauseBufferTimer == 1)) {
+            (easyPauseBufferEnabled && easyPauseBufferTimer == 1)) { // Force Kaleido open when easy pause buffer reaches 0
             // Remember last held buttons for pause buffer cheat (minus start so easy frame advance works)
             CVarSetInteger("gCheatEasyPauseBufferLastInputs", input->cur.button & ~(BTN_START));
 

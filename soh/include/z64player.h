@@ -13,7 +13,7 @@ typedef enum {
     /* 0 */ PLAYER_SWORD_NONE,
     /* 1 */ PLAYER_SWORD_KOKIRI,
     /* 2 */ PLAYER_SWORD_MASTER,
-    /* 3 */ PLAYER_SWORD_BGS,
+    /* 3 */ PLAYER_SWORD_BIGGORON,
     /* 4 */ PLAYER_SWORD_MAX
 } PlayerSword;
 
@@ -70,8 +70,8 @@ typedef enum {
     /* 0x02 */ PLAYER_IA_FISHING_POLE,
     /* 0x03 */ PLAYER_IA_SWORD_MASTER,
     /* 0x04 */ PLAYER_IA_SWORD_KOKIRI,
-    /* 0x05 */ PLAYER_IA_SWORD_BGS,
-    /* 0x06 */ PLAYER_IA_STICK,
+    /* 0x05 */ PLAYER_IA_SWORD_BIGGORON,
+    /* 0x06 */ PLAYER_IA_DEKU_STICK,
     /* 0x07 */ PLAYER_IA_HAMMER,
     /* 0x08 */ PLAYER_IA_BOW,
     /* 0x09 */ PLAYER_IA_BOW_FIRE,
@@ -92,33 +92,33 @@ typedef enum {
     /* 0x18 */ PLAYER_IA_FARORES_WIND,
     /* 0x19 */ PLAYER_IA_NAYRUS_LOVE,
     /* 0x1A */ PLAYER_IA_DINS_FIRE,
-    /* 0x1B */ PLAYER_IA_NUT,
+    /* 0x1B */ PLAYER_IA_DEKU_NUT,
     /* 0x1C */ PLAYER_IA_OCARINA_FAIRY,
-    /* 0x1D */ PLAYER_IA_OCARINA_TIME,
+    /* 0x1D */ PLAYER_IA_OCARINA_OF_TIME,
     /* 0x1E */ PLAYER_IA_BOTTLE,
     /* 0x1F */ PLAYER_IA_BOTTLE_FISH,
     /* 0x20 */ PLAYER_IA_BOTTLE_FIRE,
     /* 0x21 */ PLAYER_IA_BOTTLE_BUG,
     /* 0x22 */ PLAYER_IA_BOTTLE_POE,
     /* 0x23 */ PLAYER_IA_BOTTLE_BIG_POE,
-    /* 0x24 */ PLAYER_IA_BOTTLE_LETTER,
+    /* 0x24 */ PLAYER_IA_BOTTLE_RUTOS_LETTER,
     /* 0x25 */ PLAYER_IA_BOTTLE_POTION_RED,
     /* 0x26 */ PLAYER_IA_BOTTLE_POTION_BLUE,
     /* 0x27 */ PLAYER_IA_BOTTLE_POTION_GREEN,
-    /* 0x28 */ PLAYER_IA_BOTTLE_MILK,
+    /* 0x28 */ PLAYER_IA_BOTTLE_MILK_FULL,
     /* 0x29 */ PLAYER_IA_BOTTLE_MILK_HALF,
     /* 0x2A */ PLAYER_IA_BOTTLE_FAIRY,
-    /* 0x2B */ PLAYER_IA_LETTER_ZELDA,
+    /* 0x2B */ PLAYER_IA_ZELDAS_LETTER,
     /* 0x2C */ PLAYER_IA_WEIRD_EGG,
     /* 0x2D */ PLAYER_IA_CHICKEN,
-    /* 0x2E */ PLAYER_IA_BEAN,
+    /* 0x2E */ PLAYER_IA_MAGIC_BEAN,
     /* 0x2F */ PLAYER_IA_POCKET_EGG,
     /* 0x30 */ PLAYER_IA_POCKET_CUCCO,
     /* 0x31 */ PLAYER_IA_COJIRO,
     /* 0x32 */ PLAYER_IA_ODD_MUSHROOM,
     /* 0x33 */ PLAYER_IA_ODD_POTION,
-    /* 0x34 */ PLAYER_IA_SAW,
-    /* 0x35 */ PLAYER_IA_SWORD_BROKEN,
+    /* 0x34 */ PLAYER_IA_POACHERS_SAW,
+    /* 0x35 */ PLAYER_IA_BROKEN_GORONS_SWORD,
     /* 0x36 */ PLAYER_IA_PRESCRIPTION,
     /* 0x37 */ PLAYER_IA_FROG,
     /* 0x38 */ PLAYER_IA_EYEDROPS,
@@ -126,12 +126,12 @@ typedef enum {
     /* 0x3A */ PLAYER_IA_MASK_KEATON,
     /* 0x3B */ PLAYER_IA_MASK_SKULL,
     /* 0x3C */ PLAYER_IA_MASK_SPOOKY,
-    /* 0x3D */ PLAYER_IA_MASK_BUNNY,
+    /* 0x3D */ PLAYER_IA_MASK_BUNNY_HOOD,
     /* 0x3E */ PLAYER_IA_MASK_GORON,
     /* 0x3F */ PLAYER_IA_MASK_ZORA,
     /* 0x40 */ PLAYER_IA_MASK_GERUDO,
     /* 0x41 */ PLAYER_IA_MASK_TRUTH,
-    /* 0x42 */ PLAYER_IA_LENS,
+    /* 0x42 */ PLAYER_IA_LENS_OF_TRUTH,
     // Upstream TODO: Document why these entries were added
     /* 0x43 */ PLAYER_IA_SHIELD_DEKU,
     /* 0x44 */ PLAYER_IA_SHIELD_HYLIAN,
@@ -564,7 +564,7 @@ typedef enum {
     /* 0x05 */ PLAYER_ANIMGROUP_FIGHTING_LEFT_OF_ENEMY,
     /* 0x06 */ PLAYER_ANIMGROUP_FIGHTING_RIGHT_OF_ENEMY,
     /* 0x07 */ PLAYER_ANIMGROUP_START_FIGHTING,
-    /* 0x08 */ PLAYER_ANIMGROUP_8,
+    /* 0x08 */ PLAYER_ANIMGROUP_normal2fighter,
     /* 0x09 */ PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_LEFT,
     /* 0x0A */ PLAYER_ANIMGROUP_OPEN_DOOR_CHILD_LEFT,
     /* 0x0B */ PLAYER_ANIMGROUP_OPEN_DOOR_ADULT_RIGHT,
@@ -692,7 +692,8 @@ typedef enum {
     FLAG_ITEM_GET_INF,
     FLAG_INF_TABLE,
     FLAG_EVENT_INF,
-    FLAG_RANDOMIZER_INF
+    FLAG_RANDOMIZER_INF,
+    FLAG_GS_TOKEN,
 } FlagType;
 
 typedef struct {
@@ -887,7 +888,7 @@ typedef struct Player {
     /* 0x083E */ s16        targetYaw;
     /* 0x0840 */ u16        unk_840;
     /* 0x0842 */ s8         meleeWeaponAnimation;
-    /* 0x0843 */ s8         swordState;
+    /* 0x0843 */ s8         meleeWeaponState;
     /* 0x0844 */ s8         comboTimer;
     /* 0x0845 */ u8         slashCounter;
     /* 0x0846 */ u8         inputFrameCounter;
@@ -899,7 +900,7 @@ typedef struct Player {
     /* 0x0858 */ f32        unk_858;
     /* 0x085C */ f32        unk_85C; // stick length among other things
     /* 0x0860 */ s16        fpsItemType; // stick flame timer among other things
-    /* 0x0862 */ s8         giDrawIdPlusOne; // get item draw ID + 1
+    /* 0x0862 */ s16        giDrawIdPlusOne; // get item draw ID + 1
     /* 0x0864 */ f32        unk_864;
     /* 0x0868 */ f32        walkFrame;
     /* 0x086C */ f32        unk_86C;

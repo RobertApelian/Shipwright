@@ -6,6 +6,7 @@
 #endif
 #include "Extract.h"
 #include "portable-file-dialogs.h"
+#include <Utils/BitConverter.h>
 
 #ifdef unix
 #include <dirent.h>
@@ -44,11 +45,13 @@
 #include <fstream>
 #include <filesystem>
 #include <unordered_map>
+#include <random>
+#include <string>
 
 extern "C" uint32_t CRC32C(unsigned char* data, size_t dataSize);
-extern "C" void RomToBigEndian(void* rom, size_t romSize);
 
 static constexpr uint32_t OOT_PAL_GC = 0x09465AC3;
+static constexpr uint32_t OOT_PAL_MQ = 0x1D4136F3;
 static constexpr uint32_t OOT_PAL_GC_DBG1 = 0x871E1C92; // 03-21-2002 build
 static constexpr uint32_t OOT_PAL_GC_DBG2 = 0x87121EFE; // 03-13-2002 build
 static constexpr uint32_t OOT_PAL_GC_MQ_DBG = 0x917D18F6;
@@ -57,14 +60,16 @@ static constexpr uint32_t OOT_PAL_11 = 0xB2055FBD;
 
 static const std::unordered_map<uint32_t, const char*> verMap = {
     { OOT_PAL_GC, "PAL Gamecube" },
+    { OOT_PAL_MQ, "PAL MQ" },
     { OOT_PAL_GC_DBG1, "PAL Debug 1" },
     { OOT_PAL_GC_DBG2, "PAL Debug 2" },
     { OOT_PAL_GC_MQ_DBG, "PAL MQ Debug" },
+    { OOT_PAL_10, "PAL N64 1.0" },
     { OOT_PAL_11, "PAL N64 1.1" },
 };
 
 // TODO only check the first 54MB of the rom.
-static constexpr std::array<const uint32_t, 8> goodCrcs = {
+static constexpr std::array<const uint32_t, 10> goodCrcs = {
     0xfa8c0555, // MQ DBG 64MB (Original overdump)
     0x8652ac4c, // MQ DBG 64MB
     0x5B8A1EB7, // MQ DBG 64MB (Empty overdump)
@@ -72,6 +77,8 @@ static constexpr std::array<const uint32_t, 8> goodCrcs = {
     0x044b3982, // NMQ DBG 54MB
     0xEB15D7B9, // NMQ DBG 64MB
     0xDA8E61BF, // GC PAL
+    0x7A2FAE68, // GC MQ PAL
+    0xFD9913B1, // N64 PAL 1.0
     0xE033FBBA, // N64 PAL 1.1
 };
 
@@ -179,7 +186,7 @@ void Extractor::FilterRoms(std::vector<std::string>& roms, RomSearchMode searchM
         inFile.clear();
         inFile.close();
 
-        RomToBigEndian(mRomData.get(), mCurRomSize);
+        BitConverter::RomToBigEndian(mRomData.get(), mCurRomSize);
 
         // Rom doesn't claim to be valid
         // Game type doesn't match search mode
@@ -358,7 +365,7 @@ bool Extractor::ManuallySearchForRom() {
 
     inFile.read((char*)mRomData.get(), mCurRomSize);
     inFile.close();
-    RomToBigEndian(mRomData.get(), mCurRomSize);
+    BitConverter::RomToBigEndian(mRomData.get(), mCurRomSize);
 
     if (!ValidateRom()) {
         return false;
@@ -433,7 +440,7 @@ bool Extractor::Run(RomSearchMode searchMode) {
         inFile.read((char*)mRomData.get(), mCurRomSize);
         inFile.clear();
         inFile.close();
-        RomToBigEndian(mRomData.get(), mCurRomSize);
+        BitConverter::RomToBigEndian(mRomData.get(), mCurRomSize);
 
         int option = ShowRomPickBox(GetRomVerCrc());
 
@@ -467,6 +474,7 @@ bool Extractor::Run(RomSearchMode searchMode) {
 
 bool Extractor::IsMasterQuest() const {
     switch (GetRomVerCrc()) {
+        case OOT_PAL_MQ:
         case OOT_PAL_GC_MQ_DBG:
             return true;
         case OOT_PAL_10:
@@ -483,10 +491,14 @@ const char* Extractor::GetZapdVerStr() const {
     switch (GetRomVerCrc()) {
         case OOT_PAL_GC:
             return "GC_NMQ_PAL_F";
+        case OOT_PAL_MQ:
+            return "GC_MQ_PAL_F";
         case OOT_PAL_GC_DBG1:
             return "GC_NMQ_D";
         case OOT_PAL_GC_MQ_DBG:
             return "GC_MQ_D";
+        case OOT_PAL_10:
+            return "N64_PAL_10";
         case OOT_PAL_11:
             return "N64_PAL_11";
         default:
@@ -496,14 +508,50 @@ const char* Extractor::GetZapdVerStr() const {
     }
 }
 
+std::string Extractor::Mkdtemp() {
+    std::string temp_dir = std::filesystem::temp_directory_path().string();
+    
+    // create 6 random alphanumeric characters
+    static const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(0, sizeof(charset) - 1);
+
+    char randchr[7];
+    for (int i = 0; i < 6; i++) {
+        randchr[i] = charset[dist(gen)];
+    }
+    randchr[6] = '\0';
+
+    std::string tmppath = temp_dir + "/extractor-" + randchr;
+    std::filesystem::create_directory(tmppath);
+    return tmppath;
+}
+
 extern "C" int zapd_main(int argc, char** argv);
 
-bool Extractor::CallZapd() {
+bool Extractor::CallZapd(std::string installPath, std::string exportdir) {
     constexpr int argc = 16;
     char xmlPath[1024];
     char confPath[1024];
     std::array<const char*, argc> argv;
     const char* version = GetZapdVerStr();
+    const char* otrFile = IsMasterQuest() ? "oot-mq.otr" : "oot.otr";
+
+    std::string romPath = std::filesystem::absolute(mCurrentRomPath).string();
+    installPath = std::filesystem::absolute(installPath).string();
+    exportdir = std::filesystem::absolute(exportdir).string();
+    // Work this out in the temporary folder
+    std::string tempdir = Mkdtemp();
+    std::string curdir = std::filesystem::current_path().string();
+#ifdef _WIN32
+    std::filesystem::copy(installPath + "/assets", tempdir + "/assets",
+        std::filesystem::copy_options::recursive | std::filesystem::copy_options::update_existing);
+#else
+    std::filesystem::create_symlink(installPath + "/assets", tempdir + "/assets");
+#endif
+
+    std::filesystem::current_path(tempdir);
 
     snprintf(xmlPath, 1024, "assets/extractor/xmls/%s", version);
     snprintf(confPath, 1024, "assets/extractor/Config_%s.xml", version);
@@ -513,7 +561,7 @@ bool Extractor::CallZapd() {
     argv[2] = "-i";
     argv[3] = xmlPath;
     argv[4] = "-b";
-    argv[5] = mCurrentRomPath.c_str();
+    argv[5] = romPath.c_str();
     argv[6] = "-fl";
     argv[7] = "assets/extractor/filelists";
     argv[8] = "-gsf";
@@ -523,7 +571,7 @@ bool Extractor::CallZapd() {
     argv[12] = "-se";
     argv[13] = "OTR";
     argv[14] = "--otrfile";
-    argv[15] = IsMasterQuest() ? "oot-mq.otr" : "oot.otr";
+    argv[15] = otrFile;
 
 #ifdef _WIN32
     // Grab a handle to the command window.
@@ -540,6 +588,12 @@ bool Extractor::CallZapd() {
     // Hide the command window again.
     ShowWindow(cmdWindow, SW_HIDE);
 #endif
+
+    std::filesystem::copy(otrFile, exportdir + "/" + otrFile, std::filesystem::copy_options::overwrite_existing);
+
+    // Go back to where this game was executed from
+    std::filesystem::current_path(curdir);
+    std::filesystem::remove_all(tempdir);
 
     return 0;
 }
