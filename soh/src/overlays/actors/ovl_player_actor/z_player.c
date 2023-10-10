@@ -5595,20 +5595,6 @@ void Player_SetupRolling(Player* this, PlayState* play) {
     }
 }
 
-s32 Player_CanRoll(Player* this, PlayState* play) {
-    if ((this->relativeAnalogStickInputs[this->inputFrameCounter] == 0) && (sFloorSpecialProperty != 7)) {
-        if (CVarGetInteger("gForwardJump", 0)) {
-            Player_SetupBackflipOrSidehop(this, play, this->relativeAnalogStickInputs[this->inputFrameCounter]);
-        }
-        else {
-            Player_SetupRolling(this, play);
-        }
-        return 1;
-    }
-
-    return 0;
-}
-
 void Player_SetupBackflipOrSidehop(Player* this, PlayState* play, s32 relativeStickInput) {
     Player_SetupJumpWithSfx(this, sManualJumpAnims[relativeStickInput][0], !(relativeStickInput & 1) ? 5.8f : 3.5f, play, NA_SE_VO_LI_SWORD_N);
 
@@ -5623,6 +5609,20 @@ void Player_SetupBackflipOrSidehop(Player* this, PlayState* play, s32 relativeSt
     this->stateFlags2 |= PLAYER_STATE2_BACKFLIPPING_OR_SIDEHOPPING;
 
     Player_PlaySfx(&this->actor, ((relativeStickInput << 0xE) == 0x8000) ? NA_SE_PL_ROLL : NA_SE_PL_SKIP);
+}
+
+s32 Player_CanRoll(Player* this, PlayState* play) {
+    if ((this->relativeAnalogStickInputs[this->inputFrameCounter] == 0) && (sFloorSpecialProperty != 7)) {
+        if (CVarGetInteger("gForwardJump", 0)) {
+            Player_SetupBackflipOrSidehop(this, play, this->relativeAnalogStickInputs[this->inputFrameCounter]);
+        }
+        else {
+            Player_SetupRolling(this, play);
+        }
+        return 1;
+    }
+
+    return 0;
 }
 
 s32 Player_SetupJumpSlashOrRoll(Player* this, PlayState* play) {
@@ -10096,8 +10096,8 @@ void Player_Init(Actor* thisx, PlayState* play2) {
             if ((gSaveContext.sceneSetupIndex < 4) &&
                 (gEntranceTable[((void)0, gSaveContext.entranceIndex) + ((void)0, gSaveContext.sceneSetupIndex)].field &
                  0x4000) &&
-                ((play->sceneNum != SCENE_DDAN) || (Flags_GetEventChkInf(EVENTCHKINF_ENTERED_DODONGOS_CAVERN))) &&
-                ((play->sceneNum != SCENE_NIGHT_SHOP) || (Flags_GetEventChkInf(EVENTCHKINF_USED_DODONGOS_CAVERN_BLUE_WARP)))) {
+                ((play->sceneNum != SCENE_DODONGOS_CAVERN) || (Flags_GetEventChkInf(EVENTCHKINF_ENTERED_DODONGOS_CAVERN))) &&
+                ((play->sceneNum != SCENE_BOMBCHU_SHOP) || (Flags_GetEventChkInf(EVENTCHKINF_USED_DODONGOS_CAVERN_BLUE_WARP)))) {
                 TitleCard_InitPlaceName(play, &play->actorCtx.titleCtx, this->giObjectSegment, 160, 120, 144,
                                         24, 20);
             }
@@ -11047,34 +11047,34 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
 
     if (CVarGetInteger("gSunsSong", 0)) {
         switch (play->sceneNum) {
-            case SCENE_YDAN:
-            case SCENE_YDAN_BOSS:
-            case SCENE_DDAN:
-            case SCENE_DDAN_BOSS:
-            case SCENE_BDAN:
-            case SCENE_BDAN_BOSS:
-            case SCENE_BMORI1:
-            case SCENE_MORIBOSSROOM:
-            case SCENE_HIDAN:
-            case SCENE_FIRE_BS:
-            case SCENE_MIZUSIN:
-            case SCENE_MIZUSIN_BS:
-            case SCENE_JYASINZOU:
-            case SCENE_JYASINBOSS:
-            case SCENE_HAKADAN:
-            case SCENE_HAKADAN_BS:
-            case SCENE_HAKADANCH:
-            case SCENE_ICE_DOUKUTO:
-            case SCENE_GANON:
+            case SCENE_DEKU_TREE:
+            case SCENE_DEKU_TREE_BOSS:
+            case SCENE_DODONGOS_CAVERN:
+            case SCENE_DODONGOS_CAVERN_BOSS:
+            case SCENE_JABU_JABU:
+            case SCENE_JABU_JABU_BOSS:
+            case SCENE_FOREST_TEMPLE:
+            case SCENE_FOREST_TEMPLE_BOSS:
+            case SCENE_FIRE_TEMPLE:
+            case SCENE_FIRE_TEMPLE_BOSS:
+            case SCENE_WATER_TEMPLE:
+            case SCENE_WATER_TEMPLE_BOSS:
+            case SCENE_SPIRIT_TEMPLE:
+            case SCENE_SPIRIT_TEMPLE_BOSS:
+            case SCENE_SHADOW_TEMPLE:
+            case SCENE_SHADOW_TEMPLE_BOSS:
+            case SCENE_BOTTOM_OF_THE_WELL:
+            case SCENE_ICE_CAVERN:
+            case SCENE_GANONS_TOWER:
+            case SCENE_GANONDORF_BOSS:
+            case SCENE_GANONS_TOWER_COLLAPSE_EXTERIOR:
+            case SCENE_GERUDO_TRAINING_GROUND:
+            case SCENE_THIEVES_HIDEOUT:
+            case SCENE_INSIDE_GANONS_CASTLE:
+            case SCENE_GANONS_TOWER_COLLAPSE_INTERIOR:
             case SCENE_GANON_BOSS:
-            case SCENE_GANON_FINAL:
-            case SCENE_MEN:
-            case SCENE_GERUDOWAY:
-            case SCENE_GANONTIKA:
-            case SCENE_GANON_SONOGO:
-            case SCENE_GANON_DEMO:
-            case SCENE_GANONTIKA_SONOGO:
-            case SCENE_TAKARAYA:
+            case SCENE_INSIDE_GANONS_CASTLE_COLLAPSE:
+            case SCENE_TREASURE_BOX_SHOP:
                 CVarSetInteger("gSunsSong", 0);
                 break;
             
@@ -14105,7 +14105,7 @@ void Player_GetItem(Player* this, PlayState* play) {
                 } else if (IS_RANDO) {
                     gSaveContext.pendingIceTrapCount++;
                     Player_SetPendingFlag(this, play);
-                    func_8083C0E8(this, play);
+                    Player_SetupStandingStillNoMorph(this, play);
                 } else {
                     this->actor.colChkInfo.damage = 0;
                     Player_SetupDamage(play, this, 3, 0.0f, 0.0f, 0, 20);

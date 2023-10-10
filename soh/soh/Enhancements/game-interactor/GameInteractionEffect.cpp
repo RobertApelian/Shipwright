@@ -261,7 +261,7 @@ namespace GameInteractionEffect {
     // MARK: - KnockbackPlayer
     GameInteractionEffectQueryResult KnockbackPlayer::CanBeApplied() {
         Player* player = GET_PLAYER(gPlayState);
-        if (!GameInteractor::IsSaveLoaded() || GameInteractor::IsGameplayPaused() || player->stateFlags2 & PLAYER_STATE2_CRAWLING) {
+        if (!GameInteractor::IsSaveLoaded() || GameInteractor::IsGameplayPaused() || player->stateFlags2 & PLAYER_STATE2_INSIDE_CRAWLSPACE) {
             return GameInteractionEffectQueryResult::TemporarilyNotPossible;
         } else {
             return GameInteractionEffectQueryResult::Possible;
