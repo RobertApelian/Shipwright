@@ -27,7 +27,7 @@ GameInteractionEffectQueryResult GameInteractor::CanApplyEffect(GameInteractionE
     return effect->CanBeApplied();
 }
 
-GameInteractionEffectQueryResult GameInteractor::CanRemoveEffect(GameInteractionEffectBase* effect) {
+GameInteractionEffectQueryResult GameInteractor::CanRemoveEffect(RemovableGameInteractionEffect* effect) {
     return effect->CanBeRemoved();
 }
 

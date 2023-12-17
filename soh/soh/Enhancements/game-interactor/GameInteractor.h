@@ -170,7 +170,7 @@ public:
 
     // Effects
     static GameInteractionEffectQueryResult CanApplyEffect(GameInteractionEffectBase* effect);
-    static GameInteractionEffectQueryResult CanRemoveEffect(GameInteractionEffectBase* effect);
+    static GameInteractionEffectQueryResult CanRemoveEffect(RemovableGameInteractionEffect* effect);
     static GameInteractionEffectQueryResult ApplyEffect(GameInteractionEffectBase* effect);
     static GameInteractionEffectQueryResult RemoveEffect(RemovableGameInteractionEffect* effect);
 
@@ -277,6 +277,17 @@ public:
         static GameInteractionEffectQueryResult SpawnActor(uint32_t actorId, int32_t actorParams);
     };
 
+    // Chaos ==========================================================
+    class ChaosState {
+    public:
+        static float CustomLinkScale;
+        static std::vector<DogFollower> DogFollowers;
+    };
+
+    class ChaosRawAction {
+    public:
+    };
+
     private:
     #ifdef ENABLE_REMOTE_CONTROL
         IPaddress remoteIP;
@@ -291,17 +302,6 @@ public:
         void HandleRemoteData(char payload[512]);
         void HandleRemoteJson(std::string payload);
     #endif
-
-    // Chaos ==========================================================
-    class ChaosState {
-    public:
-        static float CustomLinkScale;
-        static std::vector<DogFollower> DogFollowers;
-    };
-
-    class ChaosRawAction {
-    public:
-    };
 };
 
 #endif /* __cplusplus */

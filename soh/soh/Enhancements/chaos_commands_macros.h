@@ -93,9 +93,9 @@
 #define CMD_ONE_SHOT_INTERACTOR(id, effect, bypassStart, applyParam) CMD(id, PL_BYTES(sizeof(uint32_t)), CR_ONE_SHOT_INTERACTOR(effect, applyParam, bypassStart))
 
 #define CMD_TAKE_AMMO_INTERACTOR(id, item) CMD_ONE_SHOT_INTERACTOR(id, new GameInteractionEffect::AddOrTakeAmmo(), true,			\
-	[=](GameInteractionEffectBase* effect) { effect->parameters[0] = -Read<uint32_t>(payload, 0); effect->parameters[1] = item; })
+	[=](ParameterizedGameInteractionEffect* effect) { effect->parameters[0] = -Read<uint32_t>(payload, 0); effect->parameters[1] = item; })
 
 #define CMD_GIVE_AMMO_INTERACTOR(id, item) CMD_ONE_SHOT_INTERACTOR(id, new GameInteractionEffect::AddOrTakeAmmo(), true,			\
-	[=](GameInteractionEffectBase* effect) { effect->parameters[0] = Read<uint32_t>(payload, 0); effect->parameters[1] = item; })
+	[=](ParameterizedGameInteractionEffect* effect) { effect->parameters[0] = Read<uint32_t>(payload, 0); effect->parameters[1] = item; })
 
 #endif

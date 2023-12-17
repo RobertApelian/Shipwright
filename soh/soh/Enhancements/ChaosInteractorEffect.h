@@ -9,7 +9,7 @@
 #ifdef __cplusplus
 
 namespace GameInteractionEffect {
-    class ModifyLinkScale: public GameInteractionEffectBase {
+    class ModifyLinkScale: public RemovableGameInteractionEffect, public ParameterizedGameInteractionEffect {
         GameInteractionEffectQueryResult CanBeApplied() override;
         void _Apply() override;
         void _Remove() override;

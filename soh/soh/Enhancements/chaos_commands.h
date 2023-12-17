@@ -201,7 +201,7 @@ class OneShotBooleanCVarCommand : public OneShotCommand {
 
 class OneShotInteractorCommand : public OneShotCommand {
 	public:
-		OneShotInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f, bool bypassStart = false)
+		OneShotInteractorCommand(GameInteractionEffectBase* effect, std::function<void(ParameterizedGameInteractionEffect* effect)> applyParam_f, bool bypassStart = false)
 			: effect_(effect),
 			  applyParam_f_(applyParam_f),
 			  bypassStart_(bypassStart),
@@ -214,18 +214,18 @@ class OneShotInteractorCommand : public OneShotCommand {
 
 		void tryApplyParam() {
 			if (applyParam_f_ != nullptr) {
-				applyParam_f_(effect_);
+				applyParam_f_(dynamic_cast<ParameterizedGameInteractionEffect*>(effect_));
 			}
 		}
 
 		GameInteractionEffectBase* effect_;
-		std::function<void(GameInteractionEffectBase* effect)> applyParam_f_;
+		std::function<void(ParameterizedGameInteractionEffect* effect)> applyParam_f_;
 		bool bypassStart_;
 };
 
 class TimedInteractorCommand : public OneShotTimedCommand {
 	public:
-		TimedInteractorCommand(GameInteractionEffectBase* effect, std::function<void(GameInteractionEffectBase* effect)> applyParam_f, uint32_t seconds, bool bypassStart = false)
+		TimedInteractorCommand(RemovableGameInteractionEffect* effect, std::function<void(ParameterizedGameInteractionEffect* effect)> applyParam_f, uint32_t seconds, bool bypassStart = false)
 			: effect_(effect),
 			  applyParam_f_(applyParam_f),
 			  bypassStart_(bypassStart),
@@ -246,12 +246,12 @@ class TimedInteractorCommand : public OneShotTimedCommand {
 
 		void tryApplyParam() {
 			if (applyParam_f_ != nullptr) {
-				applyParam_f_(effect_);
+				applyParam_f_(dynamic_cast<ParameterizedGameInteractionEffect*>(effect_));
 			}
 		}
 
-		GameInteractionEffectBase* effect_;
-		std::function<void(GameInteractionEffectBase* effect)> applyParam_f_;
+		RemovableGameInteractionEffect* effect_;
+		std::function<void(ParameterizedGameInteractionEffect* effect)> applyParam_f_;
 		bool bypassStart_;
 };
 
