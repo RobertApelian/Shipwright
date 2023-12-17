@@ -84,13 +84,13 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// CMD_ONE_SHOT(0x04, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 1.5f, 1.5f, 1.5f); }),
 	CMD_ONE_SHOT(0x04, PL_NONE(), { GameInteractor::ChaosState::CustomLinkScale *= 1.5f; }),
 	// CMD_ONE_SHOT_INTERACTOR(0x04, new GameInteractionEffect::ModifyLinkScale(), true,
-	// 	[=](GameInteractionEffectBase* effect) {
+	// 	[=](ParameterizedGameInteractionEffect* effect) {
 	// 		effect->parameters[0] = 1.5f;
 	// 	}),
 	// CMD_ONE_SHOT(0x05, PL_NONE(), { scale(&(GET_PLAYER(gPlayState)->actor), 0.66f, 0.66f, 0.66f); }),
 	CMD_ONE_SHOT(0x05, PL_NONE(), { GameInteractor::ChaosState::CustomLinkScale *= 0.66f; }),
 	// CMD_ONE_SHOT_INTERACTOR(0x05, new GameInteractionEffect::ModifyLinkScale(), true,
-	// 	[=](GameInteractionEffectBase* effect) {
+	// 	[=](ParameterizedGameInteractionEffect* effect) {
 	// 		effect->parameters[0] = 0.66;
 	// 	}),
 
@@ -127,11 +127,11 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// 	gSaveContext.health = s_sub(gSaveContext.health, Read<uint32_t>(payload, 0), 16);
 	// }),
 	CMD_ONE_SHOT_INTERACTOR(0x0D, new GameInteractionEffect::ModifyHealth(), true,
-		[=](GameInteractionEffectBase* effect) {
+		[=](ParameterizedGameInteractionEffect* effect) {
 			effect->parameters[0] = Read<uint32_t>(payload, 0);
 		}),
 	CMD_ONE_SHOT_INTERACTOR(0x0E, new GameInteractionEffect::ModifyHealth(), true,
-		[=](GameInteractionEffectBase* effect) {
+		[=](ParameterizedGameInteractionEffect* effect) {
 			int healthToRemove = Read<uint32_t>(payload, 0);
 			if (gSaveContext.health - (healthToRemove * 16) <= 0) {
 				healthToRemove = ceil((gSaveContext.health / 16) - 1);
@@ -146,11 +146,11 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	// 	gSaveContext.rupees = s_sub(gSaveContext.rupees, Read<uint32_t>(payload, 0), 16);
 	// }),
 	CMD_ONE_SHOT_INTERACTOR(0x0F, new GameInteractionEffect::ModifyRupees(), true,
-		[=](GameInteractionEffectBase* effect) {
+		[=](ParameterizedGameInteractionEffect* effect) {
 			effect->parameters[0] = Read<uint32_t>(payload, 0);
 		}),
 	CMD_ONE_SHOT_INTERACTOR(0x10, new GameInteractionEffect::ModifyRupees(), true,
-		[=](GameInteractionEffectBase* effect) {
+		[=](ParameterizedGameInteractionEffect* effect) {
 			effect->parameters[0] = -Read<uint32_t>(payload, 0);
 		}),
 
@@ -226,18 +226,18 @@ static std::map<uint8_t, CommandCreator> kCommands {
 
 	// Paper link
 	CMD_TIMED_INTERACTOR(CMD_ID++, new GameInteractionEffect::ModifyLinkSize(), false,
-		[&](GameInteractionEffectBase* effect) { effect->parameters[0] = GI_LINK_SIZE_PAPER; }),
+		[&](ParameterizedGameInteractionEffect* effect) { effect->parameters[0] = GI_LINK_SIZE_PAPER; }),
 
 	// CMD(CMD_ID++, PL_BYTES(sizeof(uint32_t)),
 	// 	CR_ONE_SHOT_TIMED(
 	// 		[&]() {
-	// 			GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
-	// 			effect->parameters[0] = GI_LINK_SIZE_PAPER;
+	// 			RemovableGameInteractionEffect* effect = new GameInteractionEffect::ModifyLinkSize();
+	// 			dynamic_cast<ParameterizedGameInteractionEffect*>(effect)->parameters[0] = GI_LINK_SIZE_PAPER;
 	// 			GameInteractor::ApplyEffect(effect);
 	// 		},
 	// 		[&]() {
-	// 			GameInteractionEffectBase* effect = new GameInteractionEffect::ModifyLinkSize();
-	// 			effect->parameters[0] = GI_LINK_SIZE_PAPER;
+	// 			RemovableGameInteractionEffect* effect = new GameInteractionEffect::ModifyLinkSize();
+	// 			dynamic_cast<ParameterizedGameInteractionEffect*>(effect)->parameters[0] = GI_LINK_SIZE_PAPER;
 	// 			GameInteractor::RemoveEffect(effect);
 	// 		})),
 
@@ -251,12 +251,12 @@ static std::map<uint8_t, CommandCreator> kCommands {
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gPogoStick"),
 	CMD_ONE_SHOT_CVAR(CMD_ID++, "gSunsSong"),
 	// CMD_ONE_SHOT_INTERACTOR(CMD_ID++, new GameInteractionEffect::SetTimeOfDay(), false,
-	// 	[=](GameInteractionEffectBase* effect) {
+	// 	[=](ParameterizedGameInteractionEffect* effect) {
 	// 		effect->parameters[0] = IS_DAY ? 0 : 0x8000;
 	// 	}),
 	// CMD_ONE_SHOT_CVAR(CMD_ID++, "gPressA"),
 	CMD_ONE_SHOT_INTERACTOR(CMD_ID++, new GameInteractionEffect::PressButton(), false,
-		[=](GameInteractionEffectBase* effect) {
+		[=](ParameterizedGameInteractionEffect* effect) {
 			effect->parameters[0] = BTN_A;
 		}),
 	CMD_TIMED_BOOL_CVAR(CMD_ID++, "gButtonSwap"),
@@ -368,15 +368,15 @@ static std::map<uint8_t, CommandCreator> kCommands {
 			[]() { return LINK_IS_CHILD && !CVarGetInteger("gChaosForcedBoots", 0); },
 			CR_TIMED_CVAR("gChaosForcedBoots", 0, 0xF))),
 	// CMD_TIMED_INTERACTOR(0xE2, new GameInteractionEffect::ForceEquipBoots(), false,
-	// 	[=](GameInteractionEffectBase* effect) {
+	// 	[=](ParameterizedGameInteractionEffect* effect) {
 	// 		effect->parameters[0] = PLAYER_BOOTS_IRON;
 	// 	}),
 	// CMD_TIMED_INTERACTOR(0xE3, new GameInteractionEffect::ForceEquipBoots(), false,
-	// 	[=](GameInteractionEffectBase* effect) {
+	// 	[=](ParameterizedGameInteractionEffect* effect) {
 	// 		effect->parameters[0] = PLAYER_BOOTS_HOVER;
 	// 	}),
 	// CMD_TIMED_INTERACTOR(0xEF, new GameInteractionEffect::ForceEquipBoots(), false,
-	// 	[=](GameInteractionEffectBase* effect) {
+	// 	[=](ParameterizedGameInteractionEffect* effect) {
 	// 		effect->parameters[0] = 0xD; // F boots
 	// 	}),
 };
