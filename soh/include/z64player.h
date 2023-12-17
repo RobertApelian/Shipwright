@@ -778,7 +778,7 @@ typedef struct {
 #define PLAYER_STATE3_MOVING_ALONG_HOOKSHOT_PATH (1 << 7)
 
 typedef void (*PlayerActionFunc)(struct Player*, struct PlayState*);
-typedef s32(*PlayerUpperActionFunc)(struct Player*, struct PlayState*);
+typedef s32 (*UpperActionFunc)(struct Player*, struct PlayState*);
 typedef void (*PlayerMiniCsFunc)(struct PlayState*, struct Player*);
 
 typedef struct Player {
@@ -795,7 +795,7 @@ typedef struct Player {
     /* 0x0155 */ char       unk_155[0x003];
     /* 0x0158 */ u8         modelGroup;
     /* 0x0159 */ u8         nextModelGroup;
-    /* 0x015A */ s8         itemChangeAnim;
+    /* 0x015A */ s8         itemChangeType;
     /* 0x015B */ u8         modelAnimType;
     /* 0x015C */ u8         leftHandType;
     /* 0x015D */ u8         rightHandType;
@@ -831,11 +831,11 @@ typedef struct Player {
     /* 0x043C */ s8         mountSide;
     /* 0x043D */ char       unk_43D[0x003];
     /* 0x0440 */ Actor*     rideActor;
-    /* 0x0444 */ u8         csMode;
-    /* 0x0445 */ u8         prevCsMode;
-    /* 0x0446 */ u8         csAction;
+    /* 0x0444 */ u8         csAction;
+    /* 0x0445 */ u8         prevCsAction;
+    /* 0x0446 */ u8         cueId;
     /* 0x0447 */ u8         csDoorType;
-    /* 0x0448 */ Actor*     csTargetActor;
+    /* 0x0448 */ Actor*     csActor;
     /* 0x044C */ char       unk_44C[0x004];
     /* 0x0450 */ Vec3f      csStartPos;
     /* 0x045C */ Vec3f      csEndPos;
@@ -864,7 +864,7 @@ typedef struct Player {
     /* 0x0698 */ f32        talkActorDistance;
     /* 0x069C */ char       unk_69C[0x004];
     /* 0x06A0 */ f32        stoneOfAgonyRumbleTimer;
-    /* 0x06A4 */ f32        stoneOfAgonyActorDistSq;
+    /* 0x06A4 */ f32        closestSecretDistSq;
     /* 0x06A8 */ Actor*     ocarinaActor;
     /* 0x06AC */ s8         idleCounter;
     /* 0x06AD */ u8         attentionMode;
@@ -875,18 +875,18 @@ typedef struct Player {
     /* 0x06BC */ Vec3s      upperBodyRot;
     /* 0x06C2 */ s16        shapePitchOffset;
     /* 0x06C4 */ f32        shapeOffsetY;
-    /* 0x06C8 */ SkelAnime  skelAnimeUpper;
-    /* 0x070C */ Vec3s      jointTableUpper[PLAYER_LIMB_BUF_COUNT];
-    /* 0x079C */ Vec3s      morphTableUpper[PLAYER_LIMB_BUF_COUNT];
-    /* 0x082C */ PlayerUpperActionFunc upperActionFunc;
-    /* 0x0830 */ f32        upperInterpWeight;
+    /* 0x06C8 */ SkelAnime  upperSkelAnime;
+    /* 0x070C */ Vec3s      upperJointTable[PLAYER_LIMB_BUF_COUNT];
+    /* 0x079C */ Vec3s      upperMorphTable[PLAYER_LIMB_BUF_COUNT];
+    /* 0x082C */ UpperActionFunc upperActionFunc;
+    /* 0x0830 */ f32        upperAnimBlendWeight;
     /* 0x0834 */ s16        fpsItemTimer;
     /* 0x0836 */ s8         fpsItemShootState;
     /* 0x0837 */ u8         putAwayTimer;
     /* 0x0838 */ f32        linearVelocity;
     /* 0x083C */ s16        currentYaw;
     /* 0x083E */ s16        targetYaw;
-    /* 0x0840 */ u16        unk_840;
+    /* 0x0840 */ u16        underwaterTimer;
     /* 0x0842 */ s8         meleeWeaponAnimation;
     /* 0x0843 */ s8         meleeWeaponState;
     /* 0x0844 */ s8         comboTimer;
@@ -910,8 +910,8 @@ typedef struct Player {
     /* 0x087C */ s16        unk_87C;
     /* 0x087E */ s16        unk_87E;
     /* 0x0880 */ f32        speedLimit;
-    /* 0x0884 */ f32        wallHeight; // height used to determine whether link can climb or grab a ledge at the top
-    /* 0x0888 */ f32        wallDistance; // distance to the colliding wall plane
+    /* 0x0884 */ f32        yDistToLedge; // y distance to ground above an interact wall. LEDGE_DIST_MAX if no ground is found
+    /* 0x0888 */ f32        distToInteractWall; // distance to the colliding wall plane
     /* 0x088C */ u8         touchedWallJumpType;
     /* 0x088D */ u8         wallTouchTimer;
     /* 0x088E */ u8         endTalkTimer;
@@ -922,10 +922,10 @@ typedef struct Player {
     /* 0x0893 */ u8         hoverBootsTimer;
     /* 0x0894 */ s16        fallStartHeight; // last truncated Y position before falling
     /* 0x0896 */ s16        fallDistance; // truncated Y distance the player has fallen so far (positive is down)
-    /* 0x0898 */ s16        angleToFloorX;
-    /* 0x089A */ s16        angleToFloorY;
+    /* 0x0898 */ s16        floorPitch; // angle of the floor slope in the direction of current world yaw (positive for ascending slope)
+    /* 0x089A */ s16        floorPitchAlt; // the calculation for this value is bugged and doesn't represent anything meaningful
     /* 0x089C */ s16        walkAngleToFloorX;
-    /* 0x089E */ u16        surfaceMaterial;
+    /* 0x089E */ u16        floorSfxOffset;
     /* 0x08A0 */ u8         damageAmount;
     /* 0x08A1 */ u8         damageEffect;
     /* 0x08A2 */ s16        damageYaw;

@@ -207,6 +207,8 @@ public:
     
     DEFINE_HOOK(OnSetGameLanguage, void());
 
+    DEFINE_HOOK(OnAssetAltChange, void());
+
     // Helpers
     static bool IsSaveLoaded();
     static bool IsGameplayPaused();
