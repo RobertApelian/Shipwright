@@ -276,6 +276,8 @@ namespace Logic {
   bool BigPoeKill          = false;
   bool HookshotOrBoomerang = false;
   bool CanGetNightTimeGS   = false;
+  bool CanBreakLowerBeehives = false;
+  bool CanBreakUpperBeehives = false;
 
   uint8_t   BaseHearts      = 0;
   uint8_t   Hearts          = 0;
@@ -584,6 +586,8 @@ namespace Logic {
     CanOpenStormGrotto  = CanPlay(SongOfStorms) && (ShardOfAgony || LogicGrottosWithoutAgony);
     HookshotOrBoomerang = CanUse(HOOKSHOT) || CanUse(BOOMERANG);
     CanGetNightTimeGS   = (CanPlay(SunsSong) || !NightGSExpectSuns);
+    CanBreakUpperBeehives = HookshotOrBoomerang || (LogicBombchuBeehives && (BombchusInLogic ? HasBombchus : Bombs));
+    CanBreakLowerBeehives = CanBreakUpperBeehives || Bombs;
 
     GuaranteeTradePath     = ShuffleInteriorEntrances || ShuffleOverworldEntrances || LogicBiggoronBolero || CanBlastOrSmash || StopGCRollingGoronAsAdult;
   //GuaranteeHint          = (hints == "Mask" && MaskofTruth) || (hints == "Agony") || (hints != "Mask" && hints != "Agony");
@@ -985,6 +989,8 @@ namespace Logic {
      CanOpenStormGrotto  = false;
      BigPoeKill          = false;
      HookshotOrBoomerang = false;
+     CanBreakLowerBeehives = false;
+     CanBreakUpperBeehives = false;
 
      BaseHearts      = StartingHearts.Value<uint8_t>() + 1;
      Hearts          = 0;

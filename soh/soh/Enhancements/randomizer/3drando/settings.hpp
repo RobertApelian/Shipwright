@@ -416,6 +416,7 @@ typedef struct {
     uint8_t scrubsanity;
     uint8_t shopsanity;
     uint8_t shopsanityPrices;
+    uint8_t shuffleBeehives;
     uint8_t shuffleCows;
     uint8_t shuffleKokiriSword;
     uint8_t shuffleOcarinas;
@@ -807,6 +808,7 @@ void UpdateSettings(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettin
   extern Option ShopsanityPricesAffordable;
   extern Option Tokensanity;
   extern Option Scrubsanity;
+  extern Option ShuffleBeehives;
   extern Option ShuffleCows;
   extern Option ShuffleKokiriSword;
   extern Option ShuffleMasterSword;
@@ -991,6 +993,7 @@ void UpdateSettings(std::unordered_map<RandomizerSettingKey, uint8_t> cvarSettin
   extern Option LogicBunnyHoodJump; //NEW not implemented
   extern Option LogicDamageBoost; //NEW not implemented
   extern Option LogicHoverBoost; //NEW not implemented
+  extern Option LogicBombchuBeehives;
   extern Option LogicAdultKokiriGS;
   extern Option LogicLostWoodsBridge;
   extern Option LogicMidoBackflip;

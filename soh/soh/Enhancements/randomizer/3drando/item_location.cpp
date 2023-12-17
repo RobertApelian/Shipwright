@@ -778,6 +778,43 @@ void LocationTable_Init() {
     locationTable[SONG_FROM_WINDMILL]                            = ItemLocation::Delayed(RC_SONG_FROM_WINDMILL,                 0xFF, "Song from Windmill",                             SONG_FROM_WINDMILL,          SONG_OF_STORMS,            {Category::cSong},                               SpoilerCollectionCheck::EventChkInf(0x5B), SpoilerCollectionCheckGroup::GROUP_KAKARIKO);
 
     /*-------------------------------
+            --- BEEHIVES ---
+      -------------------------------*/
+
+    locationTable[KF_STORMS_GROTTO_BEEHIVE_LEFT]                 = ItemLocation::Base   (RC_KF_STORMS_GROTTO_BEEHIVE_LEFT,          0, "KF Storms Grotto Beehive Left",          KF_STORMS_GROTTO_BEEHIVE_LEFT,          BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_KOKIRI_FOREST);
+    locationTable[KF_STORMS_GROTTO_BEEHIVE_RIGHT]                = ItemLocation::Base   (RC_KF_STORMS_GROTTO_BEEHIVE_RIGHT,         0, "KF Storms Grotto Beehive Right",         KF_STORMS_GROTTO_BEEHIVE_RIGHT,         RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_KOKIRI_FOREST);
+    locationTable[LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_LEFT]         = ItemLocation::Base   (RC_LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_LEFT,  0, "LW Near Shortcuts Grotto Beehive Left",  LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_LEFT,  BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_LOST_WOODS);
+    locationTable[LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_RIGHT]        = ItemLocation::Base   (RC_LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_RIGHT, 0, "LW Near Shortcuts Grotto Beehive Right", LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_RIGHT, RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_LOST_WOODS);
+    locationTable[LW_SCRUBS_GROTTO_BEEHIVE]                      = ItemLocation::Base   (RC_LW_DEKU_SCRUB_GROTTO_BEEHIVE,           0, "LW Deku Scrub Grotto Beehive",           LW_SCRUBS_GROTTO_BEEHIVE,               RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_LOST_WOODS);
+    locationTable[SFM_STORMS_GROTTO_BEEHIVE]                     = ItemLocation::Base   (RC_SFM_STORMS_GROTTO_BEEHIVE,              0, "SFM Storms Grotto Beehive",              SFM_STORMS_GROTTO_BEEHIVE,              RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_LOST_WOODS);
+    locationTable[HF_NEAR_MARKET_GROTTO_BEEHIVE_LEFT]            = ItemLocation::Base   (RC_HF_NEAR_MARKET_GROTTO_BEEHIVE_LEFT,     0, "HF Near Market Grotto Beehive Left",     HF_NEAR_MARKET_GROTTO_BEEHIVE_LEFT,     BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[HF_NEAR_MARKET_GROTTO_BEEHIVE_RIGHT]           = ItemLocation::Base   (RC_HF_NEAR_MARKET_GROTTO_BEEHIVE_RIGHT,    0, "HF Near Market Grotto Beehive Right",    HF_NEAR_MARKET_GROTTO_BEEHIVE_RIGHT,    RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[HF_OPEN_GROTTO_BEEHIVE_LEFT]                   = ItemLocation::Base   (RC_HF_OPEN_GROTTO_BEEHIVE_LEFT,            0, "HF Open Grotto Beehive Left",            HF_OPEN_GROTTO_BEEHIVE_LEFT,            BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[HF_OPEN_GROTTO_BEEHIVE_RIGHT]                  = ItemLocation::Base   (RC_HF_OPEN_GROTTO_BEEHIVE_RIGHT,           0, "HF Open Grotto Beehive Right",           HF_OPEN_GROTTO_BEEHIVE_RIGHT,           RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[HF_SOUTHEAST_GROTTO_BEEHIVE_LEFT]              = ItemLocation::Base   (RC_HF_SOUTHEAST_GROTTO_BEEHIVE_LEFT,       0, "HF Southeast Grotto Beehive Left",       HF_SOUTHEAST_GROTTO_BEEHIVE_LEFT,       BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[HF_SOUTHEAST_GROTTO_BEEHIVE_RIGHT]             = ItemLocation::Base   (RC_HF_SOUTHEAST_GROTTO_BEEHIVE_RIGHT,      0, "HF Southeast Grotto Beehive Right",      HF_SOUTHEAST_GROTTO_BEEHIVE_RIGHT,      RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[HF_INSIDE_FENCE_GROTTO_BEEHIVE]                = ItemLocation::Base   (RC_HF_INSIDE_FENCE_GROTTO_BEEHIVE,         0, "HF Inside Fence Grotto Beehive",         HF_INSIDE_FENCE_GROTTO_BEEHIVE,         RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_HYRULE_FIELD);
+    locationTable[LLR_GROTTO_BEEHIVE]                            = ItemLocation::Base   (RC_LLR_GROTTO_BEEHIVE,                     0, "LLR Grotto Beehive",                     LLR_GROTTO_BEEHIVE,                     RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_LON_LON_RANCH);
+    locationTable[KAK_OPEN_GROTTO_BEEHIVE_LEFT]                  = ItemLocation::Base   (RC_KAK_OPEN_GROTTO_BEEHIVE_LEFT,           0, "Kak Open Grotto Beehive Left",           KAK_OPEN_GROTTO_BEEHIVE_LEFT,           BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_KAKARIKO);
+    locationTable[KAK_OPEN_GROTTO_BEEHIVE_RIGHT]                 = ItemLocation::Base   (RC_KAK_OPEN_GROTTO_BEEHIVE_RIGHT,          0, "Kak Open Grotto Beehive Right",          KAK_OPEN_GROTTO_BEEHIVE_RIGHT,          RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_KAKARIKO);
+    locationTable[DMT_COW_GROTTO_BEEHIVE]                        = ItemLocation::Base   (RC_DMT_COW_GROTTO_BEEHIVE,                 0, "DMT Cow Grotto Beehive",                 DMT_COW_GROTTO_BEEHIVE,                 RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
+    locationTable[DMT_STORMS_GROTTO_BEEHIVE_LEFT]                = ItemLocation::Base   (RC_DMT_STORMS_GROTTO_BEEHIVE_LEFT,         0, "DMT Storms Grotto Beehive Left",         DMT_STORMS_GROTTO_BEEHIVE_LEFT,         BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
+    locationTable[DMT_STORMS_GROTTO_BEEHIVE_RIGHT]               = ItemLocation::Base   (RC_DMT_STORMS_GROTTO_BEEHIVE_RIGHT,        0, "DMT Storms Grotto Beehive Right",        DMT_STORMS_GROTTO_BEEHIVE_RIGHT,        RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
+    locationTable[GC_GROTTO_BEEHIVE]                             = ItemLocation::Base   (RC_GC_GROTTO_BEEHIVE,                      0, "GC Grotto Beehive",                      GC_GROTTO_BEEHIVE,                      RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_GORON_CITY);
+    locationTable[DMC_UPPER_GROTTO_BEEHIVE_LEFT]                 = ItemLocation::Base   (RC_DMC_UPPER_GROTTO_BEEHIVE_LEFT,          0, "DMC Upper Grotto Beehive Left",          DMC_UPPER_GROTTO_BEEHIVE_LEFT,          BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
+    locationTable[DMC_UPPER_GROTTO_BEEHIVE_RIGHT]                = ItemLocation::Base   (RC_DMC_UPPER_GROTTO_BEEHIVE_RIGHT,         0, "DMC Upper Grotto Beehive Right",         DMC_UPPER_GROTTO_BEEHIVE_RIGHT,         RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
+    locationTable[DMC_HAMMER_GROTTO_BEEHIVE]                     = ItemLocation::Base   (RC_DMC_HAMMER_GROTTO_BEEHIVE,              0, "DMC Hammer Grotto Beehive",              DMC_HAMMER_GROTTO_BEEHIVE,              RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_DEATH_MOUNTAIN);
+    locationTable[ZR_OPEN_GROTTO_BEEHIVE_LEFT]                   = ItemLocation::Base   (RC_ZR_OPEN_GROTTO_BEEHIVE_LEFT,            0, "ZR Open Grotto Beehive Left",            ZR_OPEN_GROTTO_BEEHIVE_LEFT,            BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_ZORAS_RIVER);
+    locationTable[ZR_OPEN_GROTTO_BEEHIVE_RIGHT]                  = ItemLocation::Base   (RC_ZR_OPEN_GROTTO_BEEHIVE_RIGHT,           0, "ZR Open Grotto Beehive Right",           ZR_OPEN_GROTTO_BEEHIVE_RIGHT,           RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_ZORAS_RIVER);
+    locationTable[ZR_STORMS_GROTTO_BEEHIVE]                      = ItemLocation::Base   (RC_ZR_STORMS_GROTTO_BEEHIVE,               0, "ZR Storms Grotto Beehive",               ZR_STORMS_GROTTO_BEEHIVE,               RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_ZORAS_RIVER);
+    locationTable[ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_LEFT]         = ItemLocation::Base   (RC_ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_LEFT,  0, "ZD In Front of King Zora Beehive Left",  ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_LEFT,  BLUE_RUPEE, {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_ZORAS_DOMAIN);
+    locationTable[ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_RIGHT]        = ItemLocation::Base   (RC_ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_RIGHT, 0, "ZD In Front of King Zora Beehive Right", ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_RIGHT, RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_ZORAS_DOMAIN);
+    locationTable[ZD_BEHIND_KING_ZORA_BEEHIVE]                   = ItemLocation::Base   (RC_ZD_BEHIND_KING_ZORA_BEEHIVE,            0, "ZD Behind King Zora Beehive",            ZD_BEHIND_KING_ZORA_BEEHIVE,            RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_ZORAS_DOMAIN);
+    locationTable[LH_GROTTO_BEEHIVE]                             = ItemLocation::Base   (RC_LH_GROTTO_BEEHIVE,                      0, "LH Grotto Beehive",                      LH_GROTTO_BEEHIVE,                      RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_LAKE_HYLIA);
+    locationTable[GV_DEKU_SCRUB_GROTTO_BEEHIVE]                  = ItemLocation::Base   (RC_GV_DEKU_SCRUB_GROTTO_BEEHIVE,           0, "GV Deku Scrub Grotto Beehive",           GV_DEKU_SCRUB_GROTTO_BEEHIVE,           RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_GERUDO_VALLEY);
+    locationTable[COLOSSUS_GROTTO_BEEHIVE]                       = ItemLocation::Base   (RC_COLOSSUS_GROTTO_BEEHIVE,                0, "Colossus Grotto Beehive",                COLOSSUS_GROTTO_BEEHIVE,                RED_RUPEE,  {Category::cBeehive}, SpoilerCollectionCheck::RandomizerInf(), SpoilerCollectionCheckGroup::GROUP_GERUDO_VALLEY);
+
+    /*-------------------------------
                --- COWS ---
       -------------------------------*/
 
@@ -1486,6 +1523,39 @@ std::vector<uint32_t> overworldLocations = {
   LLR_GS_RAIN_SHED,
   LLR_GS_HOUSE_WINDOW,
   LLR_GS_TREE,
+
+  KF_STORMS_GROTTO_BEEHIVE_LEFT,
+  KF_STORMS_GROTTO_BEEHIVE_RIGHT,
+  LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_LEFT,
+  LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_RIGHT,
+  LW_SCRUBS_GROTTO_BEEHIVE,
+  SFM_STORMS_GROTTO_BEEHIVE,
+  HF_NEAR_MARKET_GROTTO_BEEHIVE_LEFT,
+  HF_NEAR_MARKET_GROTTO_BEEHIVE_RIGHT,
+  HF_OPEN_GROTTO_BEEHIVE_LEFT,
+  HF_OPEN_GROTTO_BEEHIVE_RIGHT,
+  HF_SOUTHEAST_GROTTO_BEEHIVE_LEFT,
+  HF_SOUTHEAST_GROTTO_BEEHIVE_RIGHT,
+  HF_INSIDE_FENCE_GROTTO_BEEHIVE,
+  LLR_GROTTO_BEEHIVE,
+  KAK_OPEN_GROTTO_BEEHIVE_LEFT,
+  KAK_OPEN_GROTTO_BEEHIVE_RIGHT,
+  DMT_COW_GROTTO_BEEHIVE,
+  DMT_STORMS_GROTTO_BEEHIVE_LEFT,
+  DMT_STORMS_GROTTO_BEEHIVE_RIGHT,
+  GC_GROTTO_BEEHIVE,
+  DMC_UPPER_GROTTO_BEEHIVE_LEFT,
+  DMC_UPPER_GROTTO_BEEHIVE_RIGHT,
+  DMC_HAMMER_GROTTO_BEEHIVE,
+  ZR_OPEN_GROTTO_BEEHIVE_LEFT,
+  ZR_OPEN_GROTTO_BEEHIVE_RIGHT,
+  ZR_STORMS_GROTTO_BEEHIVE,
+  ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_LEFT,
+  ZD_IN_FRONT_OF_KING_ZORA_BEEHIVE_RIGHT,
+  ZD_BEHIND_KING_ZORA_BEEHIVE,
+  LH_GROTTO_BEEHIVE,
+  GV_DEKU_SCRUB_GROTTO_BEEHIVE,
+  COLOSSUS_GROTTO_BEEHIVE,
 };
 
 ItemLocation* Location(uint32_t locKey) {

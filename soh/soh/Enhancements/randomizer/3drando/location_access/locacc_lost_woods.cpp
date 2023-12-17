@@ -98,8 +98,10 @@ void AreaTable_Init_LostWoods() {
 
   areaTable[KF_STORMS_GROTTO] = Area("KF Storms Grotto", "KF Storms Grotto", NONE, NO_DAY_NIGHT_CYCLE, grottoEvents, {
                   //Locations
-                  LocationAccess(KF_STORMS_GROTTO_CHEST,        {[]{return true;}}),
-                  LocationAccess(KF_STORMS_GROTTO_GOSSIP_STONE, {[]{return true;}}),
+                  LocationAccess(KF_STORMS_GROTTO_CHEST,         {[]{return true;}}),
+                  LocationAccess(KF_STORMS_GROTTO_GOSSIP_STONE,  {[]{return true;}}),
+                  LocationAccess(KF_STORMS_GROTTO_BEEHIVE_LEFT,  {[]{return CanBreakLowerBeehives;}}),
+                  LocationAccess(KF_STORMS_GROTTO_BEEHIVE_RIGHT, {[]{return CanBreakLowerBeehives;}}),
                 }, {
                   //Exits
                   Entrance(KOKIRI_FOREST, {[]{return true;}})
@@ -157,8 +159,11 @@ void AreaTable_Init_LostWoods() {
 
   areaTable[LW_NEAR_SHORTCUTS_GROTTO] = Area("LW Near Shortcuts Grotto", "LW Near Shortcuts Grotto", NONE, NO_DAY_NIGHT_CYCLE, grottoEvents, {
                   //Locations
-                  LocationAccess(LW_NEAR_SHORTCUTS_GROTTO_CHEST,        {[]{return true;}}),
-                  LocationAccess(LW_NEAR_SHORTCUTS_GROTTO_GOSSIP_STONE, {[]{return true;}}),
+                  LocationAccess(LW_NEAR_SHORTCUTS_GROTTO_CHEST,         {[]{return true;}}),
+                  LocationAccess(LW_NEAR_SHORTCUTS_GROTTO_GOSSIP_STONE,  {[]{return true;}}),
+                  LocationAccess(LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_LEFT,  {[]{return CanBreakLowerBeehives;}}),
+                  LocationAccess(LW_NEAR_SHORTCUTS_GROTTO_BEEHIVE_RIGHT, {[]{return CanBreakLowerBeehives;}}),
+                  LocationAccess(LW_SCRUBS_GROTTO_BEEHIVE,               {[]{return CanBreakUpperBeehives;}}),
                 }, {
                   //Exits
                   Entrance(THE_LOST_WOODS, {[]{return true;}}),
@@ -228,6 +233,7 @@ void AreaTable_Init_LostWoods() {
                   //Locations
                   LocationAccess(SFM_DEKU_SCRUB_GROTTO_REAR,  {[]{return CanStunDeku;}}),
                   LocationAccess(SFM_DEKU_SCRUB_GROTTO_FRONT, {[]{return CanStunDeku;}}),
+                  LocationAccess(SFM_STORMS_GROTTO_BEEHIVE,   {[]{return CanBreakUpperBeehives;}}),
                 }, {
                   //Exits
                   Entrance(SACRED_FOREST_MEADOW, {[]{return true;}}),

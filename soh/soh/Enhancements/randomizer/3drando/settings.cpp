@@ -187,6 +187,7 @@ namespace Settings {
   Option ShopsanityPricesAffordable = Option::Bool("Affordable Prices",      {"Off", "On"});
   Option Tokensanity                = Option::U8  ("Tokensanity",            {"Off", "Dungeons", "Overworld", "All Tokens"});
   Option Scrubsanity                = Option::U8  ("Scrub Shuffle",          {"Off", "Affordable", "Expensive", "Random Prices"});
+  Option ShuffleBeehives            = Option::Bool("Shuffle Beehives",       {"Off", "On"});
   Option ShuffleCows                = Option::Bool("Shuffle Cows",           {"Off", "On"});
   Option ShuffleKokiriSword         = Option::Bool("Shuffle Kokiri Sword",   {"Off", "On"});
   Option ShuffleMasterSword         = Option::Bool("Shuffle Master Sword",   {"Off", "On"});
@@ -210,6 +211,7 @@ namespace Settings {
     &ShopsanityPricesAffordable,
     &Tokensanity,
     &Scrubsanity,
+    &ShuffleBeehives,
     &ShuffleCows,
     &ShuffleKokiriSword,
     &ShuffleMasterSword,
@@ -671,6 +673,7 @@ namespace Settings {
   Option LogicBunnyHoodJump                       = LogicTrick(std::to_string(RT_BUNNY_HOOD_JUMPS));
   Option LogicDamageBoost                         = LogicTrick(std::to_string(RT_DAMAGE_BOOST_SIMPLE));
   Option LogicHoverBoost                          = LogicTrick(std::to_string(RT_HOVER_BOOST_SIMPLE));
+  Option LogicBombchuBeehives                     = LogicTrick(std::to_string(RT_BOMBCHU_BEEHIVES));
   Option LogicAdultKokiriGS                       = LogicTrick(std::to_string(RT_KF_ADULT_GS));
   Option LogicLostWoodsBridge                     = LogicTrick(std::to_string(RT_LW_BRIDGE));
   Option LogicMidoBackflip                        = LogicTrick(std::to_string(RT_LW_MIDO_BACKFLIP));
@@ -844,6 +847,7 @@ namespace Settings {
     &LogicBunnyHoodJump,
     &LogicDamageBoost,
     &LogicHoverBoost,
+    &LogicBombchuBeehives,
     &LogicAdultKokiriGS,
     &LogicLostWoodsBridge,
     &LogicMidoBackflip,
@@ -1017,6 +1021,7 @@ namespace Settings {
     {RT_BUNNY_HOOD_JUMPS,&LogicBunnyHoodJump},
     {RT_DAMAGE_BOOST_SIMPLE,&LogicDamageBoost},
     {RT_HOVER_BOOST_SIMPLE,&LogicHoverBoost},
+    {RT_BOMBCHU_BEEHIVES,&LogicBombchuBeehives},
     {RT_KF_ADULT_GS,&LogicAdultKokiriGS},
     {RT_LW_BRIDGE,&LogicLostWoodsBridge},
     {RT_LW_MIDO_BACKFLIP,&LogicMidoBackflip},
@@ -1316,6 +1321,7 @@ namespace Settings {
     ctx.shuffleSongs         = ShuffleSongs.Value<uint8_t>();
     ctx.tokensanity          = Tokensanity.Value<uint8_t>();
     ctx.scrubsanity          = Scrubsanity.Value<uint8_t>();
+    ctx.shuffleBeehives      = (ShuffleBeehives) ? 1 : 0;
     ctx.shuffleCows          = (ShuffleCows) ? 1 : 0;
     ctx.shuffleKokiriSword   = (ShuffleKokiriSword) ? 1 : 0;
     ctx.shuffleOcarinas      = (ShuffleOcarinas) ? 1 : 0;
@@ -1601,6 +1607,14 @@ namespace Settings {
       IncludeAndHide(scrubLocations);
     } else {
       Unhide(scrubLocations);
+    }
+
+    //Force include Beehives if Shuffle Beehives is Off
+    std::vector<uint32_t> beehiveLocations = GetLocations(everyPossibleLocation, Category::cBeehive);
+    if (ShuffleBeehives) {
+      Unhide(beehiveLocations);
+    } else {
+      IncludeAndHide(beehiveLocations);
     }
 
     //Force include Cows if Shuffle Cows is Off
@@ -2091,6 +2105,7 @@ namespace Settings {
     { &Shopsanity, SHOPSANITY_OFF },
     { &Tokensanity, TOKENSANITY_OFF },
     { &Scrubsanity, SCRUBSANITY_OFF },
+    { &ShuffleBeehives, OFF },
     { &ShuffleCows, OFF },
     { &ShuffleKokiriSword, OFF },
     { &ShuffleMasterSword, OFF },
@@ -2340,6 +2355,7 @@ namespace Settings {
     ShopsanityPrices.SetSelectedIndex(cvarSettings[RSK_SHOPSANITY_PRICES]);
     ShopsanityPricesAffordable.SetSelectedIndex(cvarSettings[RSK_SHOPSANITY_PRICES_AFFORDABLE]);
     Scrubsanity.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_SCRUBS]);
+    ShuffleBeehives.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_BEEHIVES]);
     ShuffleCows.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_COWS]);
     ShuffleKokiriSword.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_KOKIRI_SWORD]);
     ShuffleMasterSword.SetSelectedIndex(cvarSettings[RSK_SHUFFLE_MASTER_SWORD]);

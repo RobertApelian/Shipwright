@@ -34,8 +34,10 @@ void AreaTable_Init_HyruleField() {
 
   areaTable[HF_SOUTHEAST_GROTTO] = Area("HF Southeast Grotto", "HF Southeast Grotto", NONE, NO_DAY_NIGHT_CYCLE, grottoEvents, {
                   //Locations
-                  LocationAccess(HF_SOUTHEAST_GROTTO_CHEST,        {[]{return true;}}),
-                  LocationAccess(HF_SOUTHEAST_GROTTO_GOSSIP_STONE, {[]{return true;}}),
+                  LocationAccess(HF_SOUTHEAST_GROTTO_CHEST,         {[]{return true;}}),
+                  LocationAccess(HF_SOUTHEAST_GROTTO_GOSSIP_STONE,  {[]{return true;}}),
+                  LocationAccess(HF_SOUTHEAST_GROTTO_BEEHIVE_LEFT,  {[]{return CanBreakLowerBeehives;}}),
+                  LocationAccess(HF_SOUTHEAST_GROTTO_BEEHIVE_RIGHT, {[]{return CanBreakLowerBeehives;}}),
                 }, {
                   //Exits
                   Entrance(HYRULE_FIELD, {[]{return true;}}),
@@ -43,8 +45,10 @@ void AreaTable_Init_HyruleField() {
 
   areaTable[HF_OPEN_GROTTO] = Area("HF Open Grotto", "HF Open Grotto", NONE, NO_DAY_NIGHT_CYCLE, grottoEvents, {
                   //Locations
-                  LocationAccess(HF_OPEN_GROTTO_CHEST,        {[]{return true;}}),
-                  LocationAccess(HF_OPEN_GROTTO_GOSSIP_STONE, {[]{return true;}}),
+                  LocationAccess(HF_OPEN_GROTTO_CHEST,         {[]{return true;}}),
+                  LocationAccess(HF_OPEN_GROTTO_GOSSIP_STONE,  {[]{return true;}}),
+                  LocationAccess(HF_OPEN_GROTTO_BEEHIVE_LEFT,  {[]{return CanBreakLowerBeehives;}}),
+                  LocationAccess(HF_OPEN_GROTTO_BEEHIVE_RIGHT, {[]{return CanBreakLowerBeehives;}}),
                 }, {
                   //Exits
                   Entrance(HYRULE_FIELD, {[]{return true;}}),
@@ -52,7 +56,8 @@ void AreaTable_Init_HyruleField() {
 
   areaTable[HF_INSIDE_FENCE_GROTTO] = Area("HF Inside Fence Grotto", "HF Inside Fence Grotto", NONE, NO_DAY_NIGHT_CYCLE, {}, {
                   //Locations
-                  LocationAccess(HF_DEKU_SCRUB_GROTTO, {[]{return CanStunDeku;}}),
+                  LocationAccess(HF_DEKU_SCRUB_GROTTO,           {[]{return CanStunDeku;}}),
+                  LocationAccess(HF_INSIDE_FENCE_GROTTO_BEEHIVE, {[]{return CanBreakLowerBeehives;}}),
                 }, {
                   //Exits
                   Entrance(HYRULE_FIELD, {[]{return true;}}),
@@ -70,8 +75,10 @@ void AreaTable_Init_HyruleField() {
 
   areaTable[HF_NEAR_MARKET_GROTTO] = Area("HF Near Market Grotto", "HF Near Market Grotto", NONE, NO_DAY_NIGHT_CYCLE, grottoEvents, {
                   //Locations
-                  LocationAccess(HF_NEAR_MARKET_GROTTO_CHEST,        {[]{return true;}}),
-                  LocationAccess(HF_NEAR_MARKET_GROTTO_GOSSIP_STONE, {[]{return true;}}),
+                  LocationAccess(HF_NEAR_MARKET_GROTTO_CHEST,         {[]{return true;}}),
+                  LocationAccess(HF_NEAR_MARKET_GROTTO_GOSSIP_STONE,  {[]{return true;}}),
+                  LocationAccess(HF_NEAR_MARKET_GROTTO_BEEHIVE_LEFT,  {[]{return CanBreakLowerBeehives;}}),
+                  LocationAccess(HF_NEAR_MARKET_GROTTO_BEEHIVE_RIGHT, {[]{return CanBreakLowerBeehives;}}),
                 }, {
                   //Exits
                   Entrance(HYRULE_FIELD, {[]{return true;}}),
@@ -170,6 +177,7 @@ void AreaTable_Init_HyruleField() {
                   LocationAccess(LH_DEKU_SCRUB_GROTTO_LEFT,   {[]{return CanStunDeku;}}),
                   LocationAccess(LH_DEKU_SCRUB_GROTTO_RIGHT,  {[]{return CanStunDeku;}}),
                   LocationAccess(LH_DEKU_SCRUB_GROTTO_CENTER, {[]{return CanStunDeku;}}),
+                  LocationAccess(LH_GROTTO_BEEHIVE,           {[]{return CanBreakUpperBeehives;}}),
                 }, {
                   //Exits
                   Entrance(LAKE_HYLIA, {[]{return true;}}),
@@ -227,6 +235,7 @@ void AreaTable_Init_HyruleField() {
                   LocationAccess(LLR_DEKU_SCRUB_GROTTO_LEFT,   {[]{return CanStunDeku;}}),
                   LocationAccess(LLR_DEKU_SCRUB_GROTTO_RIGHT,  {[]{return CanStunDeku;}}),
                   LocationAccess(LLR_DEKU_SCRUB_GROTTO_CENTER, {[]{return CanStunDeku;}}),
+                  LocationAccess(LLR_GROTTO_BEEHIVE,           {[]{return CanBreakUpperBeehives;}}),
                 }, {
                   //Exits
                   Entrance(LON_LON_RANCH, {[]{return true;}}),
